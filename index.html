@@ -52,20 +52,27 @@
    2. WEB LAYOUT — ours. The kit has no web/form layer (brand-spec.md §6).
    ========================================================================== */
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+/* The header is sticky, so an anchored jump would otherwise land the target
+   underneath it. scroll-padding keeps the destination visible. */
+html{scroll-behavior:smooth; scroll-padding-top:76px; scroll-padding-bottom:88px}
 body{
   margin:0; font-family:var(--b24-font-body); color:var(--b24-text);
   background:var(--b24-page-cool); font-size:15px; line-height:1.55;
   -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:1120px; margin:0 auto; padding:0 var(--b24-s5)}
+.wrap{max-width:1200px; margin:0 auto; padding:0 var(--b24-s6)}
+section{scroll-margin-top:76px}
 
 /* focus ring — visible for keyboard users everywhere (brand-spec §6.2) */
 :focus-visible{outline:3px solid var(--b24-cyan); outline-offset:2px; border-radius:6px}
 
-/* ---- header ---- */
-.hdr{position:sticky; top:0; z-index:40; background:rgba(255,255,255,.92);
-  backdrop-filter:saturate(1.4) blur(8px); border-bottom:1px solid var(--b24-line)}
+/* ---- header ----
+   Opaque, not translucent: over the navy hero a semi-transparent bar let the
+   headline ghost through and the white/navy junction read as one bruised band.
+   A hairline plus a soft shadow gives the sticky bar a real edge on both the
+   navy hero and the pale page below it. */
+.hdr{position:sticky; top:0; z-index:40; background:var(--b24-white);
+  border-bottom:1px solid var(--b24-line); box-shadow:0 2px 10px rgba(0,102,161,.10)}
 .hdr-in{display:flex; align-items:center; gap:var(--b24-s5); padding:var(--b24-s3) 0}
 .hdr-logo img{height:34px; width:auto; display:block}
 .hdr-sp{flex:1}
@@ -81,13 +88,18 @@ body{
 .sw-lab{font:600 12px/1 var(--b24-font-body); color:var(--b24-text-mute);
   text-transform:uppercase; letter-spacing:.06em; margin-right:var(--b24-s2)}
 
-/* ---- hero: navy sheet, signature radial gradient only ---- */
+/* ---- hero: navy sheet, signature radial gradient only ----
+   Padding trimmed: 64/48 left a dead navy band under the pills that read as
+   "the hero got cut off". The headline is widened so the sheet does not sit
+   two-thirds empty at 1440. */
 .hero{background:var(--b24-grad-partner-navy); color:var(--b24-on-navy);
-  padding:var(--b24-s16) 0 var(--b24-s12)}
-.hero h1{font:800 clamp(28px,4vw,44px)/1.15 var(--b24-font-display); margin:0 0 var(--b24-s4);
-  letter-spacing:-.01em; max-width:20ch}
-.hero p{margin:0; color:var(--b24-on-navy-soft); font-size:17px; max-width:62ch}
-.hero-pills{display:flex; flex-wrap:wrap; gap:var(--b24-s2); margin-top:var(--b24-s6)}
+  padding:var(--b24-s12) 0 var(--b24-s10)}
+.hero h1{font:800 clamp(30px,4.2vw,50px)/1.12 var(--b24-font-display); margin:0 0 var(--b24-s4);
+  letter-spacing:-.01em; max-width:26ch}
+.hero p{margin:0; color:var(--b24-on-navy-soft); font-size:17px; max-width:70ch}
+/* one row of equal pills instead of a ragged 2 + 1 wrap */
+.hero-pills{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:var(--b24-s2); margin-top:var(--b24-s6)}
 .pill{display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.12);
   border:1px solid rgba(255,255,255,.24); color:var(--b24-on-navy);
   border-radius:var(--b24-r-pill); padding:7px 14px; font-size:13.5px; font-weight:500}
@@ -109,7 +121,12 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 /* ---- cards ---- */
 .card{background:var(--b24-white); border:1px solid var(--b24-line);
   border-radius:var(--b24-r-card); box-shadow:var(--b24-shadow-card); padding:var(--b24-s6)}
-.grid-co{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:var(--b24-s4)}
+/* Three columns, not auto-fit four: the company block has six fields and the
+   economics block three, so a 3-wide grid fills every row exactly instead of
+   leaving half a row of dead space on the right. */
+.grid-co{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--b24-s5) var(--b24-s5)}
+@media (max-width:860px){ .grid-co{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:560px){ .grid-co{grid-template-columns:1fr} }
 
 /* ---- form field ---- */
 .field{display:flex; flex-direction:column; gap:6px}
@@ -117,7 +134,10 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .field .hint{font-size:12px; color:var(--b24-text)}
 .in-wrap{position:relative; display:flex; align-items:center}
 .in-wrap input{width:100%}
-.in-wrap .suf{position:absolute; right:14px; font-size:12.5px; color:var(--b24-text-mute);
+/* unit suffix: --b24-text, not --b24-text-mute. At 12.5px the mute tone is
+   3.88:1 on white, below WCAG AA, and brand-spec §1 permits it only from 18px
+   (or 14px bold). See .b24x-unit in css/brand-ext.css. */
+.in-wrap .suf{position:absolute; right:14px; font-size:12.5px; color:var(--b24-text);
   pointer-events:none; font-weight:600}
 .in-wrap input{padding-right:64px}
 .field .err{display:none; font-size:12px; color:var(--b24x-error-ink); font-weight:600}
@@ -127,7 +147,7 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
   text-transform:uppercase; letter-spacing:.05em; margin-left:6px; vertical-align:1px}
 
 .rev-toggle{display:flex; align-items:center; gap:10px; cursor:pointer;
-  font-size:13px; font-weight:600; color:var(--b24-text)}
+  font-size:13px; font-weight:600; color:var(--b24-text); min-height:48px}
 .rev-toggle input{width:20px; height:20px; accent-color:var(--b24-deep); cursor:pointer}
 .btn-primary{appearance:none; border:0; cursor:pointer; background:var(--b24p-deep);
   color:var(--b24-white); border-radius:var(--b24-r-pill); padding:13px 26px;
@@ -182,8 +202,10 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .sc.on .sc-body{display:block}
 .sc-note{background:var(--b24-card); border-radius:var(--b24-r-inner);
   padding:var(--b24-s3) var(--b24-s4); font-size:12.5px; margin:var(--b24-s4) 0 0}
-.sc-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:var(--b24-s4); margin-top:var(--b24-s5)}
+.sc-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--b24-s5); margin-top:var(--b24-s5)}
+@media (max-width:860px){ .sc-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:560px){ .sc-grid{grid-template-columns:1fr} }
 .seg{border:1px dashed var(--b24-dashed); border-radius:var(--b24-r-inner);
   padding:var(--b24-s4); margin-top:var(--b24-s4)}
 .seg-h{font-size:12px; font-weight:700; color:var(--b24-deep); text-transform:uppercase;
@@ -244,7 +266,7 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .tr-name{font:700 18px/1.25 var(--b24-font-display); color:var(--b24p-deep); margin-bottom:var(--b24-s3)}
 .tr-price{font:800 26px/1 var(--b24-font-display); color:var(--b24p-deep);
   font-variant-numeric:tabular-nums}
-.tr-per{font-size:12.5px; color:var(--b24-text-mute); margin-top:4px}
+.tr-per{font-size:12.5px; color:var(--b24-text); margin-top:4px}
 .tr-arrow{display:flex; align-items:center; justify-content:center; color:var(--b24-deep)}
 .tr-arrow svg{width:30px; height:30px}
 .tr-rows{margin-top:var(--b24-s4); border-top:1px solid var(--b24-line); padding-top:var(--b24-s3)}
@@ -296,7 +318,11 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
   border:0; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:20px;
   color:var(--b24-deep); line-height:1}
 
-.foot{padding:var(--b24-s8) 0; font-size:12.5px; color:var(--b24-text)}
+/* The navbar is sticky at the bottom, so it floats over whatever is scrolled
+   under it. Reserve its height at the end of the page — without this the tail of
+   every hint and the footer text read as cut off mid-word. */
+main.wrap{padding-bottom:var(--b24-s16)}
+.foot{padding:var(--b24-s8) 0 var(--b24-s10); font-size:12.5px; color:var(--b24-text)}
 .foot img{height:26px; margin-bottom:var(--b24-s3); display:block}
 
 @media (max-width:820px){
@@ -313,13 +339,16 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
   <div class="wrap hdr-in">
     <a class="hdr-logo" href="#top"><img src="assets/logo-partner-h.png" alt="Bitrix24 Partners"></a>
     <div class="hdr-sp"></div>
-    <span class="sw-lab" data-i18n="ui.lang"></span>
-    <div class="switch" id="sw-lang" role="group">
+    <!-- EN + USD scope: hidden in the markup so they never paint, not even for a
+         frame before applyStatic() runs. The controls and their handlers stay in
+         place — flip SHOW_LANG_SWITCH / SHOW_CUR_SWITCH to bring them back. -->
+    <span class="sw-lab" data-i18n="ui.lang" hidden></span>
+    <div class="switch" id="sw-lang" role="group" hidden>
       <button type="button" data-lang="en" aria-pressed="true">EN</button>
       <button type="button" data-lang="de" aria-pressed="false">DE</button>
     </div>
-    <span class="sw-lab" data-i18n="ui.cur"></span>
-    <div class="switch" id="sw-cur" role="group">
+    <span class="sw-lab" data-i18n="ui.cur" hidden></span>
+    <div class="switch" id="sw-cur" role="group" hidden>
       <button type="button" data-cur="EUR" aria-pressed="true">EUR</button>
       <button type="button" data-cur="USD" aria-pressed="false">USD</button>
     </div>
@@ -346,8 +375,8 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
     <h2 data-i18n="ui.companyH"></h2>
     <p class="note-line" data-i18n="ui.companyNote"></p>
     <div class="card">
-      <div class="grid-co" id="co-grid"></div>
-      <div class="grid-co" style="margin-top:var(--b24-s5); border-top:1px solid var(--b24-line); padding-top:var(--b24-s5)">
+      <div class="grid-co b24x-field-row" id="co-grid"></div>
+      <div class="grid-co b24x-field-row" style="margin-top:var(--b24-s5); border-top:1px solid var(--b24-line); padding-top:var(--b24-s5)">
         <div class="field">
           <label for="burden"><span data-i18n="ui.burden"></span></label>
           <div class="in-wrap">
@@ -365,6 +394,7 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
           <span class="hint" data-i18n="ui.daysHint"></span>
         </div>
         <div class="field">
+          <label data-i18n="ui.revToggleLabel"></label>
           <label class="rev-toggle" for="show-rev">
             <input type="checkbox" id="show-rev">
             <span data-i18n="ui.showRevenue"></span>
@@ -381,7 +411,7 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
     <h2 data-i18n="ui.partnerH"></h2>
     <p class="note-line" data-i18n="ui.partnerNote"></p>
     <div class="card">
-      <div class="grid-co" id="pt-grid"></div>
+      <div class="grid-co b24x-field-row" id="pt-grid"></div>
     </div>
   </section>
 
@@ -445,7 +475,7 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 
   <!-- report export -->
   <section id="report">
-    <div class="sec-h" data-i18n="ui.reportH"></div>
+    <div class="sec-h" data-i18n="ui.step7"></div>
     <h2 data-i18n="ui.reportH"></h2>
     <p class="note-line" data-i18n="ui.reportNote"></p>
     <div class="card">
@@ -607,7 +637,7 @@ en: {
   "ui.burden":"Employer payroll burden",
   "ui.burdenHint":"Added on top of gross salary to get the real cost of an employee. The correct figure depends on the country and the type of contract — set it to your market before quoting.",
   "ui.estimate":"estimate",
-  "ui.step5":"Step 5", "ui.step6":"Step 6",
+  "ui.step5":"Step 5", "ui.step6":"Step 6", "ui.step7":"Step 7",
 
   // ---- coverage ----
   "ui.coverage":"Coverage — share of staff this touches",
@@ -620,6 +650,7 @@ en: {
   "ui.overlapReport":"Coverage warning: the selected scenarios total {pct} of payroll cost, above the {limit}% credibility limit. The scenarios likely overlap and the coverage shares need review before this is quoted.",
 
   // ---- revenue switch ----
+  "ui.revToggleLabel":"Revenue projection",
   "ui.showRevenue":"Show revenue uplift",
   "ui.showRevenueHint":"Off by default. Revenue uplift and existing-base potential are ESTIMATES, not a saving the client can verify — they assume freed time and generated opportunities actually convert into sales. Payroll saving does not depend on that assumption. Turn this on knowingly, and say so out loud when you do.",
 
@@ -1265,10 +1296,10 @@ function scHtml(sc){
         <p class="cov-hint" id="covhint-${sc.id}">${covHintText(sc)}</p>
       </div>`:`
       <p class="cov-hint cov-hint--none">${t("ui.coverageNone")}</p>`}
-      <div class="sc-grid">${vis.map(f=>fieldHtml(sc,f,st.values,null)).join("")}</div>
+      <div class="sc-grid b24x-field-row">${vis.map(f=>fieldHtml(sc,f,st.values,null)).join("")}</div>
       <div id="segs-${sc.id}">${(st.segments||[]).map((sv,i)=>`
         <div class="seg"><div class="seg-h">${t("ui.segN",{n:i+2})}</div>
-          <div class="sc-grid">${vis.map(f=>fieldHtml(sc,f,sv,i)).join("")}</div>
+          <div class="sc-grid b24x-field-row">${vis.map(f=>fieldHtml(sc,f,sv,i)).join("")}</div>
         </div>`).join("")}</div>
       ${sc.segments?`<button class="btn-add" data-addseg="${sc.id}">${t("ui.addSeg")}</button>`:""}
       <div class="res" id="res-${sc.id}"></div>
