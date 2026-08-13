@@ -1167,16 +1167,34 @@ function applyCompany(key){
     const el = document.querySelector(`#card-${id} .num-in[data-k="${fk}"]`);
     if(el) el.value = groupFmt(String(val));
   });
+  /* the company headcount is quoted inside the coverage sentence — keep it in step */
+  scenarios.forEach(sc=>{ if(sc.cov && sc.cov.src === key) refreshCovHint(sc); });
 }
+/* The sentence next to the coverage field ("...costed for N people"). It lives in
+   .sc-body, which recompute() does not rewrite, so it must be refreshed by hand
+   whenever the headcount behind it changes — otherwise it goes stale next to a
+   correct number, which reads as a broken calculator. */
+const covHintText = sc => t("ui.coverageHint", {
+  src: t("co." + sc.cov.src),
+  n:   fmtInt(company[sc.cov.src] || 0),
+  got: fmtInt(state[sc.id].values[sc.cov.target] || 0),
+});
+function refreshCovHint(sc){
+  if(!sc.cov) return;
+  const el = document.getElementById("covhint-" + sc.id);
+  if(el) el.innerHTML = covHintText(sc);
+}
+
 /* Re-derive one scenario's autofilled headcount after its coverage changes. */
 function applyCoverage(sc){
   if(!sc.cov) return;
   const {src, target} = sc.cov;
-  if(state[sc.id].dirty[target]) return;   // partner typed it by hand — leave it alone
+  if(state[sc.id].dirty[target]){ refreshCovHint(sc); return; }  // typed by hand — keep it
   const val = Math.max(0, Math.round((company[src] || 0) * covOf(sc) / 100));
   state[sc.id].values[target] = val;
   const el = document.querySelector(`#card-${sc.id} .num-in[data-k="${target}"]`);
   if(el) el.value = groupFmt(String(val));
+  refreshCovHint(sc);
 }
 
 function fieldHtml(sc, f, vals, segIdx){
@@ -1244,9 +1262,7 @@ function scHtml(sc){
             <span class="suf">%</span>
           </div>
         </div>
-        <p class="cov-hint">${t("ui.coverageHint",{
-            src: t("co."+sc.cov.src), n: fmtInt(company[sc.cov.src]||0),
-            got: fmtInt(state[sc.id].values[sc.cov.target]||0)})}</p>
+        <p class="cov-hint" id="covhint-${sc.id}">${covHintText(sc)}</p>
       </div>`:`
       <p class="cov-hint cov-hint--none">${t("ui.coverageNone")}</p>`}
       <div class="sc-grid">${vis.map(f=>fieldHtml(sc,f,st.values,null)).join("")}</div>
