@@ -1,0 +1,6 @@
+# generated reports — rebuild with scripts/build-report.mjs
+build/
+
+node_modules/
+.DS_Store
+*.env

@@ -1,0 +1,822 @@
+{
+  "_source": "Client-facing prices. Partner-programme economics are deliberately absent — see README. Current prices and partner terms: Bitrix24 Partner Portal.",
+  "_effective_from": "2026-08-17",
+  "key_dates": {
+    "prices_live": "2026-08-17",
+    "existing_clients_grandfathered_until": "end of current period or ~2026-11-17, whichever is later"
+  },
+  "lineup": {
+    "essentials": "Former Basic/Standard/Professional/Enterprise, renamed. Capped Market apps, REST API, AI.",
+    "vibe_plus": "New premium tier. Adds Vibecode, MCP server, higher AI allowance, unlimited REST API + Market."
+  },
+  "essentials_prices": {
+    "USD": [
+      {
+        "plan": "Basic",
+        "monthly": 69,
+        "annual_per_month": 49
+      },
+      {
+        "plan": "Standard",
+        "monthly": 144,
+        "annual_per_month": 99
+      },
+      {
+        "plan": "Professional",
+        "monthly": 289,
+        "annual_per_month": 199
+      },
+      {
+        "plan": "Enterprise",
+        "monthly": 579,
+        "annual_per_month": 399
+      }
+    ],
+    "EUR": "MISSING - not in source xlsx, guide is USD only. REQUEST FROM ANTON.",
+    "GBP": "MISSING - not in source xlsx, guide is USD only. REQUEST FROM ANTON."
+  },
+  "vibe_plus_prices": {
+    "USD": [
+      {
+        "plan": "Alaio Basic Vibe+",
+        "monthly": 89,
+        "annual_per_month": 69,
+        "annual_total": 828,
+        "quarterly_per_month": 80
+      },
+      {
+        "plan": "Alaio Standard Vibe+",
+        "monthly": 199,
+        "annual_per_month": 144,
+        "annual_total": 1728,
+        "quarterly_per_month": 175
+      },
+      {
+        "plan": "Alaio Professional Vibe+",
+        "monthly": 399,
+        "annual_per_month": 289,
+        "annual_total": 3468,
+        "quarterly_per_month": 350
+      },
+      {
+        "plan": "Alaio Enterprise-250 Vibe+",
+        "monthly": 799,
+        "annual_per_month": 579,
+        "annual_total": 6948,
+        "quarterly_per_month": 700
+      },
+      {
+        "plan": "Alaio Enterprise-500 Vibe+",
+        "monthly": 1269,
+        "annual_per_month": 919,
+        "annual_total": 11028,
+        "quarterly_per_month": 1115
+      },
+      {
+        "plan": "Alaio Enterprise-1000 Vibe+",
+        "monthly": 1599,
+        "annual_per_month": 1149,
+        "annual_total": 13788,
+        "quarterly_per_month": 1400
+      },
+      {
+        "plan": "Alaio Enterprise-2000 Vibe+",
+        "monthly": 3199,
+        "annual_per_month": 2299,
+        "annual_total": 27588,
+        "quarterly_per_month": 2800
+      },
+      {
+        "plan": "Alaio Enterprise-3000 Vibe+",
+        "monthly": 4799,
+        "annual_per_month": 3449,
+        "annual_total": 41388,
+        "quarterly_per_month": 4200
+      },
+      {
+        "plan": "Alaio Enterprise-4000 Vibe+",
+        "monthly": 6399,
+        "annual_per_month": 4599,
+        "annual_total": 55188,
+        "quarterly_per_month": 5600
+      },
+      {
+        "plan": "Alaio Enterprise-5000 Vibe+",
+        "monthly": 7999,
+        "annual_per_month": 5749,
+        "annual_total": 68988,
+        "quarterly_per_month": 7000
+      },
+      {
+        "plan": "Alaio Enterprise-6000 Vibe+",
+        "monthly": 9599,
+        "annual_per_month": 6899,
+        "annual_total": 82788,
+        "quarterly_per_month": 8400
+      },
+      {
+        "plan": "Alaio Enterprise-7000 Vibe+",
+        "monthly": 11199,
+        "annual_per_month": 8049,
+        "annual_total": 96588,
+        "quarterly_per_month": 9800
+      },
+      {
+        "plan": "Alaio Enterprise-8000 Vibe+",
+        "monthly": 12799,
+        "annual_per_month": 9199,
+        "annual_total": 110388,
+        "quarterly_per_month": 11200
+      },
+      {
+        "plan": "Alaio Enterprise-9000 Vibe+",
+        "monthly": 14399,
+        "annual_per_month": 10349,
+        "annual_total": 124188,
+        "quarterly_per_month": 12600
+      },
+      {
+        "plan": "Alaio Enterprise-10000 Vibe+",
+        "monthly": 15999,
+        "annual_per_month": 11499,
+        "annual_total": 137988,
+        "quarterly_per_month": 14000
+      }
+    ],
+    "EUR": [
+      {
+        "plan": "Alaio Basic Vibe+",
+        "monthly": 89,
+        "annual_per_month": 69,
+        "annual_total": 828,
+        "quarterly_per_month": 80
+      },
+      {
+        "plan": "Alaio Standard Vibe+",
+        "monthly": 199,
+        "annual_per_month": 144,
+        "annual_total": 1728,
+        "quarterly_per_month": 175
+      },
+      {
+        "plan": "Alaio Professional Vibe+",
+        "monthly": 399,
+        "annual_per_month": 289,
+        "annual_total": 3468,
+        "quarterly_per_month": 350
+      },
+      {
+        "plan": "Alaio Enterprise-250 Vibe+",
+        "monthly": 799,
+        "annual_per_month": 579,
+        "annual_total": 6948,
+        "quarterly_per_month": 700
+      },
+      {
+        "plan": "Alaio Enterprise-500 Vibe+",
+        "monthly": 1269,
+        "annual_per_month": 919,
+        "annual_total": 11028,
+        "quarterly_per_month": 1115
+      },
+      {
+        "plan": "Alaio Enterprise-1000 Vibe+",
+        "monthly": 1599,
+        "annual_per_month": 1149,
+        "annual_total": 13788,
+        "quarterly_per_month": 1400
+      },
+      {
+        "plan": "Alaio Enterprise-2000 Vibe+",
+        "monthly": 3199,
+        "annual_per_month": 2299,
+        "annual_total": 27588,
+        "quarterly_per_month": 2800
+      },
+      {
+        "plan": "Alaio Enterprise-3000 Vibe+",
+        "monthly": 4799,
+        "annual_per_month": 3449,
+        "annual_total": 41388,
+        "quarterly_per_month": 4200
+      },
+      {
+        "plan": "Alaio Enterprise-4000 Vibe+",
+        "monthly": 6399,
+        "annual_per_month": 4599,
+        "annual_total": 55188,
+        "quarterly_per_month": 5600
+      },
+      {
+        "plan": "Alaio Enterprise-5000 Vibe+",
+        "monthly": 7999,
+        "annual_per_month": 5749,
+        "annual_total": 68988,
+        "quarterly_per_month": 7000
+      },
+      {
+        "plan": "Alaio Enterprise-6000 Vibe+",
+        "monthly": 9599,
+        "annual_per_month": 6899,
+        "annual_total": 82788,
+        "quarterly_per_month": 8400
+      },
+      {
+        "plan": "Alaio Enterprise-7000 Vibe+",
+        "monthly": 11199,
+        "annual_per_month": 8049,
+        "annual_total": 96588,
+        "quarterly_per_month": 9800
+      },
+      {
+        "plan": "Alaio Enterprise-8000 Vibe+",
+        "monthly": 12799,
+        "annual_per_month": 9199,
+        "annual_total": 110388,
+        "quarterly_per_month": 11200
+      },
+      {
+        "plan": "Alaio Enterprise-9000 Vibe+",
+        "monthly": 14399,
+        "annual_per_month": 10349,
+        "annual_total": 124188,
+        "quarterly_per_month": 12600
+      },
+      {
+        "plan": "Alaio Enterprise-10000 Vibe+",
+        "monthly": 15999,
+        "annual_per_month": 11499,
+        "annual_total": 137988,
+        "quarterly_per_month": 14000
+      }
+    ],
+    "GBP": [
+      {
+        "plan": "Alaio Basic Vibe+",
+        "monthly": 69,
+        "annual_per_month": 52,
+        "annual_total": 624,
+        "quarterly_per_month": 61
+      },
+      {
+        "plan": "Alaio Standard Vibe+",
+        "monthly": 149,
+        "annual_per_month": 107,
+        "annual_total": 1284,
+        "quarterly_per_month": 132
+      },
+      {
+        "plan": "Alaio Professional Vibe+",
+        "monthly": 299,
+        "annual_per_month": 215,
+        "annual_total": 2580,
+        "quarterly_per_month": 264
+      },
+      {
+        "plan": "Alaio Enterprise-250 Vibe+",
+        "monthly": 599,
+        "annual_per_month": 429,
+        "annual_total": 5148,
+        "quarterly_per_month": 528
+      },
+      {
+        "plan": "Alaio Enterprise-500 Vibe+",
+        "monthly": 959,
+        "annual_per_month": 689,
+        "annual_total": 8268,
+        "quarterly_per_month": 845
+      },
+      {
+        "plan": "Alaio Enterprise-1000 Vibe+",
+        "monthly": 1199,
+        "annual_per_month": 859,
+        "annual_total": 10308,
+        "quarterly_per_month": 1050
+      },
+      {
+        "plan": "Alaio Enterprise-2000 Vibe+",
+        "monthly": 2399,
+        "annual_per_month": 1719,
+        "annual_total": 20628,
+        "quarterly_per_month": 2100
+      },
+      {
+        "plan": "Alaio Enterprise-3000 Vibe+",
+        "monthly": 3599,
+        "annual_per_month": 2579,
+        "annual_total": 30948,
+        "quarterly_per_month": 3150
+      },
+      {
+        "plan": "Alaio Enterprise-4000 Vibe+",
+        "monthly": 4799,
+        "annual_per_month": 3439,
+        "annual_total": 41268,
+        "quarterly_per_month": 4200
+      },
+      {
+        "plan": "Alaio Enterprise-5000 Vibe+",
+        "monthly": 5999,
+        "annual_per_month": 4299,
+        "annual_total": 51588,
+        "quarterly_per_month": 5250
+      },
+      {
+        "plan": "Alaio Enterprise-6000 Vibe+",
+        "monthly": 7199,
+        "annual_per_month": 5159,
+        "annual_total": 61908,
+        "quarterly_per_month": 6300
+      },
+      {
+        "plan": "Alaio Enterprise-7000 Vibe+",
+        "monthly": 8399,
+        "annual_per_month": 6019,
+        "annual_total": 72228,
+        "quarterly_per_month": 7350
+      },
+      {
+        "plan": "Alaio Enterprise-8000 Vibe+",
+        "monthly": 9599,
+        "annual_per_month": 6879,
+        "annual_total": 82548,
+        "quarterly_per_month": 8400
+      },
+      {
+        "plan": "Alaio Enterprise-9000 Vibe+",
+        "monthly": 10799,
+        "annual_per_month": 7739,
+        "annual_total": 92868,
+        "quarterly_per_month": 9450
+      },
+      {
+        "plan": "Alaio Enterprise-10000 Vibe+",
+        "monthly": 11999,
+        "annual_per_month": 8599,
+        "annual_total": 103188,
+        "quarterly_per_month": 10500
+      }
+    ],
+    "BRL": [
+      {
+        "plan": "Alaio Basic Vibe+",
+        "monthly": 549,
+        "annual_per_month": 399,
+        "annual_total": 4788,
+        "quarterly_per_month": 480
+      },
+      {
+        "plan": "Alaio Standard Vibe+",
+        "monthly": 1099,
+        "annual_per_month": 799,
+        "annual_total": 9588,
+        "quarterly_per_month": 960
+      },
+      {
+        "plan": "Alaio Professional Vibe+",
+        "monthly": 2199,
+        "annual_per_month": 1599,
+        "annual_total": 19188,
+        "quarterly_per_month": 1920
+      },
+      {
+        "plan": "Alaio Enterprise-250 Vibe+",
+        "monthly": 4399,
+        "annual_per_month": 3199,
+        "annual_total": 38388,
+        "quarterly_per_month": 3840
+      },
+      {
+        "plan": "Alaio Enterprise-500 Vibe+",
+        "monthly": 7099,
+        "annual_per_month": 5149,
+        "annual_total": 61788,
+        "quarterly_per_month": 6200
+      },
+      {
+        "plan": "Alaio Enterprise-1000 Vibe+",
+        "monthly": 8899,
+        "annual_per_month": 6399,
+        "annual_total": 76788,
+        "quarterly_per_month": 7700
+      },
+      {
+        "plan": "Alaio Enterprise-2000 Vibe+",
+        "monthly": 17799,
+        "annual_per_month": 12799,
+        "annual_total": 153588,
+        "quarterly_per_month": 15400
+      },
+      {
+        "plan": "Alaio Enterprise-3000 Vibe+",
+        "monthly": 26699,
+        "annual_per_month": 19199,
+        "annual_total": 230388,
+        "quarterly_per_month": 23100
+      },
+      {
+        "plan": "Alaio Enterprise-4000 Vibe+",
+        "monthly": 35599,
+        "annual_per_month": 25599,
+        "annual_total": 307188,
+        "quarterly_per_month": 30800
+      },
+      {
+        "plan": "Alaio Enterprise-5000 Vibe+",
+        "monthly": 44499,
+        "annual_per_month": 31999,
+        "annual_total": 383988,
+        "quarterly_per_month": 38500
+      },
+      {
+        "plan": "Alaio Enterprise-6000 Vibe+",
+        "monthly": 53399,
+        "annual_per_month": 38399,
+        "annual_total": 460788,
+        "quarterly_per_month": 46200
+      },
+      {
+        "plan": "Alaio Enterprise-7000 Vibe+",
+        "monthly": 62299,
+        "annual_per_month": 44799,
+        "annual_total": 537588,
+        "quarterly_per_month": 53900
+      },
+      {
+        "plan": "Alaio Enterprise-8000 Vibe+",
+        "monthly": 71199,
+        "annual_per_month": 51199,
+        "annual_total": 614388,
+        "quarterly_per_month": 61600
+      },
+      {
+        "plan": "Alaio Enterprise-9000 Vibe+",
+        "monthly": 80099,
+        "annual_per_month": 57599,
+        "annual_total": 691188,
+        "quarterly_per_month": 69300
+      },
+      {
+        "plan": "Alaio Enterprise-10000 Vibe+",
+        "monthly": 88999,
+        "annual_per_month": 63999,
+        "annual_total": 767988,
+        "quarterly_per_month": 77000
+      }
+    ],
+    "PLN": [
+      {
+        "plan": "Alaio Basic Vibe+",
+        "monthly": 379,
+        "annual_per_month": 289,
+        "annual_total": 3468,
+        "quarterly_per_month": 335
+      },
+      {
+        "plan": "Alaio Standard Vibe+",
+        "monthly": 799,
+        "annual_per_month": 579,
+        "annual_total": 6948,
+        "quarterly_per_month": 700
+      },
+      {
+        "plan": "Alaio Professional Vibe+",
+        "monthly": 1599,
+        "annual_per_month": 1149,
+        "annual_total": 13788,
+        "quarterly_per_month": 1400
+      },
+      {
+        "plan": "Alaio Enterprise-250 Vibe+",
+        "monthly": 3199,
+        "annual_per_month": 2299,
+        "annual_total": 27588,
+        "quarterly_per_month": 2800
+      },
+      {
+        "plan": "Alaio Enterprise-500 Vibe+",
+        "monthly": 5099,
+        "annual_per_month": 3679,
+        "annual_total": 44148,
+        "quarterly_per_month": 4460
+      },
+      {
+        "plan": "Alaio Enterprise-1000 Vibe+",
+        "monthly": 6399,
+        "annual_per_month": 4599,
+        "annual_total": 55188,
+        "quarterly_per_month": 5600
+      },
+      {
+        "plan": "Alaio Enterprise-2000 Vibe+",
+        "monthly": 12799,
+        "annual_per_month": 9199,
+        "annual_total": 110388,
+        "quarterly_per_month": 11200
+      },
+      {
+        "plan": "Alaio Enterprise-3000 Vibe+",
+        "monthly": 19199,
+        "annual_per_month": 13799,
+        "annual_total": 165588,
+        "quarterly_per_month": 16800
+      },
+      {
+        "plan": "Alaio Enterprise-4000 Vibe+",
+        "monthly": 25599,
+        "annual_per_month": 18399,
+        "annual_total": 220788,
+        "quarterly_per_month": 22400
+      },
+      {
+        "plan": "Alaio Enterprise-5000 Vibe+",
+        "monthly": 31999,
+        "annual_per_month": 22999,
+        "annual_total": 275988,
+        "quarterly_per_month": 28000
+      },
+      {
+        "plan": "Alaio Enterprise-6000 Vibe+",
+        "monthly": 38399,
+        "annual_per_month": 27599,
+        "annual_total": 331188,
+        "quarterly_per_month": 33600
+      },
+      {
+        "plan": "Alaio Enterprise-7000 Vibe+",
+        "monthly": 44799,
+        "annual_per_month": 32199,
+        "annual_total": 386388,
+        "quarterly_per_month": 39200
+      },
+      {
+        "plan": "Alaio Enterprise-8000 Vibe+",
+        "monthly": 51199,
+        "annual_per_month": 36799,
+        "annual_total": 441588,
+        "quarterly_per_month": 44800
+      },
+      {
+        "plan": "Alaio Enterprise-9000 Vibe+",
+        "monthly": 57599,
+        "annual_per_month": 41399,
+        "annual_total": 496788,
+        "quarterly_per_month": 50400
+      },
+      {
+        "plan": "Alaio Enterprise-10000 Vibe+",
+        "monthly": 63999,
+        "annual_per_month": 45999,
+        "annual_total": 551988,
+        "quarterly_per_month": 56000
+      }
+    ],
+    "MXN": [
+      {
+        "plan": "Alaio Basic Vibe+",
+        "monthly": 1899,
+        "annual_per_month": 1399,
+        "annual_total": 16788,
+        "quarterly_per_month": 1670
+      },
+      {
+        "plan": "Alaio Standard Vibe+",
+        "monthly": 3799,
+        "annual_per_month": 2799,
+        "annual_total": 33588,
+        "quarterly_per_month": 3340
+      },
+      {
+        "plan": "Alaio Professional Vibe+",
+        "monthly": 7599,
+        "annual_per_month": 5599,
+        "annual_total": 67188,
+        "quarterly_per_month": 6680
+      },
+      {
+        "plan": "Alaio Enterprise-250 Vibe+",
+        "monthly": 15199,
+        "annual_per_month": 11199,
+        "annual_total": 134388,
+        "quarterly_per_month": 13360
+      },
+      {
+        "plan": "Alaio Enterprise-500 Vibe+",
+        "monthly": 24299,
+        "annual_per_month": 17999,
+        "annual_total": 215988,
+        "quarterly_per_month": 21400
+      },
+      {
+        "plan": "Alaio Enterprise-1000 Vibe+",
+        "monthly": 31499,
+        "annual_per_month": 22999,
+        "annual_total": 275988,
+        "quarterly_per_month": 27500
+      },
+      {
+        "plan": "Alaio Enterprise-2000 Vibe+",
+        "monthly": 62999,
+        "annual_per_month": 45999,
+        "annual_total": 551988,
+        "quarterly_per_month": 55000
+      },
+      {
+        "plan": "Alaio Enterprise-3000 Vibe+",
+        "monthly": 94499,
+        "annual_per_month": 68999,
+        "annual_total": 827988,
+        "quarterly_per_month": 82500
+      },
+      {
+        "plan": "Alaio Enterprise-4000 Vibe+",
+        "monthly": 125999,
+        "annual_per_month": 91999,
+        "annual_total": 1103988,
+        "quarterly_per_month": 110000
+      },
+      {
+        "plan": "Alaio Enterprise-5000 Vibe+",
+        "monthly": 157499,
+        "annual_per_month": 114999,
+        "annual_total": 1379988,
+        "quarterly_per_month": 137500
+      },
+      {
+        "plan": "Alaio Enterprise-6000 Vibe+",
+        "monthly": 188999,
+        "annual_per_month": 137999,
+        "annual_total": 1655988,
+        "quarterly_per_month": 165000
+      },
+      {
+        "plan": "Alaio Enterprise-7000 Vibe+",
+        "monthly": 220499,
+        "annual_per_month": 160999,
+        "annual_total": 1931988,
+        "quarterly_per_month": 192500
+      },
+      {
+        "plan": "Alaio Enterprise-8000 Vibe+",
+        "monthly": 251999,
+        "annual_per_month": 183999,
+        "annual_total": 2207988,
+        "quarterly_per_month": 220000
+      },
+      {
+        "plan": "Alaio Enterprise-9000 Vibe+",
+        "monthly": 283499,
+        "annual_per_month": 206999,
+        "annual_total": 2483988,
+        "quarterly_per_month": 247500
+      },
+      {
+        "plan": "Alaio Enterprise-10000 Vibe+",
+        "monthly": 314999,
+        "annual_per_month": 229999,
+        "annual_total": 2759988,
+        "quarterly_per_month": 275000
+      }
+    ],
+    "INR": [
+      {
+        "plan": "Alaio Basic Vibe+",
+        "monthly": 3990,
+        "annual_per_month": 2990,
+        "annual_total": 35880,
+        "quarterly_per_month": 3500
+      },
+      {
+        "plan": "Alaio Standard Vibe+",
+        "monthly": 9590,
+        "annual_per_month": 6890,
+        "annual_total": 82680,
+        "quarterly_per_month": 8400
+      },
+      {
+        "plan": "Alaio Professional Vibe+",
+        "monthly": 19190,
+        "annual_per_month": 13790,
+        "annual_total": 165480,
+        "quarterly_per_month": 16800
+      },
+      {
+        "plan": "Alaio Enterprise-250 Vibe+",
+        "monthly": 38390,
+        "annual_per_month": 27590,
+        "annual_total": 331080,
+        "quarterly_per_month": 33600
+      },
+      {
+        "plan": "Alaio Enterprise-500 Vibe+",
+        "monthly": 57590,
+        "annual_per_month": 41390,
+        "annual_total": 496680,
+        "quarterly_per_month": 50400
+      },
+      {
+        "plan": "Alaio Enterprise-1000 Vibe+",
+        "monthly": 95990,
+        "annual_per_month": 68990,
+        "annual_total": 827880,
+        "quarterly_per_month": 84000
+      },
+      {
+        "plan": "Alaio Enterprise-2000 Vibe+",
+        "monthly": 191990,
+        "annual_per_month": 137990,
+        "annual_total": 1655880,
+        "quarterly_per_month": 168000
+      },
+      {
+        "plan": "Alaio Enterprise-3000 Vibe+",
+        "monthly": 287990,
+        "annual_per_month": 206990,
+        "annual_total": 2483880,
+        "quarterly_per_month": 252000
+      },
+      {
+        "plan": "Alaio Enterprise-4000 Vibe+",
+        "monthly": 383990,
+        "annual_per_month": 275990,
+        "annual_total": 3311880,
+        "quarterly_per_month": 336000
+      },
+      {
+        "plan": "Alaio Enterprise-5000 Vibe+",
+        "monthly": 479990,
+        "annual_per_month": 344990,
+        "annual_total": 4139880,
+        "quarterly_per_month": 420000
+      },
+      {
+        "plan": "Alaio Enterprise-6000 Vibe+",
+        "monthly": 575990,
+        "annual_per_month": 413990,
+        "annual_total": 4967880,
+        "quarterly_per_month": 504000
+      },
+      {
+        "plan": "Alaio Enterprise-7000 Vibe+",
+        "monthly": 671990,
+        "annual_per_month": 482990,
+        "annual_total": 5795880,
+        "quarterly_per_month": 588000
+      },
+      {
+        "plan": "Alaio Enterprise-8000 Vibe+",
+        "monthly": 767990,
+        "annual_per_month": 551990,
+        "annual_total": 6623880,
+        "quarterly_per_month": 672000
+      },
+      {
+        "plan": "Alaio Enterprise-9000 Vibe+",
+        "monthly": 863990,
+        "annual_per_month": 620990,
+        "annual_total": 7451880,
+        "quarterly_per_month": 756000
+      },
+      {
+        "plan": "Alaio Enterprise-10000 Vibe+",
+        "monthly": 959990,
+        "annual_per_month": 689990,
+        "annual_total": 8279880,
+        "quarterly_per_month": 840000
+      }
+    ]
+  },
+  "vibe_plus_headline_limits": {
+    "_note": "Top-of-range ceiling figures used in client-facing materials. Guide warns per-tier increments do not yet reconcile - confirm via Partner Portal before quoting.",
+    "storage": "up to 4 TB",
+    "emails_per_month": "up to 350000",
+    "admins": "up to 30",
+    "rest_api": "unlimited",
+    "bitrix24_market": "unlimited"
+  },
+  "vibe_plus_pillars": [
+    "Vibecode - build custom AI-powered business apps without traditional development",
+    "AI scaled by tier - 10x on Basic, unlimited from Standard up + queue priority",
+    "MCP server - connect Claude / ChatGPT / custom agents directly into Bitrix24"
+  ],
+  "ai_allowance_by_tier": {
+    "_critical": "AI is positioned BY TIER, NOT BY NUMBERS. No per-request quotas published. Calculator must recommend a tier qualitatively - it cannot compute 'you need N AI requests therefore plan X'.",
+    "essentials": "Per-user daily allowance, identical across all Essentials tiers. Covers call transcription, CRM field fill, AI tasks, chat summaries.",
+    "alaio_basic_vibe_plus": "10x the Essentials allowance.",
+    "alaio_standard_and_above": "Unlimited AI + priority in processing queue under load."
+  },
+  "migration_map": [
+    {
+      "to": "Alaio Basic Vibe+"
+    },
+    {
+      "to": "Alaio Standard Vibe+"
+    },
+    {
+      "to": "Alaio Professional Vibe+"
+    },
+    {
+      "to": "Alaio Enterprise-250 Vibe+"
+    }
+  ]
+}

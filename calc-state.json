@@ -1,0 +1,259 @@
+{
+  "lang": "en",
+  "currency": "USD",
+  "showRevenue": false,
+  "generatedFor": "Nordwind Digital GmbH",
+  "partner": {
+    "company": "Nordwind Digital GmbH",
+    "person": "Katharina Vogt",
+    "email": "k.vogt@nordwind-digital.de",
+    "phone": "+49 40 5566 2210",
+    "site": "nordwind-digital.de"
+  },
+  "economics": {
+    "daysMonth": 21,
+    "dayHours": 8,
+    "contractDays": 21,
+    "contractHours": 168,
+    "burdenPct": 30
+  },
+  "overlap": {
+    "ok": true,
+    "pct": 15.529166666666667,
+    "threshold": 25,
+    "payrollMonth": 260000,
+    "text": null
+  },
+  "company": {
+    "empCount": 50,
+    "empSal": 4000,
+    "mgrCount": 5,
+    "mgrSal": 4000,
+    "ropCount": 1,
+    "ropSal": 6500
+  },
+  "items": [
+    {
+      "id": 1,
+      "title": "Call transcription and automatic deal-card fill",
+      "role": "Sales manager",
+      "driver": "daily",
+      "coverage": 100,
+      "fotMonth": 10833.333333333332,
+      "fotYear": 129999.99999999999,
+      "rev": 25000,
+      "revLabel": "Revenue uplift",
+      "service": 2400,
+      "fields": [
+        {
+          "label": "Number of managers",
+          "value": "5 ppl"
+        },
+        {
+          "label": "Manager salary (gross)",
+          "value": "$4,000"
+        },
+        {
+          "label": "Calls per manager per day",
+          "value": "20 pcs"
+        },
+        {
+          "label": "Handling time per call",
+          "value": "10 min"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Running Bitrix24 from chat",
+      "role": "All staff",
+      "driver": "daily",
+      "coverage": 20,
+      "fotMonth": 9750,
+      "fotYear": 117000,
+      "rev": 0,
+      "revLabel": null,
+      "service": 5200,
+      "fields": [
+        {
+          "label": "Number of employees",
+          "value": "10 ppl"
+        },
+        {
+          "label": "Average employee salary",
+          "value": "$4,000"
+        },
+        {
+          "label": "Bitrix24 operations per day",
+          "value": "30 pcs"
+        },
+        {
+          "label": "Time saved per operation",
+          "value": "3 min"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Knowledge-base agent",
+      "role": "All staff",
+      "driver": "daily",
+      "coverage": 30,
+      "fotMonth": 3412.5,
+      "fotYear": 40950,
+      "rev": 0,
+      "revLabel": null,
+      "service": null,
+      "fields": [
+        {
+          "label": "Employees using the knowledge base",
+          "value": "15 ppl"
+        },
+        {
+          "label": "Average employee salary",
+          "value": "$4,000"
+        },
+        {
+          "label": "Knowledge-base lookups per day",
+          "value": "3 pcs"
+        },
+        {
+          "label": "Time to find an answer manually",
+          "value": "10 min"
+        },
+        {
+          "label": "Share of questions the AI answers",
+          "value": "70 %"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Document generation",
+      "role": "Any employee",
+      "driver": "daily",
+      "coverage": 12,
+      "fotMonth": 6500,
+      "fotYear": 78000,
+      "rev": 0,
+      "revLabel": null,
+      "service": null,
+      "fields": [
+        {
+          "label": "Employees preparing documents",
+          "value": "6 ppl"
+        },
+        {
+          "label": "Average employee salary",
+          "value": "$4,000"
+        },
+        {
+          "label": "Documents or letters per day",
+          "value": "5 pcs"
+        },
+        {
+          "label": "Time per document",
+          "value": "20 min"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Vibecode, CoWork and CoPilot chat",
+      "role": "All staff",
+      "driver": "share",
+      "coverage": 30,
+      "fotMonth": 9880,
+      "fotYear": 118560,
+      "rev": 0,
+      "revLabel": null,
+      "service": 3200,
+      "fields": [
+        {
+          "label": "Total employees",
+          "value": "15 ppl"
+        },
+        {
+          "label": "Share of self-starters",
+          "value": "10 %"
+        },
+        {
+          "label": "Work simplification achieved",
+          "value": "30 %"
+        },
+        {
+          "label": "Average salary",
+          "value": "$4,000"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "fotMonth": 40375.83333333333,
+    "fotYear": 484509.99999999994,
+    "revMonth": 25000,
+    "potMonth": 0,
+    "serviceSum": 10800,
+    "serviceQuoted": 3,
+    "serviceUnquoted": 2,
+    "subscriptionYear": 1728,
+    "firstYearCost": 12528,
+    "netFirstYear": 471981.99999999994
+  },
+  "display": {
+    "fotMonth": "$40,376",
+    "fotYear": "$484,510",
+    "serviceSum": "$10,800",
+    "subscriptionYear": "$1,728",
+    "firstYearCost": "$12,528",
+    "netFirstYear": "$471,982",
+    "planFromAnnual": "$99",
+    "planToAnnual": "$144",
+    "planToAnnualTotal": "$1,728",
+    "diffPerUserMonth": "$45",
+    "overlapPct": "15.5 %",
+    "perScenario": [
+      {
+        "id": 1,
+        "fotMonth": "$10,833",
+        "fotYear": "$130,000"
+      },
+      {
+        "id": 9,
+        "fotMonth": "$9,750",
+        "fotYear": "$117,000"
+      },
+      {
+        "id": 10,
+        "fotMonth": "$3,413",
+        "fotYear": "$40,950"
+      },
+      {
+        "id": 3,
+        "fotMonth": "$6,500",
+        "fotYear": "$78,000"
+      },
+      {
+        "id": 7,
+        "fotMonth": "$9,880",
+        "fotYear": "$118,560"
+      }
+    ]
+  },
+  "plan": {
+    "from": "Standard",
+    "fromAnnualPerMonth": 99,
+    "fromMonthly": 144,
+    "to": "Alaio Standard Vibe+",
+    "toAnnualPerMonth": 144,
+    "toMonthly": 199,
+    "toAnnualTotal": 1728,
+    "effectiveFrom": "2026-08-17",
+    "grandfatheredUntil": "2026-11-17"
+  },
+  "aiAllowance": [
+    "Essentials — a per-user daily allowance, identical across every Essentials plan.",
+    "Alaio Basic Vibe+ — ten times the Essentials allowance.",
+    "Alaio Standard Vibe+ and above — unlimited AI, plus priority in the processing queue under load."
+  ]
+}
