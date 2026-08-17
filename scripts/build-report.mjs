@@ -60,6 +60,75 @@ const pct1 = v => new Intl.NumberFormat(LOC, {maximumFractionDigits:1})
 const today = new Date(S.generatedAt || Date.now()).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" });
 const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
 
+/* =============================================================================
+   ASSET EMBEDDING — why the report inlines its images
+   The kit renderer injects <base href=".../partner-style/assets/">, so EVERY
+   relative URL in this document resolves against the kit folder. That folder is a
+   private skill: a partner who clones the public repo does not have it. Opening
+   the built HTML in a browser therefore produced ten broken Bitrix24 lockups and
+   a 404 on the stylesheet — in a workflow the README tells partners to use.
+   Fix: the lockups travel as data URIs (immune to <base>, to where the file is
+   moved, and to whether the kit exists), and the kit stylesheet is inlined from
+   the vendored copy in assets/ so a raw browser open is still styled and A4.
+   The <link> to the kit stays in <head> so the renderer keeps using the real
+   font files; on a raw open it 404s harmlessly and the inlined copy takes over.
+   ========================================================================== */
+const KIT_MIME = {".png":"image/png",".jpg":"image/jpeg",".svg":"image/svg+xml",".webp":"image/webp"};
+function dataUri(absPath){
+  const ext = path.extname(absPath).toLowerCase();
+  const mime = KIT_MIME[ext];
+  if(!mime || !fs.existsSync(absPath)) return null;
+  return `data:${mime};base64,${fs.readFileSync(absPath).toString("base64")}`;
+}
+const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const asset = rel => path.join(REPO, "assets", rel);
+
+/* the two lockups, embedded */
+const LOCKUP = {
+  dark:  dataUri(asset("logo-partner-h.png")),
+  white: dataUri(asset("logo-partner-h-white.png")),
+};
+for (const [k,v] of Object.entries(LOCKUP))
+  if(!v){ console.error(`build-report: missing assets/logo-partner-h${k==="white"?"-white":""}.png — the report would ship a broken lockup.`); process.exit(2); }
+
+/* kit stylesheet, inlined, with its own icon references embedded too */
+function inlinedKitCss(){
+  const kit = asset("bitrix24-kit.css");
+  if(!fs.existsSync(kit)){
+    console.error("build-report: assets/bitrix24-kit.css is missing — a report opened outside the kit renderer would be unstyled.");
+    process.exit(2);
+  }
+  let css = fs.readFileSync(kit, "utf8");
+  /* embed the icons the kit paints as backgrounds (checklist badges) */
+  css = css.replace(/url\("bitrix24-images\/icons\/([^"]+)"\)/g, (m, file) => {
+    const uri = dataUri(asset(path.join("icons", file)));
+    if (!uri) {
+      /* Leaving the raw path in would ship a 404 into the report the moment the
+         kit rule that uses it is hit. Vendor the icon instead of guessing. */
+      console.error(`build-report: kit icon "${file}" is not vendored in assets/icons — `
+                  + `copy it from the kit before building, or the report loads a broken image.`);
+      process.exit(2);
+    }
+    return `url("${uri}")`;
+  });
+  /* Fonts. The kit points at seven static Montserrat files that only exist inside
+     the kit folder. A partner working from the public repo has no kit and no
+     renderer — browser print is their ONLY route to a PDF — so the brand font has
+     to be in the file. Drop the seven @font-face rules and substitute the single
+     vendored VARIABLE font, which covers every weight the kit asks for. */
+  css = css.replace(/@font-face\s*\{[^}]*Montserrat[^}]*\}/g, "");
+  const vf = asset("fonts/Montserrat-VariableFont_wght.ttf");
+  if(fs.existsSync(vf)){
+    const uri = `data:font/ttf;base64,${fs.readFileSync(vf).toString("base64")}`;
+    css = `@font-face{font-family:'Montserrat';font-weight:100 900;font-style:normal;`
+        + `src:url("${uri}") format('truetype-variations');font-display:swap;}\n` + css;
+  } else {
+    console.warn("build-report: assets/fonts/Montserrat-VariableFont_wght.ttf missing — "
+               + "a browser-printed report will fall back to a system font.");
+  }
+  return css;
+}
+
 const T = S.totals, P = S.plan, PT = S.partner || {};
 const partnerName = PT.company || "Bitrix24 Partner";
 const clientName = S.company?.name || "";
@@ -92,14 +161,14 @@ const cobrand = (lockup, kitClass, h, maxW) => `
 const runhead = title => `
   <div class="b24-runhead">
     <span>${esc(partnerName)} — ${esc(title)}</span>
-    ${cobrand("bitrix24-logo/logo-partner-h.png", "b24-plogo--foot", 16, 80)}
+    ${cobrand(LOCKUP.dark, "b24-plogo--foot", 16, 80)}
   </div>`;
 const footer = () => `
   <div class="b24-footer">
     <!-- footer keeps the Bitrix24 lockup alone: the partner mark is already in the
          running header on every page, and repeating it twice per sheet reads as
          clutter rather than co-branding. -->
-    <img class="b24-plogo b24-plogo--foot" src="bitrix24-logo/logo-partner-h.png" alt="Bitrix24 Partners">
+    <img class="b24-plogo b24-plogo--foot" src="${LOCKUP.dark}" alt="Bitrix24 Partners">
     <span>${esc(partnerName)}${PT.email ? " · " + esc(PT.email) : ""} · Page <span class="b24-pageno"></span></span>
   </div>`;
 
@@ -111,7 +180,7 @@ const cover = () => `
   <span class="b24-star" style="position:absolute; right:150px; top:150px; width:56px; height:56px;"></span>
 
   <div class="b24-plogo b24-plogo--cover" style="z-index:1;">
-    ${cobrand("bitrix24-logo/logo-partner-h-white.png", "b24-plogo--cover", 30, 150)}
+    ${cobrand(LOCKUP.white, "b24-plogo--cover", 30, 150)}
   </div>
 
   <div class="b24-content-z" style="margin-top:auto; margin-bottom:40px;">
@@ -324,7 +393,7 @@ const closing = () => `
   </div>
 
   <div style="position:absolute; bottom:var(--b24-page-pad); left:50%; transform:translateX(-50%);">
-    ${cobrand("bitrix24-logo/logo-partner-h-white.png", "b24-plogo--foot", 20, 110)}
+    ${cobrand(LOCKUP.white, "b24-plogo--foot", 20, 110)}
   </div>
 </section>`;
 
@@ -344,7 +413,14 @@ const html = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <title>${esc(clientName || partnerName)} — AI value ${isPartner ? "assessment (partner copy)" : "assessment"}</title>
-<link rel="stylesheet" href="bitrix24-kit.css">
+<style>
+/* The kit stylesheet, inlined from the vendored copy in assets/ so the document
+   stands on its own: correct A4 geometry, colours, badges and brand font with no
+   external file. No <link> to the kit is emitted on purpose — render.py adds one
+   itself when it does not find the name in the source, so the renderer still uses
+   the kit directly and a raw browser open produces no 404 at all. */
+${inlinedKitCss()}
+</style>
 <style>
   @media screen { body { padding: 24px 0; } }
   /* Soft CSS shadows are rasterized as a hard grey rectangle by macOS Preview /

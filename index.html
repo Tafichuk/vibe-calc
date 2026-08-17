@@ -943,7 +943,7 @@ function onNumInput(inp){
 const SUF = {ppl:"suf.ppl", pcs:"suf.pcs", min:"suf.min", share:"suf.share", money:"suf.money"};
 
 const scenarios = [
-  { id:1, group:"crm", driver:"daily", cov:{src:"mgrCount", target:"mgr", def:100}, link:"https://helpdesk.bitrix24.com/open/18799442/",
+  { id:1, group:"crm", driver:"daily", cov:{src:"mgrCount", target:"mgr", def:100}, link:"https://helpdesk.bitrix24.com/open/25855535/",
     effect:["fot","rev"],
     fields:[
       {k:"mgr",  def:1,     suf:"ppl"},
@@ -962,7 +962,7 @@ const scenarios = [
       return {fot, rev};
     }},
 
-  { id:4, group:"crm", driver:"share", cov:{src:"ropCount", target:"rop", def:100}, link:"https://helpdesk.bitrix24.com/open/23240682/",
+  { id:4, group:"crm", driver:"share", cov:{src:"ropCount", target:"rop", def:100}, link:"https://helpdesk.bitrix24.com/open/23763142/",
     effect:["fot"],
     fields:[
       {k:"rop",  def:1,    suf:"ppl"},
@@ -971,7 +971,7 @@ const scenarios = [
     ],
     compute:v=>({fot: v.sal * burdenMult() * v.share * v.rop, rev:0})},
 
-  { id:5, group:"crm", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/25376986/",
+  { id:5, group:"crm", driver:"monthly", link:null,
     effect:["rev"], revLabel:"ui.revBase", segments:true,
     fields:[
       {k:"base", def:1000, suf:"pcs"},
@@ -980,7 +980,7 @@ const scenarios = [
     ],
     compute:v=>({fot:0, rev: v.base * v.conv * v.check})},
 
-  { id:9, group:"agents", driver:"daily", cov:{src:"empCount", target:"mgr", def:20}, link:null, note:true,
+  { id:9, group:"agents", driver:"daily", cov:{src:"empCount", target:"mgr", def:20}, link:"https://helpdesk.bitrix24.com/open/25866707/", note:true,
     effect:["fot"],
     fields:[
       {k:"mgr", def:1,    suf:"ppl",   src:"empCount"},
@@ -1009,7 +1009,7 @@ const scenarios = [
       return {fot: h * costHour(v.sal) * v.spec, rev:0};
     }},
 
-  { id:10, group:"agents", driver:"daily", cov:{src:"empCount", target:"emp", def:30}, link:"https://helpdesk.bitrix24.com/open/27455370/", note:true,
+  { id:10, group:"agents", driver:"daily", cov:{src:"empCount", target:"emp", def:30}, link:null, note:true,
     effect:["fot"],
     fields:[
       {k:"emp",  def:50,   suf:"ppl",   src:"empCount"},
@@ -1065,7 +1065,7 @@ const scenarios = [
       return {fot: h * costHour(v.sal) * v.emp, rev:0};
     }},
 
-  { id:6, group:"other", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/23529044/",
+  { id:6, group:"other", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/25345201/",
     effect:["fot"],
     fields:[
       {k:"meet",def:8,    suf:"pcs"},
@@ -1335,7 +1335,13 @@ function wireScenarios(){
     const sync = ()=>{ state[id].selected = cb.checked; card.classList.toggle("on", cb.checked); recompute(); };
     cb.addEventListener("click", e=> e.stopPropagation());
     cb.addEventListener("change", sync);
-    top.addEventListener("click", ()=>{ cb.checked = !cb.checked; sync(); });
+    /* The "Learn more" link sits inside this strip. Without the guard the same
+       click both opens the article and flips the selection: the card the person
+       was filling in collapses behind their back while a new tab takes focus. */
+    top.addEventListener("click", e=>{
+      if(e.target.closest("a")) return;
+      cb.checked = !cb.checked; sync();
+    });
     card.classList.toggle("on", cb.checked);
   });
   document.querySelectorAll(".num-in").forEach(inp=>{
