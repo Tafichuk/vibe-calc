@@ -74,7 +74,7 @@ section{scroll-margin-top:76px}
 .hdr{position:sticky; top:0; z-index:40; background:var(--b24-white);
   border-bottom:1px solid var(--b24-line); box-shadow:0 2px 10px rgba(0,102,161,.10)}
 .hdr-in{display:flex; align-items:center; gap:var(--b24-s5); padding:var(--b24-s3) 0}
-.hdr-logo img{height:34px; width:auto; display:block}
+/* lockup sizing lives in css/brand-ext.css (.b24x-cobrand__b24) */
 .hdr-sp{flex:1}
 .switch{display:inline-flex; background:var(--b24-card); border:1px solid var(--b24-line);
   border-radius:var(--b24-r-pill); padding:3px}
@@ -254,6 +254,10 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .verdict.neg{background:rgba(255,255,255,.14); color:var(--b24-on-navy);
   border:1px solid rgba(255,255,255,.28)}
 .sum .empty{color:var(--b24-on-navy-soft); font-size:14px}
+/* the clarification sits directly under the headline number, spanning the grid */
+.fot-meaning{grid-column:1/-1; font-size:12.5px; color:var(--b24-on-navy-soft);
+  margin:-2px 0 var(--b24-s2); max-width:78ch}
+.hint.logo-err{color:var(--b24x-warning-ink); font-weight:600}
 .qual{grid-column:1/-1; font-size:13px; color:var(--b24-on-navy-soft); margin-top:var(--b24-s3)}
 
 /* ---- vibe+ transition ---- */
@@ -323,7 +327,7 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
    every hint and the footer text read as cut off mid-word. */
 main.wrap{padding-bottom:var(--b24-s16)}
 .foot{padding:var(--b24-s8) 0 var(--b24-s10); font-size:12.5px; color:var(--b24-text)}
-.foot img{height:26px; margin-bottom:var(--b24-s3); display:block}
+
 
 @media (max-width:820px){
   .tr-grid{grid-template-columns:1fr}
@@ -337,7 +341,13 @@ main.wrap{padding-bottom:var(--b24-s16)}
 
 <header class="hdr">
   <div class="wrap hdr-in">
-    <a class="hdr-logo" href="#top"><img src="assets/logo-partner-h.png" alt="Bitrix24 Partners"></a>
+    <!-- Two separate marks, never a combined lockup. The gap is the clock-glyph
+         clear space from css/brand-ext.css (--b24x-clearspace); with no partner
+         logo the second element is hidden and the gap collapses with it. -->
+    <div class="b24x-cobrand">
+      <a class="b24x-cobrand__b24" href="#top"><img src="assets/logo-partner-h.png" alt="Bitrix24 Partners"></a>
+      <img class="b24x-cobrand__partner" id="hdr-partner-logo" alt="" hidden>
+    </div>
     <div class="hdr-sp"></div>
     <!-- EN + USD scope: hidden in the markup so they never paint, not even for a
          frame before applyStatic() runs. The controls and their handlers stay in
@@ -486,7 +496,10 @@ main.wrap{padding-bottom:var(--b24-s16)}
   </section>
 
   <div class="foot">
-    <img src="assets/logo-partner-h.png" alt="Bitrix24 Partners">
+    <div class="b24x-cobrand" style="--b24x-lockup-h:26px; margin-bottom:var(--b24-s3)">
+      <span class="b24x-cobrand__b24"><img src="assets/logo-partner-h.png" alt="Bitrix24 Partners"></span>
+      <img class="b24x-cobrand__partner" id="foot-partner-logo" alt="" hidden>
+    </div>
     <p style="margin:0" data-i18n="ui.footer"></p>
     <p style="margin:6px 0 0" id="foot-dates"></p>
   </div>
@@ -671,6 +684,12 @@ en: {
   "ui.partnerNote":"These go into the header and footer of the report. They are yours, not the client's — the report is signed by you.",
   "pt.company":"Company name", "pt.person":"Contact person",
   "pt.email":"Email", "pt.phone":"Phone", "pt.site":"Website",
+  "pt.logo":"Your logo",
+  "pt.logoPlaceholder":"https://your-site.com/logo.png",
+  "pt.logoUpload":"or upload a file",
+  "pt.logoClear":"remove",
+  "pt.logoHint":"Shown next to the Bitrix24 Partners lockup in the calculator and in both reports — as a separate mark, never merged with it. PNG, SVG, JPEG or WebP; any proportions, it is scaled to fit. Stored in this browser only.",
+  "pt.logoTooBig":"That file is larger than {max} KB. Use a smaller one, or paste a link to it instead.",
 
   // ---- partner summary ----
   "ui.pnH":"Partner summary",
@@ -698,6 +717,7 @@ en: {
   "ui.pickOne":"Select at least one scenario to see the combined effect.",
   "ui.month":"Month", "ui.year":"Year",
   "ui.sumFot":"Total payroll saving",
+  "ui.fotMeaning":"What this figure is: the cost of the working time currently spent on these tasks. It is not profit, and not cash freed up.",
   "ui.sumRev":"Additional: revenue uplift",
   "ui.sumPot":"Additional: existing-base potential",
   "ui.sumInt":"Integrator setup (one-off)",
@@ -1538,6 +1558,7 @@ function renderSummary(model){
       <div class="h"></div><div class="h">${t("ui.month")}</div><div class="h year">${t("ui.year")}</div>
       <div class="lbl">${t("ui.sumFot")}</div>
       <div class="num">${fmtMoney(fot)}</div><div class="num year">${fmtMoney(fotYear)}</div>
+      <div class="fot-meaning">${t("ui.fotMeaning")}</div>
       ${(SHOW_REVENUE && rev>0)?`<div class="lbl">${t("ui.sumRev")}</div><div class="num">${fmtMoney(rev)}</div>
         <div class="num year">${fmtMoney(rev*12)}</div>`:""}
       ${(SHOW_REVENUE && pot>0)?`<div class="lbl">${t("ui.sumPot")}</div><div class="num">${fmtMoney(pot)}</div>
@@ -1683,6 +1704,8 @@ function reportState(){
   return {
     lang: LANG, currency: CUR, showRevenue: SHOW_REVENUE,
     generatedFor: partner.company || "",
+    /* includes partner.logo — a data URI or an absolute URL. The report shows it
+       beside the Bitrix24 lockup as a separate mark. */
     partner: {...partner},
     economics: {daysMonth, dayHours: C.DAY_HOURS, contractDays: C.CONTRACT_DAYS,
                 contractHours: contractHours(), burdenPct},
@@ -1803,13 +1826,37 @@ function applyStatic(){
 }
 /* Partner contact block — values live in `partner`, so a language or currency
    switch repaints labels without clearing what the partner typed. */
-const PARTNER_FIELDS = ["company","person","email","phone","site"];
+const PARTNER_FIELDS = ["company","person","email","phone","site","logo"];
 const PT_LS = "vibecalc_partner_v1";
 const partner = {};
+const savePartner = () => { try{ localStorage.setItem(PT_LS, JSON.stringify(partner)); }catch(e){} };
+
+/* A data URI has to fit in localStorage alongside everything else, so cap the
+   upload. Bigger than this and we say so instead of silently losing the logo on
+   the next save. */
+const LOGO_MAX_BYTES = 256 * 1024;
+
 function buildPartner(){
   const g = document.getElementById("pt-grid");
   if(!g) return;
-  g.innerHTML = PARTNER_FIELDS.map(k=>`
+  g.innerHTML = PARTNER_FIELDS.map(k=> k === "logo" ? `
+    <div class="field">
+      <label for="pt-logo">${t("pt.logo")}</label>
+      <div class="in-wrap">
+        <input class="b24x-input pt-in" id="pt-logo" data-pt="logo" type="text"
+               placeholder="${t("pt.logoPlaceholder")}"
+               value="${/^data:/.test(partner.logo||"") ? "" : (partner.logo||"").replace(/"/g,"&quot;")}">
+      </div>
+      <label class="b24x-file">
+        <input type="file" id="pt-logo-file" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+        <span>${t("pt.logoUpload")}</span>
+      </label>
+      <div class="b24x-logo-preview" id="pt-logo-preview" hidden>
+        <img id="pt-logo-thumb" alt="">
+        <button type="button" class="b24x-logo-clear" id="pt-logo-clear">${t("pt.logoClear")}</button>
+      </div>
+      <span class="hint" id="pt-logo-hint">${t("pt.logoHint")}</span>
+    </div>` : `
     <div class="field">
       <label for="pt-${k}">${t("pt."+k)}</label>
       <div class="in-wrap">
@@ -1818,11 +1865,71 @@ function buildPartner(){
                value="${(partner[k]||"").replace(/"/g,"&quot;")}">
       </div>
     </div>`).join("");
+
   g.querySelectorAll(".pt-in").forEach(inp=>{
     inp.addEventListener("input", ()=>{
       partner[inp.dataset.pt] = inp.value;
-      try{ localStorage.setItem(PT_LS, JSON.stringify(partner)); }catch(e){}
+      savePartner();
+      if(inp.dataset.pt === "logo") applyPartnerLogo();
     });
+  });
+
+  const file = document.getElementById("pt-logo-file");
+  if(file) file.addEventListener("change", ()=>{
+    const f = file.files && file.files[0];
+    if(!f) return;
+    const hint = document.getElementById("pt-logo-hint");
+    if(f.size > LOGO_MAX_BYTES){
+      hint.textContent = t("pt.logoTooBig", {max: Math.round(LOGO_MAX_BYTES/1024)});
+      hint.classList.add("logo-err");
+      file.value = "";
+      return;
+    }
+    const fr = new FileReader();
+    fr.onload = () => {
+      partner.logo = String(fr.result);
+      savePartner();
+      const url = document.getElementById("pt-logo");
+      if(url) url.value = "";                     // the file wins over the link
+      hint.textContent = t("pt.logoHint");
+      hint.classList.remove("logo-err");
+      applyPartnerLogo();
+    };
+    fr.readAsDataURL(f);
+  });
+
+  const clear = document.getElementById("pt-logo-clear");
+  if(clear) clear.addEventListener("click", ()=>{
+    partner.logo = "";
+    savePartner();
+    const url = document.getElementById("pt-logo"); if(url) url.value = "";
+    const f = document.getElementById("pt-logo-file"); if(f) f.value = "";
+    applyPartnerLogo();
+  });
+
+  applyPartnerLogo();
+}
+
+/* Paint the partner mark wherever it belongs, or hide it so no gap is left.
+   Never touches the Bitrix24 lockup. */
+function applyPartnerLogo(){
+  const src = (partner.logo || "").trim();
+  ["hdr-partner-logo","foot-partner-logo"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(src){ el.src = src; el.alt = partner.company ? partner.company + " logo" : "Partner logo"; el.hidden = false; }
+    else { el.removeAttribute("src"); el.hidden = true; }
+  });
+  const prev = document.getElementById("pt-logo-preview");
+  const thumb = document.getElementById("pt-logo-thumb");
+  if(prev && thumb){
+    if(src){ thumb.src = src; prev.hidden = false; } else { thumb.removeAttribute("src"); prev.hidden = true; }
+  }
+  /* a broken link should not leave a dead image icon next to the lockup */
+  ["hdr-partner-logo","foot-partner-logo","pt-logo-thumb"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.onerror = () => { el.hidden = true; if(id==="pt-logo-thumb"){
+      const p=document.getElementById("pt-logo-preview"); if(p) p.hidden = true; } };
   });
 }
 

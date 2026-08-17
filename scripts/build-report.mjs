@@ -64,13 +64,41 @@ const T = S.totals, P = S.plan, PT = S.partner || {};
 const partnerName = PT.company || "Bitrix24 Partner";
 const clientName = S.company?.name || "";
 
+/* ---------- CO-BRANDING ----------------------------------------------------
+   The partner mark sits BESIDE the Bitrix24 Partners lockup, never merged with
+   it: two separate marks with clear space between them. The clear space is the
+   height of the clock glyph in the Bitrix24 mark — measured on the official file
+   (1889x171, glyph 107px tall) at 0.63 of the lockup height. The lockup itself is
+   untouched: official file, original colours, original proportions.
+   partner.logo is a data URI or an absolute URL, so it resolves regardless of the
+   <base> that render.py injects for the kit assets. Absent -> nothing is emitted
+   and no gap is left behind.
+   -------------------------------------------------------------------------- */
+const partnerLogo = PT.logo && String(PT.logo).trim() ? String(PT.logo).trim() : null;
+
+/* The Bitrix24 lockup keeps its kit class, so the kit owns its size and its own
+   max-width guard (.b24-plogo). We only add a sibling and the clear space between
+   them. maxW caps the partner mark so the pair can never outgrow the A4 content
+   width — .page is overflow:hidden, and a clipped logo is worse than a small one. */
+const cobrand = (lockup, kitClass, h, maxW) => `
+  <span style="display:inline-flex; align-items:center; justify-content:flex-end;
+               gap:${(h * 0.63).toFixed(1)}px; min-width:0; flex:0 1 auto;">
+    <img class="b24-plogo ${kitClass}" src="${lockup}" alt="Bitrix24 Partners">
+    ${partnerLogo ? `<img src="${esc(partnerLogo)}" alt="${esc(partnerName)}"
+        style="max-height:${h}px; max-width:${maxW}px; height:auto; width:auto;
+               object-fit:contain; display:block; flex:0 1 auto;">` : ""}
+  </span>`;
+
 const runhead = title => `
   <div class="b24-runhead">
     <span>${esc(partnerName)} — ${esc(title)}</span>
-    <img class="b24-plogo b24-plogo--foot" src="bitrix24-logo/logo-partner-h.png" alt="Bitrix24 Partners">
+    ${cobrand("bitrix24-logo/logo-partner-h.png", "b24-plogo--foot", 16, 80)}
   </div>`;
 const footer = () => `
   <div class="b24-footer">
+    <!-- footer keeps the Bitrix24 lockup alone: the partner mark is already in the
+         running header on every page, and repeating it twice per sheet reads as
+         clutter rather than co-branding. -->
     <img class="b24-plogo b24-plogo--foot" src="bitrix24-logo/logo-partner-h.png" alt="Bitrix24 Partners">
     <span>${esc(partnerName)}${PT.email ? " · " + esc(PT.email) : ""} · Page <span class="b24-pageno"></span></span>
   </div>`;
@@ -82,7 +110,9 @@ const cover = () => `
   <div class="b24-tetris--light b24-tetris b24-tetris--notch-bl" style="position:absolute; left:-55px; bottom:-55px; opacity:.15;"></div>
   <span class="b24-star" style="position:absolute; right:150px; top:150px; width:56px; height:56px;"></span>
 
-  <img class="b24-plogo b24-plogo--cover" src="bitrix24-logo/logo-partner-h-white.png" alt="Bitrix24 Partners" style="z-index:1;">
+  <div class="b24-plogo b24-plogo--cover" style="z-index:1;">
+    ${cobrand("bitrix24-logo/logo-partner-h-white.png", "b24-plogo--cover", 30, 150)}
+  </div>
 
   <div class="b24-content-z" style="margin-top:auto; margin-bottom:40px;">
     <span class="b24-pill" style="margin-bottom:22px;">${isPartner ? "Partner copy — internal" : "Value assessment"}</span>
@@ -132,6 +162,13 @@ const headline = () => `
     full implementation cost.</p>` : ""}
 
   ${overlapBlock()}
+
+  <div class="b24-dashed" style="margin-top:var(--b24-s5)">
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      <span class="b24-strong">What this figure is:</span> the cost of the working time
+      currently spent on these tasks. It is not profit, and not cash freed up.
+    </p>
+  </div>
 
   <div class="b24-quote">
     Payroll saving is the sum of the selected scenarios over twelve months. Day-driven
@@ -286,8 +323,9 @@ const closing = () => `
     </div>
   </div>
 
-  <img class="b24-plogo" src="bitrix24-logo/logo-partner-h-white.png" alt="Bitrix24 Partners"
-       style="position:absolute; bottom:var(--b24-page-pad); left:50%; transform:translateX(-50%); height:20px;">
+  <div style="position:absolute; bottom:var(--b24-page-pad); left:50%; transform:translateX(-50%);">
+    ${cobrand("bitrix24-logo/logo-partner-h-white.png", "b24-plogo--foot", 20, 110)}
+  </div>
 </section>`;
 
 /* ---------- assemble ---------- */

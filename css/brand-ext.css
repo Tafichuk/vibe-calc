@@ -138,3 +138,77 @@
    попадают. Переводим их на --b24-text (11.85 на белом).
    -------------------------------------------------------------------------- */
 .b24x-unit{ color: var(--b24-text); font-weight: 600; }
+
+/* =============================================================================
+   4. СО-БРЕНДИРОВАНИЕ — логотип партнёра рядом с локапом Bitrix24 Partners
+   В ките со-брендинга нет: он описывает только сам локап и правила обращения
+   с ним (docs/brand-spec.md §3). Поэтому компонент живёт здесь.
+
+   ПРАВИЛА, КОТОРЫЕ ЭТОТ КОМПОНЕНТ СОБЛЮДАЕТ
+   1. Локап Bitrix24 Partners не трогаем: официальный файл, без перекраски,
+      без изменения пропорций, без наложений.
+   2. Охранное поле между знаками — не меньше высоты глифа часов в знаке.
+      Измерено по assets/logo-partner-h.png: файл 1889x171, глиф часов
+      занимает по вертикали 107px, то есть 107/171 = 0.626 высоты локапа.
+      Отсюда --b24x-clearspace = 0.63 x высоты локапа. При 34px это 21.4px.
+   3. Комбинированный знак НЕ собираем. Это два отдельных знака рядом, поэтому
+      между ними только пустота — ни разделителя, ни рамки, ни общей подложки:
+      любая такая деталь читается как единый локап.
+   ========================================================================== */
+:root{
+  --b24x-lockup-h:   34px;                                  /* высота локапа в шапке */
+  --b24x-clearspace: calc(var(--b24x-lockup-h) * 0.63);     /* глиф часов, см. п.2 */
+  --b24x-partner-max: 200px;                                /* предел по ширине */
+}
+
+.b24x-cobrand{
+  display: flex;
+  align-items: center;
+  gap: var(--b24x-clearspace);   /* нет второго знака — нет и отступа */
+}
+.b24x-cobrand__b24{ flex: 0 0 auto; display: block; }
+.b24x-cobrand__b24 img{ height: var(--b24x-lockup-h); width: auto; display: block; }
+
+/* Логотип партнёра: вписывается в бокс с сохранением пропорций.
+   height/width:auto + два максимума — квадратный знак упирается в высоту,
+   длинный горизонтальный в ширину, и ни один не искажается и не ломает шапку. */
+.b24x-cobrand__partner{
+  flex: 0 1 auto;
+  display: block;
+  height: auto; width: auto;
+  max-height: var(--b24x-lockup-h);
+  max-width: var(--b24x-partner-max);
+  object-fit: contain;
+}
+.b24x-cobrand__partner[hidden]{ display: none; }
+
+/* Загрузка файла рядом с полем ссылки */
+.b24x-file{
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; font-weight: 600; color: var(--b24-deep); cursor: pointer;
+}
+.b24x-file input[type="file"]{
+  position: absolute; width: 1px; height: 1px; opacity: 0;   /* доступно с клавиатуры */
+}
+.b24x-file span{ text-decoration: underline; text-underline-offset: 2px; }
+.b24x-file input[type="file"]:focus-visible + span{
+  outline: 3px solid var(--b24-cyan); outline-offset: 3px; border-radius: 4px;
+}
+.b24x-logo-preview{
+  margin-top: var(--b24-s2);
+  display: flex; align-items: center; gap: var(--b24-s3);
+  min-height: 0;
+}
+.b24x-logo-preview[hidden]{ display: none; }
+.b24x-logo-preview img{
+  height: auto; width: auto; max-height: 32px; max-width: 150px;
+  object-fit: contain;
+  background: var(--b24-white);
+  border: 1px solid var(--b24-line); border-radius: var(--b24-r-tile);
+  padding: 4px 8px;
+}
+.b24x-logo-clear{
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  font: 600 12.5px var(--b24-font-body); color: var(--b24-deep);
+  text-decoration: underline; text-underline-offset: 2px; padding: 2px;
+}
