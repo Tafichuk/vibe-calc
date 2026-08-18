@@ -674,11 +674,19 @@ const PRICING = {
   effectiveFrom: "2026-08-17",
   grandfatheredUntil: "2026-11-17",
   essentials: {
+    /* Семь тиров. Enterprise 250/500/1000/2000 — с публичного сайта (данные от
+       заказчика, подтверждение Антона ожидается): в конфиге у них есть
+       annual_per_month и seats, но НЕТ monthly. Строку «Monthly» для них поэтому
+       не печатаем — выдумывать месячную цену нельзя.
+       Тиры 3000+ в Essentials не опубликованы вообще, см. planPair(). */
     USD: [
-      {plan:"Basic",        monthly:69,  annual:49},
-      {plan:"Standard",     monthly:144, annual:99},
+      {plan:"Basic", monthly:69, annual:49},
+      {plan:"Standard", monthly:144, annual:99},
       {plan:"Professional", monthly:289, annual:199},
-      {plan:"Enterprise",   monthly:579, annual:399},
+      {plan:"Enterprise", annual:399, seats:250},
+      {plan:"Enterprise-500", annual:639, seats:500},
+      {plan:"Enterprise-1000", annual:799, seats:1000},
+      {plan:"Enterprise-2000", annual:1599, seats:2000},
     ],
     EUR: null,   // not published — config says "REQUEST FROM ANTON"
   },
@@ -750,6 +758,7 @@ en: {
   "ui.trNote":"Two independent choices. The target starts out matched to the current plan one to one, and you can point it anywhere in the Vibe+ line-up — including a higher tier, to show the client that even the plan with headroom pays for itself. Prices for the pair you pick are shown below; where the price list has no \u201cbefore\u201d price, the calculator says so instead of guessing.",
   "ui.targetPlan":"Target Vibe+ plan",
   "ui.planNone":"No Bitrix24 yet",
+  "ui.seatsUpTo":"up to {n} users",
   "ui.tgtAuto":"Matched to the current plan. Pick another to quote an upgrade with headroom.",
   "ui.tgtManual":"Chosen by you.",
   "ui.tgtReset":"match to the current plan",
@@ -757,7 +766,7 @@ en: {
   "ui.grpEnterprise":"Enterprise, 500 users and above",
   "ui.fromNone":"Nothing today",
   "ui.fromNoPriceTier":"No published price",
-  "ui.fromNoPriceNote":"Essentials is published for four plans only, and those cover up to 250 users. For {plan} there is no \u201cbefore\u201d price in the price list, so the difference cannot be calculated — the figure shown here is the full price of the target plan, not a surcharge.",
+  "ui.fromNoPriceNote":"Essentials is published up to the 2,000-user tier. For {plan} there is no \u201cbefore\u201d price in the price list at all, so the difference cannot be calculated — the figure shown here is the full price of the target plan, not a surcharge. The Vibe+ ladder is linear above 2,000, but that is not a reason to extend someone else\u2019s price list.",
   "ui.fromNoPriceCur":"Essentials prices are not published in {cur}, so there is no \u201cbefore\u201d price to compare with.",
   "ui.targetOnly":"Target plan price",
   "ui.diffNotMatched":"These percentages describe the one-to-one pairs from the price list, not the pair you picked.",
@@ -774,6 +783,12 @@ en: {
      вернулось незаметно. */
   "ui.diffPerMonth":"more per month for the account, billed annually",
   "ui.diffPerYear":"more per year",
+  /* Пара может быть и понижением: с новыми тирами Essentials (Enterprise-1000 за
+     $799) цель Alaio Enterprise-250 Vibe+ за $579 стоит ДЕШЕВЛЕ текущего тарифа.
+     Раньше это печаталось как «+ -$220». Знак и слово теперь согласованы. */
+  "ui.diffLessPerMonth":"less per month for the account, billed annually",
+  "ui.diffLessPerYear":"less per year",
+  "ui.diffSame":"the same price",
   "ui.aiH":"AI allowance by plan",
   "ui.aiNote":"AI is positioned by plan, not by numbers. No per-request quotas are published, so this calculator recommends a plan qualitatively and never states a request or token count.",
   "ui.burden":"Employer payroll burden",
@@ -1881,11 +1896,25 @@ const mapFor = plan => PRICING.migration.find(x => x.from === plan) || null;
 /* Приводит tgtPlanName к существующему тарифу выбранной валюты. Зовётся и из
    planPair(), и из fillPlanSelects() — иначе список успевал отрисоваться до
    разрешения цели и подсвечивал не тот пункт. */
+/* Цель по умолчанию: для тарифов из карты миграции — её пара, для новых тиров
+   Enterprise — тот же тир Vibe+ по числу мест (Enterprise-1000 -> Alaio
+   Enterprise-1000 Vibe+). Это не догадка: у обеих линеек тир назван ёмкостью. */
+function autoTargetFor(plan){
+  const m = mapFor(plan);
+  if(m) return m.to;
+  const row = (PRICING.essentials[CUR] || []).find(r => r.plan === plan);
+  const vibeList = PRICING.vibePlus[CUR] || [];
+  if(row && row.seats){
+    const same = vibeList.find(v => seatsOf(v.plan) === row.seats);
+    if(same) return same.plan;
+  }
+  return null;
+}
+
 function resolveTarget(){
   const vibeList = PRICING.vibePlus[CUR] || [];
   if(tgtPlanName == null || !vibeList.some(v => v.plan === tgtPlanName)){
-    const m = mapFor(essPlan) || PRICING.migration[1];
-    tgtPlanName = m.to;
+    tgtPlanName = autoTargetFor(essPlan) || PRICING.migration[1].to;
   }
   return vibeList.find(v => v.plan === tgtPlanName) || vibeList[0];
 }
@@ -1906,20 +1935,23 @@ function planPair(){
       from = {kind:"essentials", name: essPlan, annual: null, monthly: null,
               known: false, why: "currency"};
     } else if(!isMatchedTier(tgtPlanName)){
-      /* Опубликованы четыре тарифа Essentials, и они описывают ёмкость до 250
-         пользователей. Для Enterprise-500 и выше цены «до» в источнике нет —
-         подставлять цену 250-местного тарифа было бы подлогом. */
+      /* У цели нет своего тира в Essentials — это тиры от 3000 мест. Сравнивать
+         не с чем: подставить цену 2000-местного тарифа значило бы выдать чужую
+         ёмкость за нужную. */
       from = {kind:"essentials", name: essPlan, annual: null, monthly: null,
               known: false, why: "tier"};
     } else {
-      from = {kind:"essentials", name: essPlan, annual: ess.annual, monthly: ess.monthly,
-              known: true, why: null};
+      /* Цена «до» — строка ВЫБРАННОГО текущего тарифа. monthly есть только у
+         младших тиров; у Enterprise его в источнике нет, и это не пропуск, а факт. */
+      from = {kind:"essentials", name: essPlan, annual: ess.annual,
+              monthly: ess.monthly != null ? ess.monthly : null,
+              seats: ess.seats || null, known: true, why: null};
     }
   }
 
   /* промо-цена существует только у четырёх целей из карты миграции */
   const promoRow = PRICING.migration.find(x => x.to === tgtPlanName);
-  const matched = mapFor(essPlan) ? mapFor(essPlan).to === tgtPlanName : false;
+  const matched = autoTargetFor(essPlan) === tgtPlanName;
 
   const diff = from.known
     ? {perMonth: vibe.annual - from.annual, promo: null}
@@ -1930,8 +1962,22 @@ function planPair(){
           map: {from: essPlan, to: tgtPlanName, promo: promoRow ? promoRow.promo : null}};
 }
 
-/* Четыре тарифа, для которых Essentials-цена опубликована (ёмкость до 250). */
-const isMatchedTier = plan => PRICING.migration.some(x => x.to === plan);
+/* Цели, у которых есть пара в Essentials. Раньше это были только четыре тарифа
+   из карты миграции; теперь Essentials опубликован и для Enterprise 500/1000/2000,
+   поэтому сравнимость определяется НЕ картой, а числом мест: у цели
+   «Alaio Enterprise-1000 Vibe+» есть Essentials-строка Enterprise-1000 на 1000 мест.
+   Для 3000 и выше строки нет — и достраивать её нельзя, хотя цена Vibe+ там линейна:
+   это чужая линейка, а не наша арифметика. */
+const seatsOf = plan => { const m = /-(\d+)\s+Vibe\+/.exec(plan) || /-(\d+)$/.exec(plan);
+                          return m ? +m[1] : null; };
+function essentialsFor(targetPlan){
+  const list = PRICING.essentials[CUR] || [];
+  const m = PRICING.migration.find(x => x.to === targetPlan);
+  if(m) return list.find(r => r.plan === m.from) || null;   /* Basic/Standard/Professional/Enterprise-250 */
+  const seats = seatsOf(targetPlan);
+  return seats ? (list.find(r => r.seats === seats) || null) : null;
+}
+const isMatchedTier = plan => !!essentialsFor(plan);
 /* Обёртка для остального кода: подписка и итоги берут цель отсюда. */
 function targetPlan(){
   const p = planPair();
@@ -2000,7 +2046,8 @@ function renderTransition(){
     ? `<div class="tr-price">${fmtMoney(from.annual)}</div>
        <div class="tr-per">${t("ui.perPlanMonth")}</div>
        <div class="tr-rows">
-         <div><span>${t("ui.monthly")}</span><b>${fmtMoney(from.monthly)}</b></div>
+         ${from.monthly != null
+           ? `<div><span>${t("ui.monthly")}</span><b>${fmtMoney(from.monthly)}</b></div>` : ""}
          <div><span>${t("ui.annualTotal")}</span><b>${fmtMoney(from.annual*12)}</b></div>
        </div>`
     : `<div class="tr-price tr-price--none">${t("ui.fromNoPriceTier")}</div>
@@ -2042,11 +2089,19 @@ function renderTransition(){
   } else {
     const dPerMonth = P.diff.perMonth;
     const dPerYear  = dPerMonth * 12;
-    diffEl.innerHTML = `
-      <div class="gap-box"><div class="gap-n">+ ${fmtMoney(dPerMonth)}</div>
-        <div class="gap-l">${t("ui.diffPerMonth")}</div></div>
-      <div class="gap-box"><div class="gap-n">+ ${fmtMoney(dPerYear)}</div>
-        <div class="gap-l">${t("ui.diffPerYear")}</div></div>
+    /* Одна точка, где решается знак: «+ N больше», «− N меньше» или «та же цена».
+       Печатать «+ -$220» нельзя ни в одном из трёх мест, где разница видна. */
+    const box = (v, moreKey, lessKey) => {
+      if(v === 0) return `<div class="gap-box"><div class="gap-n">${fmtMoney(0)}</div>
+        <div class="gap-l">${t("ui.diffSame")}</div></div>`;
+      const up = v > 0;
+      return `<div class="gap-box"><div class="gap-n">${up ? "+" : "\u2212"} ${fmtMoney(Math.abs(v))}</div>
+        <div class="gap-l">${t(up ? moreKey : lessKey)}</div></div>`;
+    };
+    diffEl.innerHTML =
+        box(dPerMonth, "ui.diffPerMonth", "ui.diffLessPerMonth")
+      + box(dPerYear,  "ui.diffPerYear",  "ui.diffLessPerYear")
+      + `
       ${from.kind==="none"?`<div class="gap-box gap-box--wide">
         <div class="gap-l">${t("ui.pairNoteNone")}</div></div>`:""}`;
   }
@@ -2082,7 +2137,9 @@ function renderPartnerPanel(model){
       <div><span>${t("ui.from")}</span><b>${fromPrice.name} · ${fromPrice.known
         ? fmtMoney(fromPrice.annual) : t("ui.fromNoPriceTier")}</b></div>
       <div><span>${t("ui.to")}</span><b>${map.to} · ${fmtMoney(vibe.annual)}</b></div>
-      ${fromPrice.known?`<div><span>${t("ui.diffMonth")}</span><b>+ ${fmtMoney(vibe.annual-fromPrice.annual)}</b></div>`:""}
+      ${fromPrice.known?(()=>{ const d = vibe.annual - fromPrice.annual;
+        const sign = d === 0 ? "" : (d > 0 ? "+ " : "\u2212 ");
+        return `<div><span>${t("ui.diffMonth")}</span><b>${sign}${fmtMoney(Math.abs(d))}</b></div>`; })():""}
     </div>`;
 }
 
@@ -2257,9 +2314,9 @@ const fromPriceCell = () => {
 const noPriceNote = () => P.fromNoPriceReason === "currency"
   ? `Essentials prices are not published in ${esc(S.currency)}, so the difference against `
     + `${esc(P.to)} cannot be shown. The figure above is the full price of ${esc(P.to)}, not a surcharge.`
-  : `Essentials is published for four plans covering up to 250 users. ${esc(P.from)} at the `
-    + `capacity of ${esc(P.to)} has no price in the price list, so the difference is not shown: `
-    + `the figure above is the full price of ${esc(P.to)}, not a surcharge.`;
+  : `Essentials is published up to the 2,000-user tier. At the capacity of ${esc(P.to)} it has no `
+    + `published price, so the difference is not shown: the figure above is the full price of `
+    + `${esc(P.to)}, not a surcharge.`;
 const partnerName = PT.company || "Bitrix24 Partner";
 const clientName = S.company?.name || "";
 
@@ -2449,11 +2506,16 @@ const planPage = () => `
       <tbody>
         <tr><td>Currently</td><td>${esc(P.from)}</td><td>${fromPriceCell()}</td></tr>
         <tr><td>Recommended</td><td><strong>${esc(P.to)}</strong></td><td><strong>${money(P.toAnnualPerMonth)}</strong></td></tr>
-        ${P.diffPerMonth == null ? "" :
-          `<tr><td>Difference</td><td>${P.fromKind === "none" ? "new spend" : "upgrade"}</td>
-               <td><strong>+ ${money(P.diffPerMonth)}</strong></td></tr>`}
-        ${P.diffPerMonth == null ? "" :
-          `<tr><td>Difference, year</td><td></td><td>+ ${money(P.diffPerMonth * 12)}</td></tr>`}
+        ${P.diffPerMonth == null ? "" : (() => {
+          /* Пара может быть понижением: с тирами Essentials до 2000 мест цель может
+             стоить меньше текущего тарифа. «+ -$220» — не вариант. */
+          const d = P.diffPerMonth;
+          const kind = P.fromKind === "none" ? "new spend" : (d < 0 ? "downgrade" : d === 0 ? "same price" : "upgrade");
+          const sign = d === 0 ? "" : (d > 0 ? "+ " : "\u2212 ");
+          return `<tr><td>Difference</td><td>${kind}</td>
+               <td><strong>${sign}${money(Math.abs(d))}</strong></td></tr>
+        <tr><td>Difference, year</td><td></td><td>${sign}${money(Math.abs(d) * 12)}</td></tr>`;
+        })()}
       </tbody>
     </table>
   </div>
@@ -2751,7 +2813,7 @@ function applyLoadedState(st){
   } else if(st.plan){
     const fromName = String(st.plan.from || "");
     essPlan = fromName === t("ui.planNone") ? NO_B24
-            : (PRICING.migration.some(m=>m.from === fromName) ? fromName : essPlan);
+            : ((PRICING.essentials[CUR]||[]).some(r=>r.plan === fromName) ? fromName : essPlan);
     if(st.plan.to && (PRICING.vibePlus[CUR]||[]).some(v=>v.plan === st.plan.to)){
       tgtPlanName = st.plan.to;
       const m = mapFor(essPlan);
@@ -2880,9 +2942,15 @@ function applyStatic(){
 function fillPlanSelects(){
   const cur = document.getElementById("ess-sel");
   if(cur){
-    /* Четыре Essentials + «ещё нет Битрикс24»: партнёр считает и для клиента с нуля. */
-    cur.innerHTML = PRICING.migration.map(m=>
-        `<option value="${m.from}"${m.from===essPlan?" selected":""}>${m.from}</option>`).join("")
+    /* ВСЕ опубликованные тиры Essentials + «ещё нет Битрикс24». Раньше список
+       строился по карте миграции — четыре пункта, и клиента на Enterprise-1000
+       выбрать было нельзя вообще. Ёмкость показываем прямо в подписи: без неё
+       «Enterprise» и «Enterprise-500» читаются как одно и то же. */
+    const list = PRICING.essentials[CUR] || [];
+    cur.innerHTML = list.map(r=>{
+        const label = r.seats ? `${r.plan} — ${t("ui.seatsUpTo", {n: fmtInt(r.seats)})}` : r.plan;
+        return `<option value="${r.plan}"${r.plan===essPlan?" selected":""}>${label}</option>`;
+      }).join("")
       + `<option value="${NO_B24}"${essPlan===NO_B24?" selected":""}>${t("ui.planNone")}</option>`;
   }
   const tgt = document.getElementById("tgt-sel");
@@ -3174,8 +3242,8 @@ document.getElementById("ess-sel").addEventListener("change", e=>{
   /* Пока цель не выбрана руками, она идёт за текущим тарифом. У «нет Битрикс24»
      пары в прайсе нет — тогда остаётся та цель, которая уже выбрана. */
   if(tgtAuto){
-    const m = mapFor(essPlan);
-    if(m) tgtPlanName = m.to;
+    const auto = autoTargetFor(essPlan);
+    if(auto) tgtPlanName = auto;
   }
   fillPlanSelects();
   recompute();
@@ -3190,8 +3258,8 @@ document.getElementById("tgt-sel").addEventListener("change", e=>{
 document.addEventListener("click", e=>{
   if(!e.target.closest("#tgt-reset")) return;
   tgtAuto = true;
-  const m = mapFor(essPlan);
-  if(m) tgtPlanName = m.to;
+  const auto = autoTargetFor(essPlan);
+  if(auto) tgtPlanName = auto;
   fillPlanSelects();
   recompute();
 });

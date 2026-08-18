@@ -52,9 +52,9 @@ const fromPriceCell = () => {
 const noPriceNote = () => P.fromNoPriceReason === "currency"
   ? `Essentials prices are not published in ${esc(S.currency)}, so the difference against `
     + `${esc(P.to)} cannot be shown. The figure above is the full price of ${esc(P.to)}, not a surcharge.`
-  : `Essentials is published for four plans covering up to 250 users. ${esc(P.from)} at the `
-    + `capacity of ${esc(P.to)} has no price in the price list, so the difference is not shown: `
-    + `the figure above is the full price of ${esc(P.to)}, not a surcharge.`;
+  : `Essentials is published up to the 2,000-user tier. At the capacity of ${esc(P.to)} it has no `
+    + `published price, so the difference is not shown: the figure above is the full price of `
+    + `${esc(P.to)}, not a surcharge.`;
 const partnerName = PT.company || "Bitrix24 Partner";
 const clientName = S.company?.name || "";
 
@@ -244,11 +244,16 @@ const planPage = () => `
       <tbody>
         <tr><td>Currently</td><td>${esc(P.from)}</td><td>${fromPriceCell()}</td></tr>
         <tr><td>Recommended</td><td><strong>${esc(P.to)}</strong></td><td><strong>${money(P.toAnnualPerMonth)}</strong></td></tr>
-        ${P.diffPerMonth == null ? "" :
-          `<tr><td>Difference</td><td>${P.fromKind === "none" ? "new spend" : "upgrade"}</td>
-               <td><strong>+ ${money(P.diffPerMonth)}</strong></td></tr>`}
-        ${P.diffPerMonth == null ? "" :
-          `<tr><td>Difference, year</td><td></td><td>+ ${money(P.diffPerMonth * 12)}</td></tr>`}
+        ${P.diffPerMonth == null ? "" : (() => {
+          /* Пара может быть понижением: с тирами Essentials до 2000 мест цель может
+             стоить меньше текущего тарифа. «+ -$220» — не вариант. */
+          const d = P.diffPerMonth;
+          const kind = P.fromKind === "none" ? "new spend" : (d < 0 ? "downgrade" : d === 0 ? "same price" : "upgrade");
+          const sign = d === 0 ? "" : (d > 0 ? "+ " : "\u2212 ");
+          return `<tr><td>Difference</td><td>${kind}</td>
+               <td><strong>${sign}${money(Math.abs(d))}</strong></td></tr>
+        <tr><td>Difference, year</td><td></td><td>${sign}${money(Math.abs(d) * 12)}</td></tr>`;
+        })()}
       </tbody>
     </table>
   </div>

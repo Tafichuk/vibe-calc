@@ -28,12 +28,28 @@
       },
       {
         "plan": "Enterprise",
-        "monthly": 579,
-        "annual_per_month": 399
+        "annual_per_month": 399,
+        "seats": 250
+      },
+      {
+        "plan": "Enterprise-500",
+        "annual_per_month": 639,
+        "seats": 500
+      },
+      {
+        "plan": "Enterprise-1000",
+        "annual_per_month": 799,
+        "seats": 1000
+      },
+      {
+        "plan": "Enterprise-2000",
+        "annual_per_month": 1599,
+        "seats": 2000
       }
     ],
     "EUR": "MISSING - not in source xlsx, guide is USD only. REQUEST FROM ANTON.",
-    "GBP": "MISSING - not in source xlsx, guide is USD only. REQUEST FROM ANTON."
+    "GBP": "MISSING - not in source xlsx, guide is USD only. REQUEST FROM ANTON.",
+    "_note": "Enterprise tiers 250/500/1000/2000 are taken from the public Bitrix24 site and are pending final confirmation. Same basis as the rest: annual billing, price per plan, not per user. Tiers above 2,000 users have no published Essentials price."
   },
   "vibe_plus_prices": {
     "USD": [

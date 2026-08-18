@@ -58,7 +58,12 @@ if (!Array.isArray(essUSD)) fail(2, "check-prices: config.essentials_prices.USD 
 
 const expected = {
   effectiveFrom: cfg.key_dates?.prices_live,
-  essentialsUSD: essUSD.map(r => ({ plan: r.plan, monthly: r.monthly, annual: r.annual_per_month })),
+  /* seats и monthly сверяются наравне с ценой. monthly есть только у трёх младших
+     тиров: у Enterprise 250/500/1000/2000 источник его НЕ публикует, и появление
+     месячной цены в index.html означало бы, что её придумали. seats задаёт ёмкость
+     тира, а от неё зависит, с какой целью Vibe+ пара сравнима вообще. */
+  essentialsUSD: essUSD.map(r => ({ plan: r.plan, monthly: r.monthly, annual: r.annual_per_month,
+                                    seats: r.seats })),
   // EUR Essentials is intentionally absent in the source; the page must model that as null.
   essentialsEURisNull: typeof cfg.essentials_prices?.EUR === "string"
     && /MISSING/i.test(cfg.essentials_prices.EUR),
@@ -79,15 +84,22 @@ const cmp = (label, want, got) => {
 
 cmp("effectiveFrom", expected.effectiveFrom, embedded.effectiveFrom);
 
-// Essentials USD — the page only carries the 4 published tiers
+// Essentials USD — every published tier, with its seat capacity
 const embEss = embedded.essentials?.USD || [];
 if (embEss.length !== expected.essentialsUSD.length) {
   problems.push({ field: "essentials.USD.length", config: expected.essentialsUSD.length, index_html: embEss.length });
 } else {
   expected.essentialsUSD.forEach((w, i) => {
     cmp(`essentials.USD[${i}].plan`, w.plan, embEss[i].plan);
-    cmp(`essentials.USD[${i}].monthly`, w.monthly, embEss[i].monthly);
     cmp(`essentials.USD[${i}].annual`, w.annual, embEss[i].annual);
+    cmp(`essentials.USD[${i}].seats`, w.seats, embEss[i].seats);
+    /* Наличие monthly — тоже факт из источника, а не деталь оформления. */
+    const wantHas = w.monthly != null, gotHas = embEss[i].monthly != null;
+    if (wantHas !== gotHas)
+      problems.push({ field: `essentials.USD[${i}].monthly (${w.plan})`,
+                      config: wantHas ? `published: ${w.monthly}` : "NOT published in source",
+                      index_html: gotHas ? `${embEss[i].monthly} — invented` : "absent" });
+    else if (wantHas) cmp(`essentials.USD[${i}].monthly`, w.monthly, embEss[i].monthly);
   });
 }
 
@@ -150,7 +162,9 @@ if (problems.length) {
 const tiers = (embedded.vibePlus?.USD || []).length;
 console.log(`check-prices: OK — index.html matches config/pricing.json`);
 console.log(`  effective from   ${embedded.effectiveFrom}`);
-console.log(`  Essentials USD   ${(embedded.essentials?.USD || []).length} tiers`);
+console.log(`  Essentials USD   ${(embedded.essentials?.USD || []).length} tiers`
+          + ` (monthly published for ${expected.essentialsUSD.filter(r=>r.monthly!=null).length},`
+          + ` seat tiers ${expected.essentialsUSD.filter(r=>r.seats).map(r=>r.seats).join("/")})`);
 console.log(`  Essentials EUR   null (source: MISSING — not invented)`);
 console.log(`  Vibe+ tiers      ${tiers} carried (config has ${expected.vibe.USD.length})`);
 console.log(`  migration pairs  ${(embedded.migration || []).length}`);
