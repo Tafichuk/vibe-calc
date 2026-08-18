@@ -130,6 +130,24 @@ function inlinedKitCss(){
 }
 
 const T = S.totals, P = S.plan, PT = S.partner || {};
+
+/* THE PLAN PAIR arrives exactly as the partner picked it: current and target are
+   chosen independently on screen. The "before" price has THREE states and each
+   prints differently — a real price, nothing (the client pays nothing today), and
+   no published price at all. Nothing is reconstructed here: with no "before"
+   price we print the target price and say why the difference is missing. */
+const fromPriceCell = () => {
+  if (P.fromPriceKnown) return money(P.fromAnnualPerMonth);
+  return P.fromNoPriceReason === "currency"
+    ? `not published in ${esc(S.currency)}`
+    : "no published price";
+};
+const noPriceNote = () => P.fromNoPriceReason === "currency"
+  ? `Essentials prices are not published in ${esc(S.currency)}, so the difference against `
+    + `${esc(P.to)} cannot be shown. The figure above is the full price of ${esc(P.to)}, not a surcharge.`
+  : `Essentials is published for four plans covering up to 250 users. ${esc(P.from)} at the `
+    + `capacity of ${esc(P.to)} has no price in the price list, so the difference is not shown: `
+    + `the figure above is the full price of ${esc(P.to)}, not a surcharge.`;
 const partnerName = PT.company || "Bitrix24 Partner";
 const clientName = S.company?.name || "";
 
@@ -317,12 +335,15 @@ const planPage = () => `
     <table class="b24-table">
       <thead><tr><th></th><th>Plan</th><th>Per user / month, billed annually</th></tr></thead>
       <tbody>
-        <tr><td>Currently</td><td>${esc(P.from)}</td>
-            <td>${P.fromAnnualPerMonth == null ? "no " + esc(S.currency) + " price published" : money(P.fromAnnualPerMonth)}</td></tr>
+        <tr><td>Currently</td><td>${esc(P.from)}</td><td>${fromPriceCell()}</td></tr>
         <tr><td>Recommended</td><td><strong>${esc(P.to)}</strong></td><td><strong>${money(P.toAnnualPerMonth)}</strong></td></tr>
+        ${P.diffPerUserMonth == null ? "" :
+          `<tr><td>Difference</td><td>${P.fromKind === "none" ? "new spend" : "upgrade"}</td>
+               <td><strong>+ ${money(P.diffPerUserMonth)}</strong></td></tr>`}
       </tbody>
     </table>
   </div>
+  ${P.fromPriceKnown ? "" : `<p class="b24-p">${noPriceNote()}</p>`}
 
   <h1 class="b24-h1" style="margin-top:var(--b24-s8); font-size:22px;">What ${esc(P.to)} adds</h1>
   <ul class="b24-checklist">

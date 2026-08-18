@@ -107,7 +107,24 @@ const checks = [
   { what: "net first-year saving",   screen: D.netFirstYear,     in: ["client", "partner"] },
   { what: "plan price, current",     screen: D.planFromAnnual,   in: ["client", "partner"] },
   { what: "plan price, target",      screen: D.planToAnnual,     in: ["client", "partner"] },
+  /* The pair is now chosen freely (any Essentials or "no Bitrix24 yet" against any
+     of the 15 Vibe+ tiers), so the difference is no longer derivable from the plan
+     names — it has to travel and match. When the "before" price is not published
+     the screen sends null and there is nothing to compare. */
+  { what: "plan price difference",   screen: D.diffPerUserMonth, in: ["client", "partner"] },
 ];
+
+/* With no published "before" price, both reports must SAY so rather than quietly
+   dropping the row — that is the whole point of the honest-gap rule. */
+if (S.plan && S.plan.fromPriceKnown === false) {
+  for (const mode of ["client", "partner"]) {
+    const text = visible(built[mode]);
+    if (!/no published price|not published in/i.test(text))
+      problems.push({ what: `missing "no published price" note — ${mode} report`,
+                      a: "expected an explicit note next to the plan table",
+                      b: "(report shows neither)" });
+  }
+}
 
 for (const c of checks) {
   if (c.screen == null) continue;                 // not applicable (e.g. no price published)
