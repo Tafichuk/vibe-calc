@@ -2606,7 +2606,25 @@ function reportToPdf(mode){
   const doc = frame.contentDocument;
   doc.open(); doc.write(html); doc.close();
 
+  /* Дождаться ВСЕГО, что влияет на раскладку листа. Замерено: без ожидания
+     таблицы стилей первое нажатие уходило в печать по неоформленному документу —
+     лист выходил 202x57mm вместо 210x297mm. readyState после document.write уже
+     "complete", хотя <link> ещё в пути, поэтому ориентироваться на него нельзя. */
+  const waitStyles = () => new Promise(res => {
+    const link = doc.querySelector('link[rel="stylesheet"]');
+    if(!link || link.sheet) return res();
+    let done = false;
+    const finish = () => { if(!done){ done = true; res(); } };
+    link.addEventListener("load", finish, {once:true});
+    link.addEventListener("error", finish, {once:true});
+    setTimeout(finish, 8000);            /* страховка: печатать, а не висеть */
+  });
+  const waitImages = () => Promise.all([...doc.images].map(img =>
+    img.complete ? null : new Promise(r => { img.onload = img.onerror = r; })));
+
   const print = async () => {
+    await waitStyles();
+    await waitImages();
     /* Печать до загрузки шрифта даёт подстановочный шрифт в PDF. */
     try { await frame.contentWindow.document.fonts.ready; } catch(e){}
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
