@@ -433,9 +433,19 @@ main.wrap{padding-bottom:var(--b24-s16)}
     <div id="groups"></div>
   </section>
 
+  <!-- partner services: own step, because a price field buried at the bottom of a
+       scenario card is a field nobody finds (the customer walked the whole
+       calculator and never saw it) -->
+  <section id="services">
+    <div class="sec-h" data-i18n="ui.step4"></div>
+    <h2 data-i18n="ui.svcH"></h2>
+    <p class="note-line" data-i18n="ui.svcNote"></p>
+    <div class="card" id="svc-body"></div>
+  </section>
+
   <!-- summary -->
   <section id="summary">
-    <div class="sec-h" data-i18n="ui.step4"></div>
+    <div class="sec-h" data-i18n="ui.step5"></div>
     <div class="sum">
       <h2 data-i18n="ui.summaryH"></h2>
       <div id="sum-body"></div>
@@ -444,7 +454,7 @@ main.wrap{padding-bottom:var(--b24-s16)}
 
   <!-- vibe+ transition -->
   <section id="transition">
-    <div class="sec-h" data-i18n="ui.step5"></div>
+    <div class="sec-h" data-i18n="ui.step6"></div>
     <h2 data-i18n="ui.trH"></h2>
     <p class="note-line" data-i18n="ui.trNote"></p>
 
@@ -477,7 +487,7 @@ main.wrap{padding-bottom:var(--b24-s16)}
 
   <!-- partner summary -->
   <section id="partner-summary">
-    <div class="sec-h" data-i18n="ui.step6"></div>
+    <div class="sec-h" data-i18n="ui.step7"></div>
     <h2 data-i18n="ui.pnH"></h2>
     <p class="note-line" data-i18n="ui.pnNote"></p>
     <div class="card" id="partner-body"></div>
@@ -485,7 +495,7 @@ main.wrap{padding-bottom:var(--b24-s16)}
 
   <!-- report export -->
   <section id="report">
-    <div class="sec-h" data-i18n="ui.step7"></div>
+    <div class="sec-h" data-i18n="ui.step8"></div>
     <h2 data-i18n="ui.reportH"></h2>
     <p class="note-line" data-i18n="ui.reportNote"></p>
     <div class="card">
@@ -650,7 +660,7 @@ en: {
   "ui.burden":"Employer payroll burden",
   "ui.burdenHint":"Added on top of gross salary to get the real cost of an employee. The correct figure depends on the country and the type of contract — set it to your market before quoting.",
   "ui.estimate":"estimate",
-  "ui.step5":"Step 5", "ui.step6":"Step 6", "ui.step7":"Step 7",
+  "ui.step5":"Step 5", "ui.step6":"Step 6", "ui.step7":"Step 7", "ui.step8":"Step 8",
 
   // ---- coverage ----
   "ui.coverage":"Coverage — share of staff this touches",
@@ -673,6 +683,22 @@ en: {
 
   // ---- partner services ----
   "ui.svcLabel":"Cost of my services (one-off)",
+  /* Свой шаг для цены услуг + поле в карточке. Формулировки говорят «введите вы»,
+     а не «вот значение»: старая подпись стояла среди посчитанных строк и читалась
+     как результат. */
+  "ui.svcH":"Price your services",
+  "ui.svcNote":"Your one-off fee per scenario: connection, configuration for the client's processes, staff training. Nothing is filled in for you — you price each scenario yourself. A field left blank counts as NOT QUOTED: it stays out of the total and out of the average instead of being read as zero. A deliberate 0 is a real quote and does count.",
+  "ui.svcEmpty":"No scenarios picked yet. Choose them in Step 3 and each one shows up here as a row to price.",
+  "ui.svcColScenario":"Scenario",
+  "ui.svcColSaving":"Client's saving, year",
+  "ui.svcColFee":"Your fee, one-off",
+  "ui.svcTotal":"Total, one-off",
+  "ui.svcQuotedOf":"{quoted} of {n} priced",
+  "ui.svcAllPriced":"All {n} selected scenarios are priced.",
+  "ui.svcCardLabel":"Your fee for this scenario",
+  "ui.svcCardHint":"One-off, your price. Blank = not quoted yet.",
+  "ui.svcJump":"Price them now",
+  "ui.svcJumpAria":"Go to the first scenario without a price",
   "ui.sumSvc":"My services (one-off)",
   "ui.aboutSvc":"About my services",
   "ui.notQuoted":"not quoted",
@@ -1315,6 +1341,25 @@ function scHtml(sc){
     </div>
     <div class="sc-body">
       ${sc.note?`<div class="sc-note">${t(`sc.${sc.id}.note`)}</div>`:""}
+      <!-- ЦЕНА УСЛУГ — ПЕРВЫМ ДЕЛОМ В КАРТОЧКЕ.
+           Раньше это поле стояло внизу, внутри блока результатов: 601 px от верха
+           карточки на 1440 и 1158 px на мобильной, третьей строкой среди
+           посчитанных значений и с подписью-<span> вместо label. Его не находили.
+           Живёт в .sc-body, который recompute() не перерисовывает, — поэтому ввод
+           не сбивается на полуслове (INVENTORY.md §e). -->
+      <div class="svc-strip">
+        <div class="field" style="max-width:260px">
+          <label for="svc-${sc.id}">${t("ui.svcCardLabel")}</label>
+          <div class="in-wrap">
+            <input class="b24x-input svc-in" id="svc-${sc.id}" data-svc="${sc.id}"
+                   type="text" inputmode="decimal" placeholder="${t("ui.notQuoted")}"
+                   value="${svcCost(sc) === null ? "" : groupFmt(String(svcCost(sc)))}">
+            <span class="suf">${sufText("money")}</span>
+          </div>
+        </div>
+        <p class="hint">${t("ui.svcCardHint")}
+          <button class="info-btn" data-info="svc-${sc.id}" aria-label="${t("ui.aboutSvc")}">${ICON_I}</button></p>
+      </div>
       ${sc.cov?`
       <div class="cov-row">
         <div class="field" style="max-width:260px">
@@ -1344,7 +1389,12 @@ function wireScenarios(){
     const id = +top.dataset.toggle;
     const cb = top.querySelector(".sc-cb");
     const card = document.getElementById("card-"+id);
-    const sync = ()=>{ state[id].selected = cb.checked; card.classList.toggle("on", cb.checked); recompute(); };
+    const sync = ()=>{
+      state[id].selected = cb.checked;
+      card.classList.toggle("on", cb.checked);
+      buildServices();     /* состав строк шага 4 меняется только здесь */
+      recompute();
+    };
     cb.addEventListener("click", e=> e.stopPropagation());
     cb.addEventListener("change", sync);
     /* The "Learn more" link sits inside this strip. Without the guard the same
@@ -1509,12 +1559,11 @@ function recompute(){
       html += row(rl + ", " + t("ui.month").toLowerCase(), fmtMoney(r.rev), "rev");
       html += row(rl + ", " + t("ui.year").toLowerCase(),  fmtMoney(r.rev*12), "rev");
     }
-    const sv = r.service;
-    html += `<div class="res-row"><span class="lbl">${t("ui.svcLabel")}
-      <button class="info-btn" data-info="svc-${sc.id}" aria-label="${t("ui.aboutSvc")}">${ICON_I}</button></span>
-      <span class="val"><input class="b24x-input svc-in" data-svc="${sc.id}" type="text"
-        inputmode="decimal" placeholder="${t("ui.notQuoted")}"
-        value="${sv === null ? "" : groupFmt(String(sv))}"> ${sufText("money")}</span></div>`;
+    /* Цены услуг в блоке результатов больше нет вообще — ни поля, ни эха.
+       Поле переехало наверх карточки (.svc-strip) и в шаг 4. Эхо я сначала
+       оставил, но этот блок перерисовывает только recompute(), а набор цены
+       идёт через refreshTotals() — значение отставало бы до следующего
+       пересчёта. Строка, которая иногда врёт, хуже отсутствующей. */
     html += `<div class="res-row"><span class="lbl">${t("ui.howCalc")}
       <button class="info-btn" data-info="${sc.id}" aria-label="${t("ui.howCalc")}">${ICON_I}</button></span><span></span></div>`;
     res.innerHTML = html;
@@ -1536,7 +1585,93 @@ function refreshTotals(){
    scenarios are costed on. Above C.OVERLAP_WARN_PCT the scenarios almost certainly
    count the same working day twice. We warn and explain; we never block or clamp. */
 
+/* ============================================================ ШАГ 4: УСЛУГИ
+   Две функции вместо одной по той же причине, что и refreshTotals(): полная
+   перерисовка блока во время набора съела бы ввод. buildServices() трогает
+   строки (меняется только при смене выбора сценариев), paintServices() — только
+   посчитанные ячейки и итог, полей не касается. */
+function buildServices(){
+  const el = document.getElementById("svc-body");
+  if(!el) return;
+  const chosen = scenarios.filter(sc=> state[sc.id].selected);
+  if(!chosen.length){
+    el.innerHTML = `<div class="note-line">${t("ui.svcEmpty")}</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="svc-table" role="table">
+      <div class="svc-tr svc-tr--head" role="row">
+        <span role="columnheader">${t("ui.svcColScenario")}</span>
+        <span role="columnheader" class="svc-num">${t("ui.svcColSaving")}</span>
+        <span role="columnheader" class="svc-fee-h">${t("ui.svcColFee")}
+          <button class="info-btn" data-info="svc-summary" aria-label="${t("ui.aboutSvc")}">${ICON_I}</button></span>
+      </div>
+      ${chosen.map(sc=>`
+      <div class="svc-tr" role="row" id="svcrow-${sc.id}">
+        <span role="cell" class="svc-name"><i>${scNum(sc)}</i>${t(`sc.${sc.id}.title`)}</span>
+        <span role="cell" class="svc-num">
+          <b class="svc-lab">${t("ui.svcColSaving")}</b>
+          <span id="svcsave-${sc.id}"></span></span>
+        <span role="cell" class="svc-fee">
+          <b class="svc-lab">${t("ui.svcColFee")}</b>
+          <span class="in-wrap">
+            <input class="b24x-input svc-in" id="svct-${sc.id}" data-svc="${sc.id}"
+                   type="text" inputmode="decimal" placeholder="${t("ui.notQuoted")}"
+                   aria-label="${t("ui.svcColFee")} — ${t(`sc.${sc.id}.title`)}"
+                   value="${svcCost(sc) === null ? "" : groupFmt(String(svcCost(sc)))}">
+            <span class="suf">${sufText("money")}</span>
+          </span>
+        </span>
+      </div>`).join("")}
+      <div class="svc-tr svc-tr--total" role="row">
+        <span role="cell">${t("ui.svcTotal")}</span>
+        <span role="cell" class="svc-num svc-count" id="svc-count"></span>
+        <span role="cell" class="svc-num svc-sum" id="svc-sum"></span>
+      </div>
+    </div>`;
+}
+
+function paintServices(model){
+  const el = document.getElementById("svc-body");
+  if(!el || !el.querySelector(".svc-table")) return;
+  model.items.forEach(it=>{
+    const cell = document.getElementById("svcsave-" + it.sc.id);
+    /* У сценариев без эффекта на ФОТ (только выручка) экономии ФОТ нет вообще —
+       «$0» читался бы как «ничего не даёт». Прочерк честнее. */
+    if(cell) cell.textContent = it.sc.effect.includes("fot") ? fmtMoney(it.fot * 12) : "—";
+  });
+  const svc = model.svc;
+  const sum = document.getElementById("svc-sum");
+  const cnt = document.getElementById("svc-count");
+  if(sum) sum.textContent = fmtMoney(svc.sum);
+  if(cnt) cnt.textContent = t("ui.svcQuotedOf", {quoted: svc.quoted, n: model.items.length});
+}
+
+/* Ссылка «not priced yet» ведёт сюда: первое пустое поле шага 4 получает фокус.
+   Раньше сообщение было тупиковым — говорило о проблеме и не показывало, где она. */
+function jumpToUnpriced(){
+  const first = scenarios.find(sc=> state[sc.id].selected && svcCost(sc) === null);
+  if(!first) return;
+  const inp = document.getElementById("svct-" + first.id);
+  const row = document.getElementById("svcrow-" + first.id);
+  if(!inp) return;
+  inp.scrollIntoView({block:"center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+  inp.focus({preventScroll:true});
+  if(row){
+    row.classList.remove("svc-flash");
+    void row.offsetWidth;             /* перезапуск анимации при повторном клике */
+    row.classList.add("svc-flash");
+  }
+}
+document.addEventListener("click", e=>{
+  if(e.target.closest("[data-svc-jump]")) jumpToUnpriced();
+});
+
 function paintTotals(model){
+  /* Шаг 4 обновляется здесь, а не в refreshTotals(): через paintTotals проходят
+     ОБА пути — и полный recompute(), и быстрый refreshTotals() при наборе цены.
+     В refreshTotals цифры шага 4 оставались пустыми до первого пересчёта. */
+  paintServices(model);
   lastModel = model;
   lastOverlap = model.overlap;
   renderSummary(model);
@@ -1587,7 +1722,9 @@ function renderSummary(model){
           style="color:var(--b24-on-navy)">${ICON_I}</button></span>
         <span class="v">− ${fmtMoney(svc.sum)}</span></div>
       ${svc.unquoted>0?`<div class="fullrow"><span style="font-size:12.5px;color:var(--b24-on-navy-soft)">
-        ${t("ui.svcUnquoted",{n:svc.unquoted})}</span><span></span></div>`:""}
+        ${t("ui.svcUnquoted",{n:svc.unquoted})}
+        <button type="button" class="svc-jump svc-jump--navy" data-svc-jump
+          aria-label="${t("ui.svcJumpAria")}">${t("ui.svcJump")}</button></span><span></span></div>`:""}
       <div class="fullrow"><span>${t("ui.sumSub")} · ${targetPlan().map.to}</span>
         <span class="v">− ${fmtMoney(subYear)}</span></div>
       <div class="sum-line"></div>
@@ -1675,7 +1812,9 @@ function renderPartnerPanel(model){
         <div class="gap-l">${t("ui.pnClientSaving")}</div></div>
       <div class="gap-box"><div class="gap-n">${fmtMoney(svc.sum)}</div>
         <div class="gap-l">${t("ui.pnMyServices")}${svc.unquoted>0
-          ? "<br>" + t("ui.svcUnquoted",{n:svc.unquoted}) : ""}
+          ? "<br>" + t("ui.svcUnquoted",{n:svc.unquoted})
+            + ` <button type="button" class="svc-jump" data-svc-jump
+                  aria-label="${t("ui.svcJumpAria")}">${t("ui.svcJump")}</button>` : ""}
           ${svc.avg!==null?"<br>"+t("ui.pnAvgQuoted",{v:fmtMoney(svc.avg),n:svc.quoted}):""}</div></div>
       <div class="gap-box"><div class="gap-n">${fmtMoney(vibe.annualTotal)}</div>
         <div class="gap-l">${t("ui.pnSubYear")} · ${map.to}</div></div>
@@ -1816,6 +1955,15 @@ document.addEventListener("input", e=>{
   if(!el.classList || !el.classList.contains("svc-in")) return;
   if(el.value.trim() === ""){ svcSave(el.dataset.svc, ""); }
   else { svcSave(el.dataset.svc, onNumInput(el)); }
+  /* У одного сценария теперь ДВА поля: в карточке и в таблице шага 4. Второе
+     обновляем из состояния, но никогда то, в котором сейчас курсор, — иначе
+     каретка прыгает и набор рассыпается. */
+  const id = el.dataset.svc;
+  document.querySelectorAll(`.svc-in[data-svc="${id}"]`).forEach(twin=>{
+    if(twin === el) return;
+    const raw = svcLoad()[id];
+    twin.value = (raw === "" || raw === undefined || raw === null) ? "" : groupFmt(String(raw));
+  });
   refreshTotals();   // NOT recompute() — see refreshTotals()
 });
 
@@ -2086,7 +2234,7 @@ function applyPartnerLogo(){
 }
 
 function rerenderAll(){
-  applyStatic(); buildCompany(); buildPartner(); buildScenarios(); recompute();
+  applyStatic(); buildCompany(); buildPartner(); buildScenarios(); buildServices(); recompute();
 }
 
 document.querySelectorAll("#sw-lang button").forEach(b=>{
@@ -2136,6 +2284,7 @@ buildPartner();
 Object.keys(AUTOFILL).forEach(applyCompany);
 scenarios.forEach(applyCoverage);   // headcount x coverage, before the first render
 buildScenarios();
+buildServices();     /* пустое состояние шага 4: «выберите сценарии в шаге 3» */
 /* NOTHING is selected on first load — same as the original.
    This is the author's first line of defence against double counting: the partner
    must consciously pick each scenario, so the opening screen never shows a total
