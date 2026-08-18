@@ -1,0 +1,642 @@
+/* ГЕНЕРИРУЕТСЯ scripts/embed-report.mjs из assets/bitrix24-kit.css — не править. */
+@font-face{font-family:'Montserrat';font-weight:400;font-style:normal;src:url("fonts/static/Montserrat-Regular.ttf") format('truetype');font-display:block;}
+@font-face{font-family:'Montserrat';font-weight:600;font-style:normal;src:url("fonts/static/Montserrat-SemiBold.ttf") format('truetype');font-display:block;}
+@font-face{font-family:'Montserrat';font-weight:700;font-style:normal;src:url("fonts/static/Montserrat-Bold.ttf") format('truetype');font-display:block;}
+@font-face{font-family:'Montserrat';font-weight:800;font-style:normal;src:url("fonts/static/Montserrat-ExtraBold.ttf") format('truetype');font-display:block;}
+/* ============================================================================
+   BITRIX24 — PDF DESIGN SYSTEM KIT
+   A4 portrait (210 × 297 mm). Print-to-PDF ready.
+   Derived from the 4 reference PDFs (Bitrix24 + Bitrix24 Partners).
+   Load this file, then use the component classes. See bitrix24-template.html.
+   ========================================================================== */
+
+/* ----- Font: Montserrat (official brand font) ------------------------------
+   Embedded from the local "Montserrat (1)/static" folder so PDFs are fully
+   offline and self-contained. Display + body both use Montserrat, separated
+   by weight. If you relocate the fonts, update the url() paths below. */
+
+
+
+
+
+
+
+
+/* ============================================================================
+   1. DESIGN TOKENS
+   ========================================================================== */
+:root {
+  /* === OFFICIAL CORPORATE PALETTE ===========================================
+     3 shades of blue + 1 accent green + 1 gradient.
+     ------------------------------------------------------------------------ */
+  --b24-cyan:  #2FC7F7;   /* Blue 1 — bright cyan  (RGB 47 199 247)  primary    */
+  --b24-blue:  #409EEF;   /* Blue 2 — mid blue     (RGB 64 158 239)             */
+  --b24-deep:  #0066A1;   /* Blue 3 — deep blue    (RGB 0 102 161)  dark surfaces/text */
+  --b24-green: #BDF300;   /* Accent — green        (RGB 189 243 0)  accent only  */
+  /* Brand gradient: cyan -> mid blue */
+  --b24-grad-brand: linear-gradient(135deg, #2FC7F7 0%, #409EEF 100%);
+
+  /* --- Derived deep shade (same hue as --b24-deep, darker) for depth in
+         gradients on dark cards/hero. Not a new brand color — a shade of Blue 3. */
+  --b24-deep-2: #004E7C;
+
+  /* === PARTNER PROGRAM PALETTE ==============================================
+     Bitrix24 Partners materials use their OWN palette (per the Partner Program
+     Style Guide): a darker navy-blue main + a very pale blue + shared green/white.
+     Applied automatically on .page--sky and .page--partner-navy. */
+  --b24p-deep:   #063883;  /* Partner main — deep navy blue (RGB 6 56 131)      */
+  --b24p-light:  #EFFBFF;  /* Partner light blue (optional) (RGB 239 251 255)   */
+  --b24p-green:  #BDF300;  /* shared accent green                               */
+  --b24p-deep-2: #04213F;  /* deepest corner of the signature gradient           */
+  --b24p-deep-hi:#0A63A6;  /* bright azure core of the signature gradient        */
+  /* ★ SIGNATURE PARTNER GRADIENT — the recognizable Bitrix24 Partners look:
+     a vivid azure GLOW in the upper-centre fading to deep navy at the edges
+     (matches the Partner Program Style Guide cover). This is a RADIAL glow, NOT
+     a flat navy. Used EVERYWHERE a partner dark surface appears — dark sheets
+     (.page--partner-navy: covers, dividers, CTAs), table & comparison headers,
+     and app tiles — so the whole system reads as one recognizable gradient. */
+  --b24-grad-partner-navy:  radial-gradient(130% 130% at 45% 30%, #0A63A6 0%, #005E98 28%, #00457C 54%, #063159 78%, #04213F 100%);
+  --b24-grad-partner-light: linear-gradient(160deg, #F6FDFF 0%, #EFFBFF 55%, #DBF2FC 100%);
+
+  /* --- Aliases (semantic) --- */
+  --b24-navy-900:  var(--b24-deep);   /* darkest brand blue — titles/text        */
+  --b24-blue-500:  var(--b24-deep);   /* links, table labels                     */
+  --b24-blue-400:  var(--b24-deep);   /* section headings                        */
+
+  /* --- Accents / on-accent ink --- */
+  --b24-lime:      var(--b24-green);  /* pills, badges, CTA, highlight backgrounds */
+  --b24-lime-ink:  var(--b24-deep);   /* text on a green surface (deep blue)      */
+
+  /* --- Surfaces --- */
+  --b24-page-cool: #F4FAFE;  /* Bitrix24 pale page background                    */
+  --b24-page-sky:  #DCF2FE;  /* Partners sky-blue page background                */
+  --b24-card:      #E9F5FD;  /* light info-card fill (tint of cyan)             */
+  --b24-card-2:    #DDEEFB;  /* slightly deeper light card                      */
+  --b24-white:     #FFFFFF;
+  --b24-line:      #C8E6F6;  /* hairline dividers, table grid                   */
+  --b24-dashed:    #6EC0EC;  /* dashed outline stroke (tint of cyan)            */
+
+  /* --- Text --- */
+  --b24-text:      #143A57;  /* body copy (deep-blue slate)                     */
+  --b24-text-mute: #5E86A3;  /* labels, captions                               */
+  --b24-on-navy:   #FFFFFF;  /* text on deep-blue surfaces                      */
+  --b24-on-navy-soft: #B9E2F7;
+
+  /* --- Gradients --- */
+  --b24-grad-navy:   linear-gradient(140deg, #0079BE 0%, #0066A1 45%, #004E7C 100%);
+  --b24-grad-header: linear-gradient(90deg,  #0079BE 0%, #0066A1 55%, #004E7C 100%);
+  --b24-grad-page-sky: linear-gradient(160deg, #EAF8FF 0%, #DCF2FE 55%, #CFEEFF 100%);
+
+  /* --- Radii --- */
+  --b24-r-page:  0;      /* full-bleed page                                     */
+  --b24-r-card:  22px;   /* large cards / hero blocks                           */
+  --b24-r-inner: 16px;   /* inner cells / table wrapper                         */
+  --b24-r-tile:  14px;   /* app-icon tiles                                      */
+  --b24-r-pill:  999px;
+
+  /* --- Spacing (4px base) --- */
+  --b24-s1: 4px;  --b24-s2: 8px;  --b24-s3: 12px; --b24-s4: 16px;
+  --b24-s5: 20px; --b24-s6: 24px; --b24-s8: 32px; --b24-s10: 40px;
+  --b24-s12: 48px; --b24-s16: 64px;
+
+  /* --- Shadows --- */
+  --b24-shadow-card: 0 10px 30px rgba(0, 102, 161, 0.12);
+  --b24-shadow-navy: 0 14px 34px rgba(0, 78, 124, 0.30);
+
+  /* --- Type --- */
+  --b24-font-display: 'Montserrat', system-ui, 'Segoe UI', Arial, sans-serif;
+  --b24-font-body:    'Montserrat', system-ui, 'Segoe UI', Arial, sans-serif;
+
+  /* Page geometry */
+  --b24-page-pad: 18mm;   /* inner content margin on A4                         */
+}
+
+/* ============================================================================
+   2. PAGE FRAME  —  one .page = one A4 sheet
+   ========================================================================== */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+body {
+  margin: 0;
+  font-family: var(--b24-font-body);
+  color: var(--b24-text);
+  background: #9fb6c9;                 /* editor backdrop (screen only)         */
+  font-size: 13px;
+  line-height: 1.5;
+  counter-reset: b24page;              /* auto page numbering                   */
+}
+
+.page {
+  position: relative;
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  height: 297mm;
+  margin: 0 auto;
+  padding: var(--b24-page-pad);
+  background: var(--b24-page-cool);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  counter-increment: b24page;
+}
+.page + .page { margin-top: 8mm; }     /* gap between sheets on screen only     */
+
+.page--navy  { background: var(--b24-grad-navy); color: var(--b24-on-navy); }
+.page--flush { padding: 0; }           /* for full-bleed cover art              */
+
+/* ============================================================================
+   2b. PAGE FORMAT PRESETS  —  beyond A4 portrait (the default .page)
+   A4 portrait stays the default. These modifiers swap the canvas size + scale;
+   the palette / brand classes (.page--sky, .page--partner-navy) still apply on
+   top. Combine e.g.  <section class="page page--li page--partner-navy">.
+
+   EXPORT (the skill automates this):
+   • A4 portrait / landscape  → PDF (Chrome --print-to-pdf).
+       Landscape documents must ALSO set, in the doc's own <style>:
+         @page { size: A4 landscape; margin: 0; }
+   • Social (px canvases)     → ONE slide per .page. Render each slide with
+         @page { size: 1080px 1080px; margin: 0 }   (story: 1080px 1920px)
+       to a 1-page PDF, then rasterize to PNG (one image per slide).
+       Keep one .page per HTML file for clean social exports.
+   ========================================================================== */
+
+/* --- A4 landscape (PDF) --------------------------------------------------- */
+.page--a4-land { width: 297mm; height: 210mm; min-height: 210mm; }
+
+/* --- Social canvases ------------------------------------------------------ */
+.page--li    { width: 1080px; height: 1080px; min-height: 1080px; padding: 80px; }  /* LinkedIn square */
+.page--story { width: 1080px; height: 1920px; min-height: 1920px; padding: 90px 80px; } /* IG Stories 9:16 */
+
+/* Punchier type scale for the 1080px social canvases (A4 body type is too small
+   at this size). Higher specificity than the base scale, so these win. */
+.page--li, .page--story { font-size: 20px; line-height: 1.5; }
+.page--li  .b24-display, .page--story .b24-display { font-size: 70px; line-height: 1.02; }
+.page--li  .b24-h1,   .page--story .b24-h1   { font-size: 46px; margin-bottom: 28px; }
+.page--li  .b24-h2,   .page--story .b24-h2   { font-size: 32px; }
+.page--li  .b24-h3,   .page--story .b24-h3   { font-size: 24px; }
+.page--li  .b24-lead, .page--story .b24-lead { font-size: 27px; line-height: 1.45; }
+.page--li  .b24-p,    .page--story .b24-p    { font-size: 20px; }
+.page--li  .b24-label,.page--story .b24-label{ font-size: 16px; }
+.page--li  .b24-small,.page--story .b24-small{ font-size: 15px; }
+.page--li  .b24-pill, .page--story .b24-pill { font-size: 22px; padding: 10px 26px; }
+.page--li  .b24-btn,  .page--story .b24-btn  { font-size: 26px; padding: 18px 44px; }
+.page--li  .b24-bullets > li, .page--story .b24-bullets > li { font-size: 23px; padding-left: 36px; margin-bottom: 18px; }
+.page--li  .b24-bullets > li::before, .page--story .b24-bullets > li::before { width: 12px; height: 12px; top: .5em; }
+.page--li  .b24-tile, .page--story .b24-tile { width: 92px; height: 92px; font-size: 44px; border-radius: 20px; }
+.page--li  .b24-quote,.page--story .b24-quote{ font-size: 27px; border-left-width: 8px; padding-left: 28px; }
+.page--li  .b24-plogo--cover, .page--story .b24-plogo--cover { height: 44px; }
+
+/* Instagram Story UI safe-zone: keep key content clear of the ~240px the app
+   overlays at top (avatar) and bottom (reply / CTA bar). Wrap slide content in
+   <div class="b24-safe"> … </div>. */
+.page--story .b24-safe {
+  height: 100%; box-sizing: border-box;
+  padding-top: 150px; padding-bottom: 150px;   /* + 90px page pad ≈ 240px each end */
+  display: flex; flex-direction: column;
+}
+
+/* ---- PARTNERS light page (repurposed .page--sky) --------------------------
+   A partner-branded light page: partner light-blue background, and all
+   deep-blue accents remapped to the partner navy (#063883). */
+.page--sky { background: var(--b24-grad-partner-light); }
+/* Ink on any green surface (pills, tags, lime highlight) uses the PARTNER navy
+   on partner pages — so it matches .b24-btn and the rest of the partner palette,
+   instead of falling back to the corporate deep blue. */
+.page--sky, .page--partner-navy { --b24-lime-ink: var(--b24p-deep); }
+.page--sky .b24-h1,
+.page--sky .b24-h2,
+.page--sky .b24-h3            { color: var(--b24p-deep); }
+.page--sky a, .page--sky .b24-link { color: var(--b24p-deep); }
+.page--sky .b24-table thead th,
+.page--sky .b24-compare__head    { background: var(--b24-grad-partner-navy); }
+.page--sky .b24-table tbody td:first-child { color: var(--b24p-deep); }
+.page--sky strong, .page--sky .b24-strong,
+.page--sky .b24-solve__outcome .b24-strong,
+.page--sky .b24-compare__body > div { color: var(--b24p-deep); }  /* match the partner navy */
+.page--sky .b24-tile         { background: var(--b24-grad-partner-navy); }
+.page--sky .b24-bullets > li::before { background: var(--b24p-deep); }
+.page--sky .b24-logo__sub    { color: var(--b24p-deep); }
+.page--sky .b24-dashed,
+.page--sky .b24-cta          { border-color: #7FB2E6; }
+
+/* ---- PARTNERS deep-navy page (covers, dividers, dark creatives) ------------ */
+.page--partner-navy {
+  background: var(--b24-grad-partner-navy); color: var(--b24-on-navy);
+}
+.page--partner-navy .b24-display,
+.page--partner-navy .b24-h1, .page--partner-navy .b24-h2,
+.page--partner-navy .b24-h3, .page--partner-navy p,
+.page--partner-navy strong, .page--partner-navy .b24-strong { color: #fff; }
+.page--partner-navy .b24-label { color: var(--b24-on-navy-soft); }
+
+@media print {
+  body { background: none; }
+  .page { margin: 0 !important; box-shadow: none; break-after: page; }
+  .page:last-child { break-after: auto; }
+}
+@media screen {
+  .page { box-shadow: 0 8px 30px rgba(0,0,0,.25); }
+}
+
+/* ---- Running header & footer ---------------------------------------------- */
+.b24-runhead {
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--b24-font-body);
+  font-size: 10.5px; color: var(--b24-text-mute);
+  padding-bottom: var(--b24-s3);
+  border-bottom: 1px solid var(--b24-line);
+  margin-bottom: var(--b24-s6);
+  flex: 0 0 auto;
+}
+.b24-runhead .b24-logo { font-size: 15px; }
+
+.b24-footer {
+  margin-top: auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: var(--b24-s3);
+  border-top: 1px solid var(--b24-line);
+  font-size: 10px; color: var(--b24-text-mute);
+  flex: 0 0 auto;
+}
+.b24-footer .b24-logo { font-size: 15px; }
+.page--navy .b24-runhead,
+.page--navy .b24-footer { border-color: rgba(255,255,255,.22); color: var(--b24-on-navy-soft); }
+
+/* page number: custom counter — works in normal flow AND in print
+   (the reserved `page` counter only resolves inside @page margin boxes). */
+.b24-pageno::after { content: counter(b24page); }
+
+/* ============================================================================
+   3. LOGO / WORDMARK
+   ========================================================================== */
+/* Real logo. Lockup = <span class="b24-logo"><img ...><span class="b24-logo__sub">Partners</span></span>
+   The "Partners" word is sized so its cap-height matches the Bitrix24 wordmark. */
+.b24-logo {
+  display: inline-flex; align-items: center; gap: .3em; white-space: nowrap; line-height: 1;
+}
+.b24-logo img { height: 1.05em; width: auto; display: block; }  /* scales with font-size */
+.b24-logo__sub {                      /* the "Partners" word in the sub-brand lockup */
+  font-family: var(--b24-font-display); font-weight: 700; font-size: 1.34em;
+  line-height: 1; color: var(--b24-deep); letter-spacing: -.01em;
+  position: relative; top: -0.02em;   /* optical baseline nudge                  */
+}
+.b24-logo--light .b24-logo__sub,
+.page--navy .b24-logo__sub,
+.page--partner-navy .b24-logo__sub,
+.b24-onnavy .b24-logo__sub { color: #fff; }
+
+/* ---- OFFICIAL PARTNERS LOCKUP (single image, extracted from the Style Guide) ----
+   The Partners logo is one cohesive lockup — DO NOT rebuild it from the Bitrix24
+   wordmark + a separate "Partners" word. Use these assets:
+     logo-partner-h.png / -h-white.png   horizontal (deep-blue / white)
+     logo-partner-v.png / -v-white.png   stacked / vertical
+   Deep-blue on light pages, white on deep-navy pages. Size by height. */
+.b24-plogo { width: auto; max-width: 100%; height: auto; display: inline-block;
+             vertical-align: middle; align-self: flex-start; /* never stretch as a flex child */
+             flex: 0 0 auto; object-fit: contain; }
+.b24-runhead .b24-plogo,
+.b24-footer  .b24-plogo { align-self: center; }
+.b24-plogo--foot  { height: 16px; }   /* running header & footer            */
+.b24-plogo--cover { height: 30px; }   /* cover / section header             */
+.b24-plogo--v     { height: 120px; }  /* stacked, for navy dividers/covers  */
+
+/* ============================================================================
+   4. TYPOGRAPHY
+   ========================================================================== */
+.b24-display {                        /* cover title                            */
+  font-family: var(--b24-font-display);
+  font-weight: 800; font-size: 46px; line-height: 1.04;
+  letter-spacing: -.02em; color: var(--b24-navy-900); margin: 0;
+}
+.page--navy .b24-display { color: #fff; }
+
+.b24-h1 {                             /* section title                          */
+  font-family: var(--b24-font-display);
+  font-weight: 800; font-size: 31px; line-height: 1.08;
+  letter-spacing: -.01em; color: var(--b24-blue-500); margin: 0 0 var(--b24-s5);
+}
+.b24-h2 {
+  font-family: var(--b24-font-display);
+  font-weight: 800; font-size: 22px; line-height: 1.15;
+  color: var(--b24-navy-900); margin: 0 0 var(--b24-s3);
+}
+.b24-h3 {
+  font-family: var(--b24-font-display);
+  font-weight: 700; font-size: 16px; color: var(--b24-navy-900); margin: 0 0 var(--b24-s2);
+}
+.b24-lead {                           /* intro paragraph                        */
+  font-size: 15.5px; line-height: 1.5; color: var(--b24-text); margin: 0 0 var(--b24-s4);
+}
+.page--navy .b24-lead,
+.page--navy p { color: var(--b24-on-navy); }
+
+/* On-navy scope — apply to any navy zone that is NOT a full .page--navy sheet
+   (e.g. the navy title card on the cover). */
+.b24-onnavy { color: var(--b24-on-navy); }
+.b24-onnavy .b24-display,
+.b24-onnavy .b24-h1,
+.b24-onnavy .b24-h2,
+.b24-onnavy .b24-h3,
+.b24-onnavy .b24-lead,
+.b24-onnavy p,
+.b24-onnavy strong,
+.b24-onnavy .b24-strong { color: #fff; }
+.b24-onnavy .b24-label { color: var(--b24-on-navy-soft); }
+.b24-onnavy a { color: #BCE5FF; }
+.b24-p { font-size: 13px; line-height: 1.55; color: var(--b24-text); margin: 0 0 var(--b24-s3); }
+.b24-label {                          /* small caption above a block            */
+  font-size: 11px; font-weight: 600; color: var(--b24-text-mute);
+  margin: 0 0 var(--b24-s2); font-family: var(--b24-font-body);
+}
+.b24-small { font-size: 10.5px; color: var(--b24-text-mute); }
+
+/* inline emphasis */
+b, strong, .b24-strong { font-weight: 800; color: var(--b24-navy-900); }
+.page--navy strong { color: #fff; }
+.b24-hl        { color: var(--b24-green); font-weight: 800; }   /* green word     */
+.b24-hl-lime   { background: var(--b24-lime); color: var(--b24-lime-ink);
+                 border-radius: 6px; padding: 0 .18em; font-weight: 800;
+                 box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+a, .b24-link   { color: var(--b24-blue-500); text-decoration: underline;
+                 text-underline-offset: 2px; font-weight: 700; }
+.page--navy a  { color: #BCE5FF; }
+
+/* ============================================================================
+   5. BADGES / PILLS
+   ========================================================================== */
+.b24-pill {
+  display: inline-flex; align-items: center; gap: .4em;
+  background: var(--b24-lime); color: var(--b24-lime-ink);
+  font-family: var(--b24-font-display); font-weight: 800; font-size: 15px;
+  padding: 8px 20px; border-radius: var(--b24-r-pill); white-space: nowrap;
+}
+.b24-pill--outline {
+  background: transparent; color: var(--b24-navy-900);
+  border: 2px solid var(--b24-navy-900);
+}
+.b24-pill--sm { font-size: 12px; padding: 4px 12px; }
+
+/* ---- CTA button ("Become a Partner") --------------------------------------
+   ALWAYS an <a href="https://partners.bitrix24.com/"> so the PDF carries a real
+   clickable link. ALWAYS horizontally centered (wrap in .b24-btn-center or the
+   button itself is a centered block). Green fill, deep-blue text. Enlarge freely
+   with --lg / --xl. */
+.b24-btn-center { text-align: center; width: 100%; }
+.b24-btn {
+  display: inline-flex; align-items: center; gap: .5em;
+  background: var(--b24-green); color: var(--b24p-deep);
+  font-family: var(--b24-font-display); font-weight: 800; font-size: 20px;
+  padding: 16px 40px; border-radius: var(--b24-r-pill);
+  text-decoration: none; white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(189, 243, 0, .35);
+}
+.b24-btn:hover { filter: brightness(.97); }
+.b24-btn--lg { font-size: 26px; padding: 20px 52px; }
+.b24-btn--xl { font-size: 32px; padding: 26px 64px; }
+.b24-btn__arrow { font-weight: 800; }
+.b24-tag {                            /* tiny lime label (e.g. "and gets")       */
+  display: inline-block; background: var(--b24-lime); color: var(--b24-lime-ink);
+  font-family: var(--b24-font-display); font-weight: 800; font-size: 12px;
+  padding: 3px 10px; border-radius: var(--b24-r-pill); transform: rotate(-4deg);
+}
+
+/* ============================================================================
+   6. APP-ICON TILE (rounded-square gradient, holds a glyph/emoji)
+   ========================================================================== */
+.b24-tile {
+  width: 64px; height: 64px; border-radius: var(--b24-r-tile);
+  background: linear-gradient(150deg, #2FC7F7 0%, #0079BE 55%, #0066A1 100%);
+  box-shadow: var(--b24-shadow-navy);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 30px; flex: 0 0 auto;
+}
+.b24-tile--sm { width: 48px; height: 48px; font-size: 22px; }
+
+/* ============================================================================
+   7. CARDS
+   ========================================================================== */
+.b24-card {                           /* light info card                        */
+  background: var(--b24-card); border-radius: var(--b24-r-card);
+  padding: var(--b24-s8); margin: 0 0 var(--b24-s5);
+}
+.b24-card--white { background: #fff; box-shadow: var(--b24-shadow-card); }
+.b24-card--navy  { background: var(--b24-grad-navy); color: #fff;
+                   box-shadow: var(--b24-shadow-navy); }
+.b24-card--navy .b24-label { color: var(--b24-on-navy-soft); }
+
+/* --- Pain -> Tools -> Outcome block (Bitrix24 challenge card) --------------- */
+.b24-solve { position: relative; }
+.b24-solve__grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--b24-s6) var(--b24-s10);
+  align-items: start;
+}
+.b24-solve__tile { position: absolute; top: var(--b24-s6); right: var(--b24-s6); }
+.b24-solve__pain .b24-strong { font-size: 18px; line-height: 1.25; }
+.b24-solve__tools { padding-right: 84px; }   /* leave room for the tile          */
+.b24-solve__outcome { grid-column: 1 / -1; margin-top: var(--b24-s2); }
+.b24-solve__outcome .b24-strong { color: var(--b24-navy-900); }
+
+/* ============================================================================
+   8. BULLET VALUE LIST (square navy bullets)
+   ========================================================================== */
+.b24-bullets { list-style: none; margin: 0 0 var(--b24-s6); padding: 0; }
+.b24-bullets > li {
+  position: relative; padding-left: 26px; margin-bottom: var(--b24-s4);
+  font-size: 14.5px; line-height: 1.45;
+}
+.b24-bullets > li::before {
+  content: ""; position: absolute; left: 0; top: .42em;
+  width: 9px; height: 9px; border-radius: 2px; background: var(--b24-navy-800);
+}
+.page--navy .b24-bullets > li::before { background: var(--b24-lime); }
+
+/* check / cross list */
+/* Checklist — uses the official brand badges (a signature-gradient circle with a
+   glyph), never ✅/❌ emoji. is-yes → check badge, is-no → cross icon. Navy sheets
+   auto-swap to the light-badge / white variants. */
+.b24-checklist { list-style: none; margin: 0; padding: 0; }
+.b24-checklist > li { padding-left: 42px; position: relative; margin-bottom: var(--b24-s4);
+  font-size: 15px; line-height: 1.5; }
+.b24-checklist > li::before {
+  content: ""; position: absolute; left: 0; top: -0.06em;
+  width: 27px; height: 27px; background: no-repeat center/contain;
+}
+.b24-checklist > li.is-yes::before { background-image: url("icons/badge-check.svg"); }
+.b24-checklist > li.is-no::before  { background-image: url("icons/cross.svg"); }
+.page--navy .b24-checklist > li.is-yes::before,
+.page--partner-navy .b24-checklist > li.is-yes::before,
+.b24-onnavy .b24-checklist > li.is-yes::before { background-image: url("icons/badge-check-onnavy.svg"); }
+.page--navy .b24-checklist > li.is-no::before,
+.page--partner-navy .b24-checklist > li.is-no::before,
+.b24-onnavy .b24-checklist > li.is-no::before { background-image: url("icons/cross-white.svg"); }
+
+/* ============================================================================
+   9. QUOTE CALLOUT (green left bar)
+   ========================================================================== */
+.b24-quote {
+  border-left: 6px solid var(--b24-green);
+  padding: 2px 0 2px var(--b24-s5); margin: var(--b24-s6) 0;
+  font-size: 15.5px; line-height: 1.5; color: var(--b24-text);
+}
+.page--navy .b24-quote { color: #fff; }
+
+/* ============================================================================
+   10. TABLES
+   ========================================================================== */
+.b24-table-wrap {
+  border-radius: var(--b24-r-inner); overflow: hidden;
+  box-shadow: var(--b24-shadow-card); background: #fff; margin: 0 0 var(--b24-s6);
+}
+.b24-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.b24-table thead th {
+  background: var(--b24-grad-header); color: #fff;
+  font-family: var(--b24-font-display); font-weight: 800; font-size: 16px;
+  padding: 16px 18px; text-align: center;
+}
+.b24-table thead th:first-child { text-align: left; }
+.b24-table tbody td {
+  padding: 15px 18px; border-bottom: 1px solid var(--b24-line);
+  vertical-align: middle; text-align: center;
+}
+.b24-table tbody td:first-child {
+  text-align: left; font-family: var(--b24-font-display);
+  font-weight: 800; color: var(--b24-blue-500); font-size: 15px;
+}
+.b24-table tbody tr:last-child td { border-bottom: 0; }
+.b24-table tbody tr:nth-child(even) td { background: #F6FBFF; }
+
+/* comparison card: ❌ Weak pitch | ✅ What the client wants */
+.b24-compare { margin: 0 0 var(--b24-s6); }
+.b24-compare__head {
+  display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--b24-grad-header); color: #fff;
+  border-radius: var(--b24-r-inner) var(--b24-r-inner) 0 0; overflow: hidden;
+}
+.b24-compare__head > div {
+  padding: 16px 20px; font-family: var(--b24-font-display);
+  font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: .4em;
+}
+.b24-compare__head > div:first-child { border-right: 1px solid rgba(255,255,255,.2); }
+.b24-compare__body {
+  display: grid; grid-template-columns: 1fr 1fr;
+  background: #fff; border-radius: 0 0 var(--b24-r-inner) var(--b24-r-inner);
+  box-shadow: var(--b24-shadow-card); overflow: hidden;
+}
+.b24-compare__body > div {
+  padding: var(--b24-s8) var(--b24-s6); text-align: center;
+  font-family: var(--b24-font-display); font-weight: 800; font-size: 17px;
+  line-height: 1.3; color: var(--b24-navy-900);
+}
+.b24-compare__body > div:first-child { border-right: 1px solid var(--b24-line); }
+
+/* ============================================================================
+   11. DASHED FRAME / CTA BOX
+   ========================================================================== */
+.b24-dashed {
+  border: 2px dashed var(--b24-dashed); border-radius: var(--b24-r-card);
+  padding: var(--b24-s8); margin: 0 0 var(--b24-s5); position: relative;
+}
+.b24-cta {                            /* closing call-to-action                 */
+  border: 2px dashed var(--b24-dashed); border-radius: var(--b24-r-card);
+  padding: var(--b24-s10); position: relative;
+}
+.b24-cta .b24-h2 { margin-bottom: var(--b24-s4); }
+
+/* big decorative quote-mark watermark */
+.b24-quotemark {
+  position: absolute; font-family: var(--b24-font-display); font-weight: 900;
+  font-size: 150px; line-height: .7; color: var(--b24-line);
+  right: var(--b24-s8); bottom: var(--b24-s5); pointer-events: none; user-select: none;
+}
+.b24-quotemark::before { content: "\201D"; }
+
+/* ============================================================================
+   12. DECORATIVE ELEMENTS
+   ========================================================================== */
+/* Green sparkle (4-point). Use .b24-star and size with width/height.
+   Brand has ONE green (#BDF300); .b24-star--lime is kept as an alias. */
+.b24-star,
+.b24-star--lime {
+  display: inline-block; width: 46px; height: 46px; flex: 0 0 auto;
+  background: no-repeat center/contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 2 C56 34 66 44 98 50 C66 56 56 66 50 98 C44 66 34 56 2 50 C34 44 44 34 50 2Z' fill='%23BDF300'/%3E%3C/svg%3E");
+}
+
+/* absolute-positioned decoration helper */
+.b24-deco { position: absolute; z-index: 0; pointer-events: none; }
+.b24-content-z { position: relative; z-index: 1; }
+
+/* Tetris-style rounded block (Partners graphic element).
+   An L-shaped rounded block built from a square with one notched corner.
+   Use as background decoration; pair light + dark, add a green dot. */
+.b24-tetris {
+  width: 150px; height: 150px; border-radius: 34px; flex: 0 0 auto;
+  background: var(--b24-grad-partner-navy);
+  -webkit-mask: radial-gradient(circle 44px at 100% 100%, transparent 98%, #000 100%);
+          mask: radial-gradient(circle 44px at 100% 100%, transparent 98%, #000 100%);
+}
+.b24-tetris--light { background: var(--b24-grad-partner-light); }
+.b24-tetris--notch-tr { -webkit-mask: radial-gradient(circle 44px at 100% 0, transparent 98%, #000 100%);
+                                mask: radial-gradient(circle 44px at 100% 0, transparent 98%, #000 100%); }
+.b24-tetris--notch-bl { -webkit-mask: radial-gradient(circle 44px at 0 100%, transparent 98%, #000 100%);
+                                mask: radial-gradient(circle 44px at 0 100%, transparent 98%, #000 100%); }
+.b24-dot { width: 26px; height: 26px; border-radius: 50%; background: var(--b24-green); flex:0 0 auto; }
+
+/* photo placeholder — cutout-person area */
+.b24-photo {
+  background: linear-gradient(160deg, #DCEBF7, #C6DEF1);
+  border-radius: var(--b24-r-card);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--b24-text-mute); font-size: 12px; text-align: center;
+  min-height: 120px;
+}
+.b24-photo--navy { background: var(--b24-navy-700); color: var(--b24-on-navy-soft); }
+
+/* curved arrow (points down-right by default) */
+.b24-arrow {
+  width: 90px; height: 70px; display: inline-block;
+  background: no-repeat center/contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 90'%3E%3Cpath d='M6 8 C70 6 104 26 104 74' fill='none' stroke='%230066A1' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M104 74 L90 58 M104 74 L118 56' fill='none' stroke='%230066A1' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* utilities */
+.b24-row   { display: flex; gap: var(--b24-s5); align-items: flex-start; }
+.b24-col   { flex: 1 1 0; min-width: 0; }
+.b24-center{ text-align: center; }
+.b24-mt-0  { margin-top: 0; }   .b24-mb-0 { margin-bottom: 0; }
+.b24-fill  { flex: 1 1 auto; }  /* push footer down inside a .page */
+
+/* ============================================================================
+   13. BRAND IMAGERY & PRODUCT ICONS   (from the Figma "People" + "Icons" libs)
+   Real cutout-people photos and branded SVG icons live in  bitrix24-images/
+   (curated set: people/*.png transparent cutouts, icons/*.svg in brand navy +
+   *-white.svg for dark surfaces). Full raw libraries stay in  People/ + Icons/.
+   ========================================================================== */
+
+/* Inline product icon (SVG). Sizes with the surrounding text; keep it left of a
+   label. On light pages use the navy file (icons/crm.svg); on navy surfaces use
+   the -white variant (icons/crm-white.svg). */
+.b24-ic { height: 1.05em; width: auto; vertical-align: -.14em; flex: 0 0 auto; }
+.b24-ic--lg { height: 1.5em; }
+
+/* App-icon tile holding a brand SVG instead of an emoji glyph. Tiles are a navy
+   gradient, so use the -white icon inside them. */
+.b24-tile > img { width: 56%; height: 56%; object-fit: contain; }
+
+/* Photo band: drop a real image inside .b24-photo — it fills and crops cleanly
+   (good for the full-width "cutout people on navy" band). */
+.b24-photo { overflow: hidden; }
+.b24-photo > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Cutout person (transparent PNG) floating on a cover / hero / story. Position
+   with inline top/right/bottom/left + height. Sits at z-index:0, so keep text in
+   .b24-content-z above it. Add --shadow for a soft ground shadow under the cutout. */
+.b24-cutout { position: absolute; bottom: 0; right: var(--b24-page-pad);
+  height: 70%; width: auto; object-fit: contain; z-index: 0; pointer-events: none; }
+.b24-cutout--shadow { filter: drop-shadow(0 18px 30px rgba(6, 40, 99, .28)); }

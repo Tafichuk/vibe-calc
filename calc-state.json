@@ -261,5 +261,102 @@
     "Essentials — a per-user daily allowance, identical across every Essentials plan.",
     "Alaio Basic Vibe+ — ten times the Essentials allowance.",
     "Alaio Standard Vibe+ and above — unlimited AI, plus priority in the processing queue under load."
-  ]
+  ],
+  "restore": {
+    "version": 1,
+    "burdenPct": 30,
+    "daysMonth": 21,
+    "showRevenue": false,
+    "company": {
+      "empCount": 50,
+      "empSal": 4000,
+      "mgrCount": 5,
+      "mgrSal": 4000,
+      "ropCount": 1,
+      "ropSal": 6500
+    },
+    "partner": {
+      "company": "",
+      "person": "",
+      "email": "",
+      "phone": "",
+      "site": "",
+      "logo": ""
+    },
+    "plan": {
+      "essPlan": "Standard",
+      "tgtPlanName": "Alaio Standard Vibe+",
+      "tgtAuto": true
+    },
+    "scenarios": [
+      {
+        "id": 1,
+        "coverage": 100,
+        "values": {
+          "mgr": 5,
+          "sal": 4000,
+          "calls": 20,
+          "time": 10,
+          "plan": 40000,
+          "coef": 0.3
+        },
+        "dirty": {},
+        "segments": [],
+        "service": 2400
+      },
+      {
+        "id": 9,
+        "coverage": 20,
+        "values": {
+          "mgr": 10,
+          "sal": 4000,
+          "ops": 30,
+          "time": 3
+        },
+        "dirty": {},
+        "segments": [],
+        "service": 5200
+      },
+      {
+        "id": 10,
+        "coverage": 30,
+        "values": {
+          "emp": 15,
+          "sal": 4000,
+          "q": 3,
+          "t": 10,
+          "share": 0.7
+        },
+        "dirty": {},
+        "segments": [],
+        "service": null
+      },
+      {
+        "id": 3,
+        "coverage": 12,
+        "values": {
+          "emp": 6,
+          "sal": 4000,
+          "docs": 5,
+          "time": 20
+        },
+        "dirty": {},
+        "segments": [],
+        "service": null
+      },
+      {
+        "id": 7,
+        "coverage": 30,
+        "values": {
+          "emp": 15,
+          "share": 0.1,
+          "simp": 0.3,
+          "sal": 4000
+        },
+        "dirty": {},
+        "segments": [],
+        "service": 3200
+      }
+    ]
+  }
 }

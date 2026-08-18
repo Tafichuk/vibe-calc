@@ -1,0 +1,402 @@
+/**
+ * report-template.mjs — ЕДИНСТВЕННЫЙ ИСТОЧНИК РАЗМЕТКИ ОТЧЁТА.
+ *
+ * Отсюда её берут ОБА потребителя:
+ *   scripts/build-report.mjs — сборка из терминала (data URI, инлайн CSS кита);
+ *   index.html               — кнопки «скачать PDF» в браузере (относительные пути).
+ * В index.html лежит СГЕНЕРИРОВАННАЯ копия этого файла между маркерами
+ * REPORT TEMPLATE — её ставит scripts/embed-report.mjs, а расхождение ловит
+ * scripts/check-report-drift.mjs. Руками копию не править: она перезапишется.
+ *
+ * Почему копия, а не import: index.html обязан оставаться самодостаточным и
+ * работать из file://, где загрузка ES-модулей запрещена браузером. Поэтому
+ * авторский источник один, а копия — генерируемый артефакт, как встроенный
+ * PRICING против config/pricing.json.
+ *
+ * ОКРУЖЕНИЕ приходит параметром `assets`, чтобы в шаблоне не было ни fs, ни fetch:
+ *   lockupDark / lockupWhite — адрес локапа (data URI в Node, относительный путь в браузере);
+ *   styleTags                — готовые <style>/<link> для <head>;
+ *   baseHref                 — необязательный <base>, чтобы относительные пути
+ *                              разрешались от каталога страницы в iframe.
+ */
+
+export function buildReport(S, {mode, assets}) {
+  const isPartner = mode === "partner";
+  const ROWS_PER_PAGE = 7;          // scenario rows per A4 sheet — deliberately conservative
+  const FIELD_ROWS_PER_PAGE = 5;    // scenario input blocks per A4 sheet
+
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const LOC = S.lang === "de" ? "de-DE" : "en-US";
+  const money = n => new Intl.NumberFormat(LOC, { style: "currency", currency: S.currency, maximumFractionDigits: 0 }).format(Math.round(n || 0));
+  const int = n => new Intl.NumberFormat(LOC).format(Math.round(n || 0));
+  /* one-decimal percent, identical rule to fmtPct1() on screen. The state carries the
+     raw ratio; rounding happens here, on display, once. */
+  const pct1 = v => new Intl.NumberFormat(LOC, {maximumFractionDigits:1})
+    .format(Math.round((v || 0) * 10) / 10);
+  const today = new Date(S.generatedAt || Date.now()).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" });
+  const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
+
+const T = S.totals, P = S.plan, PT = S.partner || {};
+
+/* THE PLAN PAIR arrives exactly as the partner picked it: current and target are
+   chosen independently on screen. The "before" price has THREE states and each
+   prints differently — a real price, nothing (the client pays nothing today), and
+   no published price at all. Nothing is reconstructed here: with no "before"
+   price we print the target price and say why the difference is missing. */
+const fromPriceCell = () => {
+  if (P.fromPriceKnown) return money(P.fromAnnualPerMonth);
+  return P.fromNoPriceReason === "currency"
+    ? `not published in ${esc(S.currency)}`
+    : "no published price";
+};
+const noPriceNote = () => P.fromNoPriceReason === "currency"
+  ? `Essentials prices are not published in ${esc(S.currency)}, so the difference against `
+    + `${esc(P.to)} cannot be shown. The figure above is the full price of ${esc(P.to)}, not a surcharge.`
+  : `Essentials is published for four plans covering up to 250 users. ${esc(P.from)} at the `
+    + `capacity of ${esc(P.to)} has no price in the price list, so the difference is not shown: `
+    + `the figure above is the full price of ${esc(P.to)}, not a surcharge.`;
+const partnerName = PT.company || "Bitrix24 Partner";
+const clientName = S.company?.name || "";
+
+/* ---------- CO-BRANDING ----------------------------------------------------
+   The partner mark sits BESIDE the Bitrix24 Partners lockup, never merged with
+   it: two separate marks with clear space between them. The clear space is the
+   height of the clock glyph in the Bitrix24 mark — measured on the official file
+   (1889x171, glyph 107px tall) at 0.63 of the lockup height. The lockup itself is
+   untouched: official file, original colours, original proportions.
+   partner.logo is a data URI or an absolute URL, so it resolves regardless of the
+   <base> that render.py injects for the kit assets. Absent -> nothing is emitted
+   and no gap is left behind.
+   -------------------------------------------------------------------------- */
+const partnerLogo = PT.logo && String(PT.logo).trim() ? String(PT.logo).trim() : null;
+
+/* The Bitrix24 lockup keeps its kit class, so the kit owns its size and its own
+   max-width guard (.b24-plogo). We only add a sibling and the clear space between
+   them. maxW caps the partner mark so the pair can never outgrow the A4 content
+   width — .page is overflow:hidden, and a clipped logo is worse than a small one. */
+const cobrand = (lockup, kitClass, h, maxW) => `
+  <span style="display:inline-flex; align-items:center; justify-content:flex-end;
+               gap:${(h * 0.63).toFixed(1)}px; min-width:0; flex:0 1 auto;">
+    <img class="b24-plogo ${kitClass}" src="${lockup}" alt="Bitrix24 Partners">
+    ${partnerLogo ? `<img src="${esc(partnerLogo)}" alt="${esc(partnerName)}"
+        style="max-height:${h}px; max-width:${maxW}px; height:auto; width:auto;
+               object-fit:contain; display:block; flex:0 1 auto;">` : ""}
+  </span>`;
+
+const runhead = title => `
+  <div class="b24-runhead">
+    <span>${esc(partnerName)} — ${esc(title)}</span>
+    ${cobrand(assets.lockupDark, "b24-plogo--foot", 16, 80)}
+  </div>`;
+const footer = () => `
+  <div class="b24-footer">
+    <!-- footer keeps the Bitrix24 lockup alone: the partner mark is already in the
+         running header on every page, and repeating it twice per sheet reads as
+         clutter rather than co-branding. -->
+    <img class="b24-plogo b24-plogo--foot" src="${assets.lockupDark}" alt="Bitrix24 Partners">
+    <span>${esc(partnerName)}${PT.email ? " · " + esc(PT.email) : ""} · Page <span class="b24-pageno"></span></span>
+  </div>`;
+
+/* ---------- page 1: cover ---------- */
+const cover = () => `
+<section class="page page--partner-navy page--flush" style="padding:var(--b24-page-pad);">
+  <div class="b24-tetris" style="position:absolute; right:-50px; top:-50px; opacity:.55;"></div>
+  <div class="b24-tetris--light b24-tetris b24-tetris--notch-bl" style="position:absolute; left:-55px; bottom:-55px; opacity:.15;"></div>
+  <span class="b24-star" style="position:absolute; right:150px; top:150px; width:56px; height:56px;"></span>
+
+  <div class="b24-plogo b24-plogo--cover" style="z-index:1;">
+    ${cobrand(assets.lockupWhite, "b24-plogo--cover", 30, 150)}
+  </div>
+
+  <div class="b24-content-z" style="margin-top:auto; margin-bottom:40px;">
+    <span class="b24-pill" style="margin-bottom:22px;">${isPartner ? "Partner copy — internal" : "Value assessment"}</span>
+    <h1 class="b24-display">What AI in Bitrix24 is<br>worth to <span class="b24-hl">${esc(clientName || "your business")}</span></h1>
+    <p class="b24-lead" style="margin-top:22px; max-width:86%; font-size:17px;">
+      ${int(S.items.length)} selected scenarios, costed on your own numbers.
+      Annual payroll saving <span class="b24-hl">${money(T.fotYear)}</span>.
+    </p>
+    <p class="b24-lead" style="margin-top:26px; font-size:14px; opacity:.85;">
+      ${esc(partnerName)} · ${esc(today)}
+    </p>
+  </div>
+</section>`;
+
+/* ---------- page 2: headline ---------- */
+const headline = () => `
+<section class="page page--sky">
+  ${runhead("Headline")}
+  <h1 class="b24-h1">The numbers</h1>
+
+  <div class="b24-table-wrap">
+    <table class="b24-table">
+      <thead><tr><th>What</th><th>Month</th><th>Year</th></tr></thead>
+      <tbody>
+        <tr><td>Payroll saving</td><td>${money(T.fotMonth)}</td><td>${money(T.fotYear)}</td></tr>
+        ${S.showRevenue && T.revMonth > 0 ? `<tr><td>Additional: revenue uplift (estimate)</td><td>${money(T.revMonth)}</td><td>${money(T.revMonth * 12)}</td></tr>` : ""}
+        ${S.showRevenue && T.potMonth > 0 ? `<tr><td>Additional: existing-base potential (estimate)</td><td>${money(T.potMonth)}</td><td>${money(T.potMonth * 12)}</td></tr>` : ""}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="b24-table-wrap" style="margin-top:var(--b24-s6)">
+    <table class="b24-table">
+      <thead><tr><th>First year</th><th>Amount</th></tr></thead>
+      <tbody>
+        <tr><td>${esc(P.to)} subscription, year</td><td>− ${money(T.subscriptionYear)}</td></tr>
+        <tr><td>Implementation services, one-off${T.serviceUnquoted
+              ? ` — quoted for ${int(T.serviceQuoted)} of ${int(S.items.length)} scenarios`
+              : ""}</td><td>− ${money(T.serviceSum)}</td></tr>
+        <tr><td><strong>Total first-year cost</strong></td><td><strong>− ${money(T.firstYearCost)}</strong></td></tr>
+        <tr><td><strong>Net first-year payroll saving</strong></td><td><strong>${money(T.netFirstYear)}</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  ${T.serviceUnquoted ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
+    ${int(T.serviceUnquoted)} scenario(s) are not yet priced, so the figure above is not the
+    full implementation cost.</p>` : ""}
+
+  ${overlapBlock()}
+
+  <div class="b24-dashed" style="margin-top:var(--b24-s5)">
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      <span class="b24-strong">What this figure is:</span> the cost of the working time
+      currently spent on these tasks. It is not profit, and not cash freed up.
+    </p>
+  </div>
+
+  <div class="b24-quote">
+    Payroll saving is the sum of the selected scenarios over twelve months. Day-driven
+    scenarios are scaled to ${int(S.economics.daysMonth)} working days; the hourly cost of an
+    employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
+    ${int(S.economics.burdenPct)}% employer payroll burden.
+    ${S.showRevenue ? "Revenue figures are projections and are shown separately; they never enter the net saving." : "Revenue projections are excluded from this report."}
+  </div>
+
+  ${footer()}
+</section>`;
+
+/* Credibility warning — travels in BOTH builds. The client is entitled to know the
+   estimate is above the level we consider defensible; hiding it would be the dishonest
+   choice. Amber callout, never red. */
+const overlapBlock = () => {
+  const o = S.overlap;
+  if (!o || o.ok) return "";
+  return `
+  <div class="b24-dashed" style="margin-top:var(--b24-s5); border-color:#A15C00;">
+    <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
+      <span class="b24-strong" style="color:#A15C00;">Estimate above the credibility limit.</span>
+      The selected scenarios total ${pct1(o.pct)}% of the company's monthly payroll cost
+      (${money(o.payrollMonth)}), above the ${int(o.threshold)}% limit this model treats as
+      defensible. The scenarios most likely overlap — the same working hours counted more
+      than once — so the coverage shares need review before these figures are relied on.
+    </p>
+  </div>`;
+};
+
+/* ---------- scenario overview table, chunked ---------- */
+const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => `
+<section class="page page--sky">
+  ${runhead("Selected scenarios")}
+  <h1 class="b24-h1">Selected scenarios${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
+
+  <div class="b24-table-wrap">
+    <table class="b24-table">
+      <thead><tr><th>Scenario</th><th>Who</th><th>Coverage</th><th>Saving / month</th><th>Saving / year</th>${isPartner ? "<th>My services</th>" : ""}</tr></thead>
+      <tbody>
+        ${rows.map(it => `<tr>
+          <td>${esc(it.title)}</td>
+          <td>${esc(it.role)}</td>
+          <td>${it.coverage === null ? "n/a" : int(it.coverage) + "%"}</td>
+          <td>${money(it.fotMonth)}</td>
+          <td>${money(it.fotYear)}</td>
+          ${isPartner ? `<td>${it.service === null ? "not quoted" : money(it.service)}</td>` : ""}
+        </tr>`).join("")}
+      </tbody>
+    </table>
+  </div>
+  ${footer()}
+</section>`).join("");
+
+/* ---------- inputs used, chunked (transparency: the client can check our numbers) ---------- */
+const inputPages = () => chunk(S.items, FIELD_ROWS_PER_PAGE).map((group, i, all) => `
+<section class="page page--sky">
+  ${runhead("Inputs used")}
+  <h1 class="b24-h1">The numbers we entered${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
+  ${group.map(it => `
+  <div class="b24-card b24-card--white" style="margin-bottom:var(--b24-s4); padding:var(--b24-s4) var(--b24-s5);">
+    <p class="b24-label" style="margin:0 0 6px;">${esc(it.title)}</p>
+    <p class="b24-p" style="margin:0; font-size:13px;">
+      ${it.fields.map(f => `${esc(f.label)}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ")}
+    </p>
+  </div>`).join("")}
+  ${footer()}
+</section>`).join("");
+
+/* ---------- plan recommendation (client-safe: names + prices only) ---------- */
+const planPage = () => `
+<section class="page page--sky">
+  ${runhead("Recommended plan")}
+  <h1 class="b24-h1">Recommended plan</h1>
+
+  <div class="b24-table-wrap">
+    <table class="b24-table">
+      <thead><tr><th></th><th>Plan</th><th>Per month for the whole account, billed annually</th></tr></thead>
+      <tbody>
+        <tr><td>Currently</td><td>${esc(P.from)}</td><td>${fromPriceCell()}</td></tr>
+        <tr><td>Recommended</td><td><strong>${esc(P.to)}</strong></td><td><strong>${money(P.toAnnualPerMonth)}</strong></td></tr>
+        ${P.diffPerMonth == null ? "" :
+          `<tr><td>Difference</td><td>${P.fromKind === "none" ? "new spend" : "upgrade"}</td>
+               <td><strong>+ ${money(P.diffPerMonth)}</strong></td></tr>`}
+        ${P.diffPerMonth == null ? "" :
+          `<tr><td>Difference, year</td><td></td><td>+ ${money(P.diffPerMonth * 12)}</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+  ${P.fromPriceKnown ? "" : `<p class="b24-p">${noPriceNote()}</p>`}
+  <p class="b24-p">Plan prices are for the whole account, not per user. The number in an
+     Enterprise tier (250, 500, 1000 …) is the seat limit included in the plan and is already
+     priced in, so nothing above is multiplied by headcount.</p>
+
+  <h1 class="b24-h1" style="margin-top:var(--b24-s8); font-size:22px;">What ${esc(P.to)} adds</h1>
+  <ul class="b24-checklist">
+    ${S.aiAllowance.map(a => `<li class="is-yes">${esc(a)}</li>`).join("")}
+    <li class="is-yes">Vibecode — build custom AI-powered business apps</li>
+    <li class="is-yes">MCP server — connect external AI agents to Bitrix24</li>
+    <li class="is-yes">Unlimited REST API and Bitrix24 Market</li>
+  </ul>
+
+  <div class="b24-dashed" style="margin-top:var(--b24-s6)">
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      AI is positioned by plan, not by a request count — no per-request quotas are published,
+      so no numeric AI limits are quoted here. Prices effective from ${esc(P.effectiveFrom)};
+      existing clients keep current pricing until the end of their period or
+      ${esc(P.grandfatheredUntil)}, whichever is later.
+    </p>
+  </div>
+  ${footer()}
+</section>`;
+
+/* ---------- PARTNER-ONLY pages ----------
+   The partner build adds the partner's own service fees. Programme economics
+   (gap %, promo mechanics, margin) are not part of this build at all. */
+const partnerServicePages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => `
+<section class="page page--sky">
+  ${runhead("My services — internal")}
+  <h1 class="b24-h1">My services${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
+  <div class="b24-table-wrap">
+    <table class="b24-table">
+      <thead><tr><th>Scenario</th><th>Fee</th></tr></thead>
+      <tbody>
+        ${rows.map(it => `<tr><td>${esc(it.title)}</td>
+          <td>${it.service === null ? "not quoted" : money(it.service)}</td></tr>`).join("")}
+        ${i === all.length - 1 ? `<tr><td><strong>Total — priced scenarios only, ${int(T.serviceQuoted)} of ${int(S.items.length)}</strong></td>
+            <td><strong>${money(T.serviceSum)}</strong></td></tr>` : ""}
+      </tbody>
+    </table>
+  </div>
+  ${(i === all.length - 1 && T.serviceUnquoted) ? `<div class="b24-quote">
+    ${int(T.serviceUnquoted)} scenario(s) left unpriced. They are excluded from the total and from
+    the average — not counted as zero. Price them before sending the client a quote.</div>` : ""}
+  ${footer()}
+</section>`).join("");
+
+/* ---------- closing CTA + partner contacts ---------- */
+const closing = () => `
+<section class="page page--partner-navy" style="text-align:center; align-items:center; justify-content:center;">
+  <div class="b24-tetris" style="position:absolute; left:-50px; top:-50px; opacity:.5;"></div>
+  <div class="b24-tetris--light b24-tetris b24-tetris--notch-tr" style="position:absolute; right:-55px; bottom:-55px; opacity:.14;"></div>
+
+  <div class="b24-content-z" style="max-width:82%;">
+    <h1 class="b24-display" style="font-size:38px;">Let's put this<br>into <span class="b24-hl">practice</span>.</h1>
+    <p class="b24-lead" style="margin:22px auto 34px; font-size:17px; opacity:.92;">
+      ${money(T.fotYear)} of payroll saving a year, on your own numbers.
+      Next step is a working session on the scenarios you picked.
+    </p>
+
+    <div class="b24-card b24-card--navy" style="text-align:left; max-width:420px; margin:0 auto var(--b24-s8);">
+      <p class="b24-label" style="margin:0 0 8px;">Your contact</p>
+      <p class="b24-p" style="margin:0; font-size:15px;">
+        <span class="b24-strong">${esc(PT.person || partnerName)}</span><br>
+        ${PT.company ? esc(PT.company) + "<br>" : ""}
+        ${PT.email ? esc(PT.email) + "<br>" : ""}
+        ${PT.phone ? esc(PT.phone) + "<br>" : ""}
+        ${PT.site ? esc(PT.site) : ""}
+      </p>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:var(--b24-page-pad); left:50%; transform:translateX(-50%);">
+    ${cobrand(assets.lockupWhite, "b24-plogo--foot", 20, 110)}
+  </div>
+</section>`;
+
+/* ---------- assemble ---------- */
+const pages = [
+  cover(),
+  headline(),
+  scenarioPages(),
+  inputPages(),
+  planPage(),
+  isPartner ? partnerServicePages() : "",
+  closing(),
+].filter(Boolean).join("\n");
+
+const html = `<!DOCTYPE html>
+<html lang="${esc(S.lang || "en")}">
+<head>
+<meta charset="UTF-8">
+<title>${esc(clientName || partnerName)} — AI value ${isPartner ? "assessment (partner copy)" : "assessment"}</title>
+${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags}
+<style>
+  @media screen { body { padding: 24px 0; } }
+  /* Soft CSS shadows are rasterized as a hard grey rectangle by macOS Preview /
+     Quick Look. Replace them with a hairline. render.py injects the same reset,
+     this keeps a standalone browser preview honest too. */
+  .b24-card--white,.b24-table-wrap{box-shadow:none;border:1px solid var(--b24-line)}
+</style>
+</head>
+<body>
+${pages}
+</body>
+</html>
+`;
+
+  const pageCount = (html.match(/<section class="page/g) || []).length;
+  const hits = isPartner ? [] : auditClient(html, P, money);
+  return {html, pageCount, hits};
+}
+
+/* =============================================================================
+   CLIENT-BUILD AUDIT — общий для терминала и браузера.
+   Клиенту достаётся ОДНА итоговая строка внедрения. Разбивка по сценариям и любая
+   страница, помеченная как партнёрская копия, — дело только партнёра.
+   Возвращает находки, а не падает: build-report.mjs отказывается писать файл,
+   браузер отказывается печатать.
+   ========================================================================== */
+/* Audit the VISIBLE TEXT, not the markup. Auditing raw HTML gives false positives:
+   CSS declarations contain `margin:` and `gap:`, and class names contain `gap-rows`,
+   none of which a client can read. So strip <style> blocks, then attributes, then tags. */
+function visibleText(doc) {
+  return doc
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[a-z][^>]*>/gi, m => m.replace(/\s+[a-z-]+\s*=\s*("[^"]*"|'[^']*')/gi, "")) // drop attributes
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+
+function auditClient(doc, P, money) {
+  const hay = visibleText(doc).toLowerCase();
+  const banned = [
+    ["itemised partner fees",   /my services/],
+    ["unpriced-scenario marker",/not quoted/],
+    ["partner copy marking",    /partner copy/],
+    ["internal-use marking",    /internal use only/],
+  ];
+  const hits = banned.filter(([, re]) => re.test(hay)).map(([label]) => label);
+
+  return hits;
+}
+

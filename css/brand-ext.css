@@ -460,3 +460,46 @@
 }
 /* Плитка на всю ширину для пояснения под разницей. */
 .gap-box--wide{ grid-column: 1 / -1; }
+
+/* =============================================================================
+   8. ШАГ 8 — две кнопки PDF и вспомогательное сохранение расчёта
+   Кнопки PDF равноправны и стоят рядом: клиентская и партнёрская сборки — это
+   выбор, а не последовательность. Сохранение расчёта визуально ниже рангом
+   (кнопка-контур), потому что это не отчёт, и путать их нельзя.
+   ========================================================================== */
+.b24x-pdf-row{ display: flex; flex-wrap: wrap; gap: var(--b24-s4); }
+.b24x-pdf-row .btn-primary{ flex: 0 1 auto; }
+
+.b24x-save-row{
+  display: flex; flex-wrap: wrap; align-items: flex-start;
+  justify-content: space-between; gap: var(--b24-s4) var(--b24-s5);
+  margin-top: var(--b24-s6); padding-top: var(--b24-s5);
+  border-top: 1px solid var(--b24-line);
+}
+.b24x-save-row > div:first-child{ flex: 1 1 260px; min-width: 0; }
+.b24x-save-h{
+  font: 700 15px var(--b24-font-display); color: var(--b24p-deep); display: block;
+}
+.b24x-save-actions{ display: flex; flex-wrap: wrap; gap: var(--b24-s3); align-items: center; }
+
+/* Кнопка-контур: то же тело, что у кнопки выбора файла в §5, чтобы «сохранить»
+   и «открыть» читались одной парой. */
+.b24x-btn-ghost{
+  appearance: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 48px; padding: 0 var(--b24-s5);
+  font: 600 14px var(--b24-font-body); color: var(--b24-deep);
+  background: var(--b24-white);
+  border: 1px solid var(--b24-line); border-radius: var(--b24-r-tile);
+}
+.b24x-btn-ghost:hover{ border-color: var(--b24p-deep); }
+.b24x-btn-ghost:focus-visible{
+  outline: none; border-color: var(--b24-cyan); box-shadow: 0 0 0 3px rgba(47,199,247,.35);
+}
+
+@media (max-width: 560px){
+  .b24x-pdf-row{ flex-direction: column; }
+  .b24x-pdf-row .btn-primary{ width: 100%; }
+  .b24x-save-actions{ width: 100%; }
+  .b24x-save-actions > *{ flex: 1 1 auto; }
+}

@@ -152,18 +152,38 @@ re-run until it passes.
 
 ---
 
-## Building the PDF report
+## Getting the PDF report
 
-Two steps: state snapshot → report HTML → A4 PDF. The PDF step uses Chrome headless.
+**From the page, with nothing installed.** Fill the calculator in and press one of the two
+buttons in the last step:
+
+| Button | What you get |
+|---|---|
+| **Client report — PDF** | the client-facing build |
+| **Partner report — PDF** | the same plus your service fees per scenario |
+
+Each button lays the report out as A4 pages and opens your browser's print dialog —
+choose **Save as PDF** as the destination. That dialog is the only way a web page can
+write a file to your disk, and it is also what keeps the text real text: selectable,
+searchable, printed with the Bitrix24 font instead of a screenshot. Verified in Chrome,
+Safari and Firefox: 210×297 mm pages, nothing clipped, fonts embedded.
+
+The **Save calculation (JSON)** button next to them is not a report — it is your work
+saved so you can reopen it later ("Open a saved calculation") or hand it to a colleague.
+
+### From the terminal, if you prefer
+
+Same report, same markup — the page and the script share `scripts/report-template.mjs`,
+so the two cannot drift apart:
 
 ```bash
-# fill the calculator in, press "Export data for the report", then:
+# press "Save calculation (JSON)", then:
 node scripts/build-report.mjs calc-state.json --mode=client  --out=build/report-client.html
 node scripts/build-report.mjs calc-state.json --mode=partner --out=build/report-partner.html
 ```
 
-Render each to A4 with the Bitrix24 partner brand kit renderer, or print the HTML from the
-browser (⌘P / Ctrl+P) — the pages are already A4-sized.
+Then render each to A4 with the Bitrix24 partner brand kit renderer, or print the HTML
+from the browser — the pages are already A4-sized.
 
 A `calc-state.json` is included as a worked example: five scenarios, a 50-person company.
 
