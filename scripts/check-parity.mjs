@@ -111,7 +111,7 @@ const checks = [
      of the 15 Vibe+ tiers), so the difference is no longer derivable from the plan
      names — it has to travel and match. When the "before" price is not published
      the screen sends null and there is nothing to compare. */
-  { what: "plan price difference",   screen: D.diffPerUserMonth, in: ["client", "partner"] },
+  { what: "plan price difference",   screen: D.diffPerMonth,     in: ["client", "partner"] },
 ];
 
 /* With no published "before" price, both reports must SAY so rather than quietly
@@ -143,6 +143,24 @@ for (const c of checks) {
   }
 }
 
+/* The loose "figure appears somewhere in the document" test is not enough for the
+   plan difference: a report that multiplies it by headcount simply prints another
+   number, and the absence of the right one is all we would learn. Read the figure
+   that sits next to the "Difference" label and compare it exactly. */
+const diffInReport = text => {
+  const m = text.match(/Difference[^$€]*([$€]\s?[\d.,]+)/);
+  return m ? m[1].replace(/\s/g, " ").trim() : null;
+};
+if (D.diffPerMonth != null) {
+  for (const mode of ["client", "partner"]) {
+    const shown = diffInReport(visible(built[mode]));
+    if (shown !== D.diffPerMonth)
+      problems.push({ what: `plan difference next to its label — ${mode} report`,
+                      a: D.diffPerMonth, b: shown === null ? "(no Difference row found)" : shown,
+                      note: "plan prices are per account; the difference must not be scaled by headcount" });
+  }
+}
+
 /* per-scenario figures must match too — that is where the rounding used to differ */
 for (const p of (D.perScenario || [])) {
   for (const mode of ["client", "partner"]) {
@@ -160,6 +178,59 @@ if (S.overlap && !S.overlap.ok) {
     if (!text.includes(`${D.overlapPct}%`))
       problems.push({ what: `overlap warning percentage — ${mode} report`,
                       a: `${D.overlapPct}%`, b: "(not found; warning missing or differently rounded)" });
+  }
+}
+
+/* ---------- 4. the cost of the move must NOT depend on headcount ----------
+   Plan prices are for the whole account: from Enterprise-1000 up the published price
+   scales exactly with the seat count in the tier name, so the seats are already inside
+   the figure. Multiplying the difference by the client's headcount double-counts them —
+   the bug this guard exists to stop from coming back ("+ $108,000 across 50 users"
+   where the real figure was $2,160 a year).
+
+   Behavioural, not textual: rebuild both reports from the same state with the headcount
+   tripled and demand every plan figure comes out identical. Only payroll may move. */
+let seatGuard = null;
+if (S.company && S.company.empCount) {
+  const scaled = JSON.parse(JSON.stringify(S));
+  scaled.company.empCount = S.company.empCount * 3;
+  const tmp2 = fs.mkdtempSync(path.join(ROOT, ".parity-seats-"));
+  const scaledFile = path.join(tmp2, "scaled.json");
+  fs.writeFileSync(scaledFile, JSON.stringify(scaled));
+  try {
+    for (const mode of ["client", "partner"]) {
+      const out = path.join(tmp2, `${mode}.html`);
+      try {
+        execFileSync(process.execPath,
+          [path.join(ROOT, "scripts", "build-report.mjs"), scaledFile, `--mode=${mode}`, `--out=${out}`],
+          { stdio: "pipe" });
+      } catch (e) {
+        die(2, `check-parity: build-report.mjs failed on the tripled-headcount state (--mode=${mode})\n` +
+               (e.stderr ? e.stderr.toString().slice(0, 600) : e.message));
+      }
+      const text = visible(fs.readFileSync(out, "utf8"));
+      if (D.diffPerMonth != null) {
+        const shown = diffInReport(text);
+        if (shown !== D.diffPerMonth)
+          problems.push({ what: `plan difference changed when headcount tripled — ${mode} report`,
+                          a: `${D.diffPerMonth} at ${S.company.empCount} users`,
+                          b: `${shown === null ? "(no Difference row)" : shown} at ${scaled.company.empCount} users`,
+                          note: "plan cost is per account and must not scale with seats" });
+      }
+      for (const [label, figure] of [["target plan price", D.planToAnnual],
+                                     ["current plan price", D.planFromAnnual],
+                                     ["subscription/year", D.subscriptionYear]]) {
+        if (figure == null) continue;
+        if (!text.includes(figure))
+          problems.push({ what: `${label} changed when headcount tripled — ${mode} report`,
+                          a: `${figure} at ${S.company.empCount} users`,
+                          b: `missing at ${scaled.company.empCount} users`,
+                          note: "plan cost is per account and must not scale with seats" });
+      }
+    }
+    seatGuard = `${S.company.empCount} and ${scaled.company.empCount} users`;
+  } finally {
+    fs.rmSync(tmp2, { recursive: true, force: true });
   }
 }
 
@@ -185,6 +256,10 @@ console.log(`  saving / month   ${D.fotMonth}`);
 console.log(`  saving / year    ${D.fotYear}`);
 console.log(`  first-year cost  ${D.firstYearCost}`);
 console.log(`  net first year   ${D.netFirstYear}`);
+/* Печатаем только когда предохранитель действительно прогнан: строка о проверке,
+   которой не было, — хуже отсутствия строки. */
+if (seatGuard) console.log(`  headcount guard  plan cost identical at ${seatGuard}`);
+else           console.log(`  headcount guard  SKIPPED — state has no company.empCount`);
 console.log(`  checks run       ${checks.filter(c=>c.screen!=null).length} totals x2 builds`
             + ` + ${(D.perScenario||[]).length} per-scenario x2`
             + (S.overlap && !S.overlap.ok ? " + overlap warning" : ""));

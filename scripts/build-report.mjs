@@ -333,17 +333,22 @@ const planPage = () => `
 
   <div class="b24-table-wrap">
     <table class="b24-table">
-      <thead><tr><th></th><th>Plan</th><th>Per user / month, billed annually</th></tr></thead>
+      <thead><tr><th></th><th>Plan</th><th>Per month for the whole account, billed annually</th></tr></thead>
       <tbody>
         <tr><td>Currently</td><td>${esc(P.from)}</td><td>${fromPriceCell()}</td></tr>
         <tr><td>Recommended</td><td><strong>${esc(P.to)}</strong></td><td><strong>${money(P.toAnnualPerMonth)}</strong></td></tr>
-        ${P.diffPerUserMonth == null ? "" :
+        ${P.diffPerMonth == null ? "" :
           `<tr><td>Difference</td><td>${P.fromKind === "none" ? "new spend" : "upgrade"}</td>
-               <td><strong>+ ${money(P.diffPerUserMonth)}</strong></td></tr>`}
+               <td><strong>+ ${money(P.diffPerMonth)}</strong></td></tr>`}
+        ${P.diffPerMonth == null ? "" :
+          `<tr><td>Difference, year</td><td></td><td>+ ${money(P.diffPerMonth * 12)}</td></tr>`}
       </tbody>
     </table>
   </div>
   ${P.fromPriceKnown ? "" : `<p class="b24-p">${noPriceNote()}</p>`}
+  <p class="b24-p">Plan prices are for the whole account, not per user. The number in an
+     Enterprise tier (250, 500, 1000 …) is the seat limit included in the plan and is already
+     priced in, so nothing above is multiplied by headcount.</p>
 
   <h1 class="b24-h1" style="margin-top:var(--b24-s8); font-size:22px;">What ${esc(P.to)} adds</h1>
   <ul class="b24-checklist">

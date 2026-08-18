@@ -2,13 +2,13 @@
   "lang": "en",
   "currency": "USD",
   "showRevenue": false,
-  "generatedFor": "Nordwind Digital GmbH",
+  "generatedFor": "",
   "partner": {
-    "company": "Nordwind Digital GmbH",
-    "person": "Katharina Vogt",
-    "email": "k.vogt@nordwind-digital.de",
-    "phone": "+49 40 5566 2210",
-    "site": "nordwind-digital.de",
+    "company": "",
+    "person": "",
+    "email": "",
+    "phone": "",
+    "site": "",
     "logo": ""
   },
   "economics": {
@@ -211,7 +211,7 @@
     "planFromAnnual": "$99",
     "planToAnnual": "$144",
     "planToAnnualTotal": "$1,728",
-    "diffPerUserMonth": "$45",
+    "diffPerMonth": "$45",
     "overlapPct": "15.5 %",
     "perScenario": [
       {
@@ -243,8 +243,13 @@
   },
   "plan": {
     "from": "Standard",
+    "fromKind": "essentials",
+    "fromPriceKnown": true,
+    "fromNoPriceReason": null,
     "fromAnnualPerMonth": 99,
     "fromMonthly": 144,
+    "matchedPair": true,
+    "diffPerMonth": 45,
     "to": "Alaio Standard Vibe+",
     "toAnnualPerMonth": 144,
     "toMonthly": 199,

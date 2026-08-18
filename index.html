@@ -479,6 +479,8 @@ main.wrap{padding-bottom:var(--b24-s16)}
     </div>
 
     <div class="tr-grid" id="tr-grid"></div>
+    <p class="note-line" data-i18n="ui.planPriceNote"
+       style="margin-top:var(--b24-s4)"></p>
 
     <div class="gap-card">
       <h3 style="margin:0 0 var(--b24-s2); font:700 17px var(--b24-font-display); color:var(--b24p-deep)"
@@ -702,9 +704,15 @@ en: {
   "ui.currentPlan":"Client's current plan",
   "ui.eurMissing":"Essentials prices are published in USD only. Switch to USD for the full comparison.",
   "ui.diffH":"What the move costs",
-  "ui.diffPerUser":"more per user / month, billed annually",
-  "ui.diffPerUserYear":"more per user / year",
-  "ui.diffAllSeats":"more per year across {n} users",
+  /* ЦЕНА — ЗА ТАРИФ ЦЕЛИКОМ, НЕ ЗА ПОЛЬЗОВАТЕЛЯ.
+     Проверено по прайсу: начиная с Enterprise-1000 цена растёт РОВНО пропорционально
+     числу мест в тире (мест ×2 → цена ×2.00, ×1.5 → ×1.50), то есть число мест уже
+     заложено в опубликованную цифру. Цена «за пользователя» от ёмкости тира зависеть
+     не может. Отсюда: умножать разницу на численность нельзя — это двойной счёт.
+     Ключи переименованы намеренно (было perUser*): чтобы прежнее прочтение не
+     вернулось незаметно. */
+  "ui.diffPerMonth":"more per month for the account, billed annually",
+  "ui.diffPerYear":"more per year",
   "ui.aiH":"AI allowance by plan",
   "ui.aiNote":"AI is positioned by plan, not by numbers. No per-request quotas are published, so this calculator recommends a plan qualitatively and never states a request or token count.",
   "ui.burden":"Employer payroll burden",
@@ -793,7 +801,8 @@ en: {
   "ui.dlState":"Export data for the report",
   "ui.reportHow":"Then run: node scripts/build-report.mjs calc-state.json --mode=client   (or --mode=partner)",
   "ui.from":"Currently", "ui.to":"After migration",
-  "ui.perUserMonth":"per user / month, billed annually",
+  "ui.perPlanMonth":"per month for the whole account, billed annually",
+  "ui.planPriceNote":"Plan prices are for the whole account, not per user: the number in an Enterprise tier (250, 500, 1000 …) is the seat limit the plan includes, and it is already priced in. Nothing here is multiplied by the client's headcount.",
   "ui.monthly":"Monthly", "ui.annualPerMonth":"Annual, per month", "ui.annualTotal":"Annual total",
   "ui.diffMonth":"Difference, per month",
   "ui.effectiveFrom":"Prices effective from {date}. Existing clients stay on current pricing until the end of their period or {grand}, whichever is later.",
@@ -1810,7 +1819,7 @@ function planPair(){
   const matched = mapFor(essPlan) ? mapFor(essPlan).to === tgtPlanName : false;
 
   const diff = from.known
-    ? {perUser: vibe.annual - from.annual, promo: null}
+    ? {perMonth: vibe.annual - from.annual, promo: null}
     : null;
 
   return {from, vibe, promo: promoRow ? promoRow.promo : null, diff, matched,
@@ -1881,13 +1890,12 @@ function renderTransition(){
   const P = planPair();
   const from = P.from, vibe = P.vibe;
   document.getElementById("warn-eur").hidden = true;
-  const seats = Math.max(1, Math.round(company.empCount || 1));
 
   /* Колонка «до» имеет три состояния, и они не взаимозаменяемы:
      цена известна · клиент не платит ничего · цены в прайсе нет. */
   const fromPrice = from.known
     ? `<div class="tr-price">${fmtMoney(from.annual)}</div>
-       <div class="tr-per">${t("ui.perUserMonth")}</div>
+       <div class="tr-per">${t("ui.perPlanMonth")}</div>
        <div class="tr-rows">
          <div><span>${t("ui.monthly")}</span><b>${fmtMoney(from.monthly)}</b></div>
          <div><span>${t("ui.annualTotal")}</span><b>${fmtMoney(from.annual*12)}</b></div>
@@ -1908,7 +1916,7 @@ function renderTransition(){
       <div class="tr-k">${t("ui.to")}</div>
       <div class="tr-name">${vibe.plan}</div>
       <div class="tr-price">${fmtMoney(vibe.annual)}</div>
-      <div class="tr-per">${t("ui.perUserMonth")}</div>
+      <div class="tr-per">${t("ui.perPlanMonth")}</div>
       <div class="tr-rows">
         <div><span>${t("ui.monthly")}</span><b>${fmtMoney(vibe.monthly)}</b></div>
         <div><span>${t("ui.annualTotal")}</span><b>${fmtMoney(vibe.annualTotal)}</b></div>
@@ -1924,20 +1932,18 @@ function renderTransition(){
       : t("ui.fromNoPriceNote", {plan: vibe.plan});
     diffEl.innerHTML = `
       <div class="gap-box"><div class="gap-n">${fmtMoney(vibe.annual)}</div>
-        <div class="gap-l">${t("ui.targetOnly")} · ${t("ui.perUserMonth")}</div></div>
+        <div class="gap-l">${t("ui.targetOnly")} · ${t("ui.perPlanMonth")}</div></div>
       <div class="gap-box"><div class="gap-n">${fmtMoney(vibe.annualTotal)}</div>
         <div class="gap-l">${t("ui.annualTotal")}</div></div>
       <div class="gap-box gap-box--wide"><div class="gap-l">${why}</div></div>`;
   } else {
-    const dPerUser = P.diff.perUser;
-    const dPerYear = dPerUser * 12;
+    const dPerMonth = P.diff.perMonth;
+    const dPerYear  = dPerMonth * 12;
     diffEl.innerHTML = `
-      <div class="gap-box"><div class="gap-n">+ ${fmtMoney(dPerUser)}</div>
-        <div class="gap-l">${t("ui.diffPerUser")}</div></div>
+      <div class="gap-box"><div class="gap-n">+ ${fmtMoney(dPerMonth)}</div>
+        <div class="gap-l">${t("ui.diffPerMonth")}</div></div>
       <div class="gap-box"><div class="gap-n">+ ${fmtMoney(dPerYear)}</div>
-        <div class="gap-l">${t("ui.diffPerUserYear")}</div></div>
-      <div class="gap-box"><div class="gap-n">+ ${fmtMoney(dPerYear*seats)}</div>
-        <div class="gap-l">${t("ui.diffAllSeats",{n:fmtInt(seats)})}</div></div>
+        <div class="gap-l">${t("ui.diffPerYear")}</div></div>
       ${from.kind==="none"?`<div class="gap-box gap-box--wide">
         <div class="gap-l">${t("ui.pairNoteNone")}</div></div>`:""}`;
   }
@@ -2050,7 +2056,7 @@ function reportState(){
       planFromAnnual:  PP.from.known ? fmtMoney(PP.from.annual) : null,
       planToAnnual:    fmtMoney(vibe.annual),
       planToAnnualTotal: fmtMoney(vibe.annualTotal),
-      diffPerUserMonth: PP.diff ? fmtMoney(PP.diff.perUser) : null,
+      diffPerMonth: PP.diff ? fmtMoney(PP.diff.perMonth) : null,
       overlapPct:      fmtPct1(m.overlap.pct),
       perScenario: items.map(i=>({id:i.id, fotMonth: fmtMoney(i.fotMonth),
                                   fotYear: fmtMoney(i.fotYear)})),
@@ -2066,7 +2072,7 @@ function reportState(){
       fromAnnualPerMonth: PP.from.known ? PP.from.annual : null,
       fromMonthly: PP.from.known ? PP.from.monthly : null,
       matchedPair: PP.matched,
-      diffPerUserMonth: PP.diff ? PP.diff.perUser : null,
+      diffPerMonth: PP.diff ? PP.diff.perMonth : null,
       to: map.to,
       toAnnualPerMonth: vibe.annual, toMonthly: vibe.monthly, toAnnualTotal: vibe.annualTotal,
       effectiveFrom: PRICING.effectiveFrom, grandfatheredUntil: PRICING.grandfatheredUntil,
