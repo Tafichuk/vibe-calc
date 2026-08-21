@@ -137,14 +137,49 @@ const partnerLogo = PT.logo && String(PT.logo).trim() ? String(PT.logo).trim() :
    max-width guard (.b24-plogo). We only add a sibling and the clear space between
    them. maxW caps the partner mark so the pair can never outgrow the A4 content
    width — .page is overflow:hidden, and a clipped logo is worse than a small one. */
-const cobrand = (lockup, kitClass, h, maxW) => `
+/* ПОДЛОЖКА ПОД ЗНАКОМ ПАРТНЁРА НА ТЁМНЫХ ПОЛОТНАХ.
+   У партнёра один файл логотипа, и он же печатается на светлых страницах и на
+   тёмно-синей обложке с закрывающей страницей. Тёмный знак на navy пропадает.
+   Плашка решает это, не требуя второго файла.
+   ОДНА ГЕОМЕТРИЯ, ДВА ЗАЛИВА. Форма, отбивка и радиус у плашки всегда одни и те
+   же — меняется только заливка, и меняется по замеру светлоты самого знака
+   (partner.logoInk, считается в index.html):
+     dark  -> белая плашка   (--b24-white),  контраст с тёмным знаком ~11.7:1;
+     light -> тёмная плашка  (--b24p-deep-2 #04213F), с белым знаком ~16.2:1,
+              и сама она отличима от полотна: в этом углу градиент около #0A63A6,
+              то есть ~2.55:1, плюс волосяная рамка тем же rgba(255,255,255,.22),
+              которым кит отбивает колонтитулы на navy;
+     null  -> плашки НЕТ. Светлоту измерить не удалось (чужой домен опечатывает
+              canvas), а белая плашка под белым знаком спрятала бы знак, который
+              до правки был виден. Молчать безопаснее, чем угадывать.
+   ФЛАГ ЯВНЫЙ, А НЕ ПО МЕСТУ ВЫЗОВА. onDark передают только обложка и
+   закрывающая страница. На светлых страницах плашки нет и быть не может: там
+   она читалась бы заплаткой, а верхний колонтитул знак вообще рисует сам, без
+   cobrand(). Значение по умолчанию false — если однажды cobrand() позовут со
+   светлой страницы, плашка не появится сама собой.
+   Отбивка и радиус — токены кита (--b24-s2/--b24-s3, --b24-r-tile), своих чисел
+   нет. Охранное поле остаётся 0.63 высоты локапа и отсчитывается теперь до КРАЯ
+   плашки, то есть строже, чем от знака до знака.
+   Локап не трогается вообще: официальный белый файл, свои пропорции и цвет. */
+const cobrand = (lockup, kitClass, h, maxW, {onDark = false, padVar = "--b24-s3"} = {}) => {
+  const ink = PT.logoInk === "light" || PT.logoInk === "dark" ? PT.logoInk : null;
+  const plated = onDark && !!partnerLogo && !!ink;
+  const mark = partnerLogo
+    ? `<img src="${esc(partnerLogo)}" alt="${esc(partnerName)}"
+        style="max-height:${h}px; max-width:${maxW}px; height:auto; width:auto;
+               object-fit:contain; display:block; flex:0 1 auto;">`
+    : "";
+  const plate = `background:${ink === "light" ? "var(--b24p-deep-2)" : "var(--b24-white)"};`
+    + `padding:var(${padVar}); border-radius:var(--b24-r-tile);`
+    + (ink === "light" ? "border:1px solid rgba(255,255,255,.22);" : "")
+    + "display:inline-flex; align-items:center; flex:0 0 auto;";
+  return `
   <span style="display:inline-flex; align-items:center; justify-content:flex-end;
                gap:${(h * 0.63).toFixed(1)}px; min-width:0; flex:0 1 auto;">
     <img class="b24-plogo ${kitClass}" src="${lockup}" alt="Bitrix24 Partners">
-    ${partnerLogo ? `<img src="${esc(partnerLogo)}" alt="${esc(partnerName)}"
-        style="max-height:${h}px; max-width:${maxW}px; height:auto; width:auto;
-               object-fit:contain; display:block; flex:0 1 auto;">` : ""}
+    ${plated ? `<span class="b24x-plate" data-ink="${ink}" style="${plate}">${mark}</span>` : mark}
   </span>`;
+};
 
 /* ---------- RUNNING HEADER — ПАРТНЁРСКИЙ ------------------------------------
    Верхний колонтитул отдан партнёру: его логотип и название компании. Локап
@@ -224,7 +259,7 @@ const cover = () => `
   <span class="b24-star" style="position:absolute; right:150px; top:150px; width:56px; height:56px;"></span>
 
   <div class="b24-plogo b24-plogo--cover" style="z-index:1;">
-    ${cobrand(assets.lockupWhite, "b24-plogo--cover", 30, 150)}
+    ${cobrand(assets.lockupWhite, "b24-plogo--cover", 30, 150, {onDark:true, padVar:"--b24-s3"})}
   </div>
 
   <div class="b24-content-z" style="margin-top:auto; margin-bottom:40px;">
@@ -476,7 +511,7 @@ const closing = () => `
   </div>
 
   <div style="position:absolute; bottom:var(--b24-page-pad); left:50%; transform:translateX(-50%);">
-    ${cobrand(assets.lockupWhite, "b24-plogo--foot", 20, 110)}
+    ${cobrand(assets.lockupWhite, "b24-plogo--foot", 20, 110, {onDark:true, padVar:"--b24-s2"})}
   </div>
 </section>`;
 
