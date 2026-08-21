@@ -2474,6 +2474,11 @@ const partnerName = PT.company || "Bitrix24 Partner";
 const clientName = S.company?.name || "";
 
 /* ---------- CO-BRANDING ----------------------------------------------------
+   Used by the COVER and the CLOSING page only. The running header no longer
+   co-brands: it belongs to the partner alone, and the Bitrix24 lockup lives in
+   the footer of every page (see runhead() / footer()). Co-branding stays where
+   the composition is built for it — one deliberate pairing at the front of the
+   document and one at the back, instead of a second lockup on every sheet.
    The partner mark sits BESIDE the Bitrix24 Partners lockup, never merged with
    it: two separate marks with clear space between them. The clear space is the
    height of the clock glyph in the Bitrix24 mark — measured on the official file
@@ -2498,10 +2503,66 @@ const cobrand = (lockup, kitClass, h, maxW) => `
                object-fit:contain; display:block; flex:0 1 auto;">` : ""}
   </span>`;
 
+/* ---------- RUNNING HEADER — ПАРТНЁРСКИЙ ------------------------------------
+   Верхний колонтитул отдан партнёру: его логотип и название компании. Локап
+   Bitrix24 Partners отсюда УБРАН. Он и так стоит в нижнем колонтитуле каждой
+   страницы — то есть печатался дважды на лист, — и партнёрский знак 16px рядом с
+   ним читался как приложение к нашему, а не как марка автора документа.
+   Теперь наверху только партнёр, внизу только мы: два отдельных знака на разных
+   краях листа. Общего знака из двух логотипов не собирается ни здесь, ни где-то
+   ещё; наш локап не перекрашен и не растянут — он остался официальным файлом в
+   своих пропорциях, только переехал из шапки в подвал, где уже был.
+   Со-брендирование сохранено там, где оно уместно и задумано композицией:
+   обложка и закрывающая страница (см. cobrand()).
+   ЛОГОТИПА НЕТ — остаётся одно название, без пустого места и без подстановки
+   нашего локапа взамен: пустой img не выводится вообще, а gap во flex не
+   возникает, потому что второго ребёнка нет. */
+/* Размер партнёрского знака в шапке. Подобран замером, а не на глаз.
+   Высоту колонтитула задаёт самый высокий его ребёнок: текст 10.5px даёт строку
+   ~16px, наш локап давал ровно 16px, отсюда прежние 28.8px вместе с отбивкой и
+   линейкой. Прогон по H = 16/20/24/28/32/40 на обеих сборках, на всех страницах,
+   с логотипами пропорций 10:1, 4:1 и 1:1 и с названием компании в 62 символа:
+
+     H     логотип 4:1     шапка     запас до подвала   обрез
+     16     64x16          29.0px          20px           0
+     20     80x20          33.0px          20px           0
+     24     96x24          37.0px          20px           0
+     28    112x28          41.0px          20px           0
+     32    128x32          45.0px          20px           0
+     40    160x40          53.0px          20px           0
+
+   Геометрического обрыва нет: страницы прижимают подвал к низу (margin-top:auto),
+   поэтому запас до подвала не меняется вообще, а обреза нет ни на одной высоте.
+   Ограничение здесь редакторское, а не техническое: колонтитул должен остаться
+   колонтитулом. Взято 24 — знак в 1.5 раза заметнее прежних 16px, шапка 37px,
+   то есть всё ещё ниже заголовка страницы (b24-h1); с 32-40px шапка уходит на
+   45-53px и начинает читаться как шапка бланка, перетягивая внимание с
+   содержимого. Плюс у самых широких знаков (10:1) высота выше 20 не даёт вообще
+   ничего: они упираются в MARK_W и остаются 180x18.
+
+   MARK_W = 180 держит широкие логотипы в пределах полосы набора: .page стоит
+   overflow:hidden, обрезанный логотип хуже мелкого. 180px — 27% полосы 658px;
+   правой ячейке остаётся с запасом на самый длинный заголовок страницы
+   («Partner economics — internal»). Замерено: пересечений левого блока с правым
+   нет ни в одном из 18 сочетаний, включая 62-символьное название с логотипом
+   180px — оба конца страхует text-overflow:ellipsis. */
+const PARTNER_MARK_H = 24;
+const PARTNER_MARK_W = 180;
+
 const runhead = title => `
   <div class="b24-runhead">
-    <span>${esc(partnerName)} — ${esc(title)}</span>
-    ${cobrand(assets.lockupDark, "b24-plogo--foot", 16, 80)}
+    <span style="display:inline-flex; align-items:center; gap:10px; min-width:0; flex:1 1 auto;">
+      ${partnerLogo ? `<img src="${esc(partnerLogo)}" alt="${esc(partnerName)}"
+          style="max-height:${PARTNER_MARK_H}px; max-width:${PARTNER_MARK_W}px;
+                 height:auto; width:auto; object-fit:contain; display:block; flex:0 0 auto;">` : ""}
+      <span style="font-weight:700; color:var(--b24-text); white-space:nowrap;
+                   overflow:hidden; text-overflow:ellipsis;">${esc(partnerName)}</span>
+    </span>
+    <!-- Заголовок страницы не сжимается: он говорит, где читатель находится, а
+         название компании продублировано в подвале и может уступить. Замерено на
+         62-символьном названии с логотипом 180px: усекается имя, заголовок цел. -->
+    <span style="flex:0 0 auto; padding-left:var(--b24-s4);
+                 text-align:right; white-space:nowrap;">${esc(title)}</span>
   </div>`;
 const footer = () => `
   <div class="b24-footer">
