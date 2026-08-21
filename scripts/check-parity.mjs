@@ -177,6 +177,63 @@ for (const p of (D.perScenario || [])) {
   }
 }
 
+/* КОЛОНКА ВЫРУЧКИ. Появляется в таблице сценариев ТОЛЬКО при включённом
+   переключателе — и тогда обязана нести по сценарию ту же цифру, которую печатает
+   карточка на экране, а не только общий итог на первой странице. Проверяется в обе
+   стороны: включён — колонка есть, выключен — колонки нет. */
+if (S.showRevenue) {
+  for (const mode of ["client", "partner"]) {
+    const text = visible(built[mode]);
+    if (!/Revenue \/ month/.test(text))
+      problems.push({ what: `revenue column missing — ${mode} report`,
+                      a: "the revenue switch is on",
+                      b: "(no Revenue / month column in the scenario table)" });
+  }
+  /* Читаем ИМЕННО ячейку строки сценария. «Цифра есть где-то в документе» здесь не
+     работает: при включённом переключателе те же суммы стоят общим итогом на первой
+     странице, поэтому удвоенное значение в колонке такую проверку проходит —
+     проверено подстановкой money(it.rev * 2), тест молчал. Та же причина, по которой
+     разницу тарифов ниже читают рядом с её подписью. */
+  const revCellFor = (doc, title) => {
+    const heads = [...(doc.match(/<thead>[\s\S]*?<\/thead>/g) || [])];
+    const rows = doc.match(/<tr>[\s\S]*?<\/tr>/g) || [];
+    const cellsOf = r => [...r.matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/g)]
+      .map(m => m[1].replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim());
+    /* индекс колонки берём из шапки таблицы сценариев, а не по счёту руками */
+    let idx = -1;
+    for (const h of heads) {
+      const c = cellsOf(h);
+      const i = c.findIndex(x => /^Revenue \/ month/.test(x));
+      if (i >= 0 && c[0] === "Scenario") { idx = i; break; }
+    }
+    if (idx < 0) return {idx, cell: null};
+    for (const r of rows) {
+      const c = cellsOf(r);
+      if (c.length > idx && c[0].startsWith(title)) return {idx, cell: c[idx]};
+    }
+    return {idx, cell: null};
+  };
+  for (const it of (S.items || [])) {
+    const p = (D.perScenario || []).find(x => x.id === it.id);
+    if (!p || p.hasRev === false || p.revMonth == null) continue;
+    for (const mode of ["client", "partner"]) {
+      const {idx, cell} = revCellFor(built[mode], it.title);
+      if (idx < 0) continue;                       // отсутствие колонки уже поймано выше
+      if (cell !== p.revMonth)
+        problems.push({ what: `scenario ${it.id} revenue/month in its own row — ${mode} report`,
+                        a: p.revMonth,
+                        b: cell === null ? "(no row found for this scenario)" : `report shows: ${cell}`,
+                        note: "read from the scenario's own cell, not from anywhere in the document" });
+    }
+  }
+} else {
+  for (const mode of ["client", "partner"]) {
+    if (/Revenue \/ month/.test(visible(built[mode])))
+      problems.push({ what: `revenue column present while the switch is off — ${mode} report`,
+                      a: "showRevenue is false", b: "(the scenario table carries a revenue column)" });
+  }
+}
+
 /* Прочерк без объяснения — такая же ловушка, как «$0»: в таблице появляется знак,
    которого читатель не заказывал. Если хоть один сценарий печатается прочерком,
    оба отчёта обязаны нести подпись под таблицей. */

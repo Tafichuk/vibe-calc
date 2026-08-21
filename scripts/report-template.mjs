@@ -45,6 +45,38 @@ export function buildReport(S, {mode, assets}) {
      нет вовсе, и они должны печататься по-старому, а не уйти в сплошной прочерк. */
   const noFot = it => it.hasFot === false;
   const DASH = "\u2014";
+  /* КОЛОНКА ВЫРУЧКИ В ТАБЛИЦЕ СЦЕНАРИЕВ.
+     Показывается ТОЛЬКО при включённом переключателе. При выключенном девять
+     сценариев из одиннадцати дали бы прочерк, а таблица стала бы на колонку шире
+     без всякой пользы — и это же причина, по которой прирост выручки не едет в
+     таблицу постоянно.
+     Значение берётся из items[].rev — это уже посчитанная моделью месячная
+     величина по сценарию (computeModel -> computeScenario, сумма по базовому
+     набору и всем сегментам). Здесь ничего не складывается и не выводится
+     заново: сумма колонки равна revMonth + potMonth с первой страницы.
+     Признак прочерка — hasRev, то есть состав effect, а не равенство нулю:
+     сценарий с эффектом на выручку и нулём на входных данных обязан печатать $0.
+     Сравнение с false — чтобы состояния, снятые до появления признака, вели себя
+     по-старому. */
+  const showRev = !!S.showRevenue;
+  const noRev = it => it.hasRev === false;
+  /* ШИРИНА НА A4. Отбивка кита (18px по горизонтали, кегль 15-16px) рассчитана на
+     пять колонок: при пяти таблица встаёт в 656px против 658px полосы набора.
+     Больше пяти — и таблица перестаёт влезать. Замерено на всех одиннадцати
+     сценариях: партнёрская сборка БЕЗ выручки (шесть колонок) даёт на второй
+     странице таблицы 672px против 658px, и лишние 14px не выезжают на поля, а
+     ОБРЕЗАЮТСЯ: у .b24-table-wrap в ките overflow:hidden. Это было и до колонки
+     выручки — от состава заголовков зависит min-content, а он на второй странице
+     другой. Поэтому режим тесной вёрстки включается по числу колонок, а не по
+     наличию выручки: 5 (клиент без выручки) — как в ките, 6 и 7 — тесно.
+     Замер после правки: 656px во всех сочетаниях. */
+  const wideTable = showRev || isPartner;
+  /* Базовый набор значений — это сегмент 1, поэтому их всегда на один больше,
+     чем в items[].segments. Пометку ставим только когда сегмент не один: она
+     нужна, чтобы сумма в строке не читалась как одно значение. Разбивки в
+     таблице нет намеренно — входные данные каждого сегмента уже напечатаны на
+     странице «The numbers we entered». */
+  const segCount = it => 1 + (it.segments || []).length;
   /* Как chunk, но набирает страницу по ВЕСУ элемента, а не по их числу.
      Нужно странице «The numbers we entered»: блок сценария с сегментами занимает
      не одну строку, а одну на каждый набор значений, и пять таких блоков на A4
@@ -226,15 +258,19 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
   <h1 class="b24-h1">Selected scenarios${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
 
   <div class="b24-table-wrap">
-    <table class="b24-table">
-      <thead><tr><th>Scenario</th><th>Who</th><th>Coverage</th><th>Saving / month</th><th>Saving / year</th>${isPartner ? "<th>My services</th>" : ""}</tr></thead>
+    <table class="b24-table${wideTable ? " b24x-table--wide" : ""}">
+      <thead><tr><th>Scenario</th><th>Who</th><th>Coverage</th><th>Saving / month</th><th>Saving / year</th>${
+        showRev ? `<th>Revenue / month<span class="b24x-th-sub">estimate</span></th>` : ""}${
+        isPartner ? "<th>My services</th>" : ""}</tr></thead>
       <tbody>
         ${rows.map(it => `<tr>
-          <td>${esc(it.title)}</td>
+          <td>${esc(it.title)}${segCount(it) > 1
+              ? `<span class="b24x-td-sub">${int(segCount(it))} segments</span>` : ""}</td>
           <td>${esc(it.role)}</td>
           <td>${it.coverage === null ? "n/a" : int(it.coverage) + "%"}</td>
           <td>${noFot(it) ? DASH : money(it.fotMonth)}</td>
           <td>${noFot(it) ? DASH : money(it.fotYear)}</td>
+          ${showRev ? `<td class="b24x-est">${noRev(it) ? DASH : money(it.rev)}</td>` : ""}
           ${isPartner ? `<td>${it.service === null ? "not quoted" : money(it.service)}</td>` : ""}
         </tr>`).join("")}
       </tbody>
@@ -243,6 +279,10 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
   ${rows.some(noFot) ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
     ${DASH} in the saving columns: the scenario works on revenue, not on the payroll fund,
     so it has no payroll saving to show.</p>` : ""}
+  ${showRev ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
+    Revenue / month is a projection, not a saving the client can verify, and it never enters
+    the net first-year figure${rows.some(noRev) ? `; ${DASH} means the scenario has no revenue effect` : ""}.
+    The headline page shows the same amount split into revenue uplift and existing-base potential.</p>` : ""}
   ${footer()}
 </section>`).join("");
 
@@ -402,6 +442,28 @@ ${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags
      Quick Look. Replace them with a hairline. render.py injects the same reset,
      this keeps a standalone browser preview honest too. */
   .b24-card--white,.b24-table-wrap{box-shadow:none;border:1px solid var(--b24-line)}
+
+  /* ТАБЛИЦА СЦЕНАРИЕВ С КОЛОНКОЙ ВЫРУЧКИ.
+     С включённым переключателем колонок становится шесть (клиентский отчёт) или
+     семь (партнёрский) вместо пяти и шести. Отбивка кита — 18px по горизонтали и
+     кегль 15-16px — рассчитана на пять; на A4 седьмая колонка выдавливала
+     название сценария в столбик по одному слову. Здесь тесним ОТБИВКУ и кегль,
+     а текст не переносим и не обрезаем: ничего не сокращено, ни одна цифра не
+     ужата. Правило живёт в отчёте, а не в brand-ext.css: в документ подключён
+     только кит, отчёт обязан быть самодостаточным.
+     Своих цветов нет: подписи — --b24-text-mute из кита. */
+  .b24x-table--wide thead th{padding:12px 9px; font-size:13px}
+  .b24x-table--wide tbody td{padding:11px 9px; font-size:12px}
+  .b24x-table--wide tbody td:first-child{font-size:13px; line-height:1.25}
+  /* «estimate» под заголовком колонки и «N segments» под названием сценария:
+     оценка и проверяемая экономия не должны читаться как величины одного
+     качества, поэтому цифры выручки идут приглушённым цветом кита. */
+  .b24x-th-sub{display:block; font-family:var(--b24-font-body); font-weight:600;
+               font-size:10.5px; letter-spacing:.02em; opacity:.85; margin-top:2px}
+  .b24x-td-sub{display:block; font-family:var(--b24-font-body); font-weight:600;
+               font-size:10.5px; color:var(--b24-text-mute); text-transform:none;
+               margin-top:3px}
+  .b24-table tbody td.b24x-est{color:var(--b24-text-mute)}
 </style>
 </head>
 <body>
