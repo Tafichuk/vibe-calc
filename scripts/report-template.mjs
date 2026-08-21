@@ -23,7 +23,7 @@
 export function buildReport(S, {mode, assets}) {
   const isPartner = mode === "partner";
   const ROWS_PER_PAGE = 7;          // scenario rows per A4 sheet — deliberately conservative
-  const FIELD_ROWS_PER_PAGE = 5;    // scenario input blocks per A4 sheet
+  const FIELD_ROWS_PER_PAGE = 5;    // строк-наборов значений на A4: сценарий без сегментов весит 1, с сегментами — 1 + их число
 
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const LOC = S.lang === "de" ? "de-DE" : "en-US";
@@ -35,6 +35,22 @@ export function buildReport(S, {mode, assets}) {
     .format(Math.round((v || 0) * 10) / 10);
   const today = new Date(S.generatedAt || Date.now()).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" });
   const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
+  /* Как chunk, но набирает страницу по ВЕСУ элемента, а не по их числу.
+     Нужно странице «The numbers we entered»: блок сценария с сегментами занимает
+     не одну строку, а одну на каждый набор значений, и пять таких блоков на A4
+     уже не помещаются. Вес = 1 + число сегментов. Один элемент кладётся на
+     страницу всегда, даже если он тяжелее лимита, — иначе цикл не сдвинется.
+     Без сегментов вес каждого равен 1 и разбиение совпадает с chunk(arr, n). */
+  const chunkByWeight = (arr, budget, weight) => {
+    const o = []; let cur = [], load = 0;
+    for (const it of arr) {
+      const w = weight(it);
+      if (cur.length && load + w > budget) { o.push(cur); cur = []; load = 0; }
+      cur.push(it); load += w;
+    }
+    if (cur.length) o.push(cur);
+    return o;
+  };
 
 const T = S.totals, P = S.plan, PT = S.partner || {};
 
@@ -218,17 +234,32 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
 </section>`).join("");
 
 /* ---------- inputs used, chunked (transparency: the client can check our numbers) ---------- */
-const inputPages = () => chunk(S.items, FIELD_ROWS_PER_PAGE).map((group, i, all) => `
+const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
+                                       it => 1 + (it.segments || []).length).map((group, i, all) => `
 <section class="page page--sky">
   ${runhead("Inputs used")}
   <h1 class="b24-h1">The numbers we entered${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
-  ${group.map(it => `
+  ${group.map(it => {
+    /* СЕГМЕНТЫ. Сценарий может быть посчитан по нескольким наборам значений:
+       базовый плюс добавленные в калькуляторе сегменты. Итог всегда учитывал их
+       все, а эта страница печатала только базовый набор — клиенту предлагалось
+       сверить сумму по неполным входным данным. Теперь каждый набор идёт своей
+       строкой. Пока сегментов нет, страница выглядит ровно как раньше: одна
+       строка полей без заголовка «Segment 1». */
+    const segs = it.segments || [];
+    const line = fs => fs.map(f => `${esc(f.label)}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ");
+    const para = (n, fs) => `
+    <p class="b24-p" style="margin:${n === null ? "0" : "6px 0 0"}; font-size:13px;">
+      ${n === null ? "" : `<span class="b24-strong">Segment ${n}</span> — `}${line(fs)}
+    </p>`;
+    return `
   <div class="b24-card b24-card--white" style="margin-bottom:var(--b24-s4); padding:var(--b24-s4) var(--b24-s5);">
-    <p class="b24-label" style="margin:0 0 6px;">${esc(it.title)}</p>
-    <p class="b24-p" style="margin:0; font-size:13px;">
-      ${it.fields.map(f => `${esc(f.label)}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ")}
-    </p>
-  </div>`).join("")}
+    <p class="b24-label" style="margin:0 0 6px;">${esc(it.title)}${
+      segs.length ? ` <span style="font-weight:600; text-transform:none;">(${int(segs.length + 1)} segments)</span>` : ""}</p>
+    ${para(segs.length ? 1 : null, it.fields)}
+    ${segs.map((fs, k) => para(k + 2, fs)).join("")}
+  </div>`;
+  }).join("")}
   ${footer()}
 </section>`).join("");
 

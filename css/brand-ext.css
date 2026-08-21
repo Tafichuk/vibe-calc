@@ -503,3 +503,40 @@
   .b24x-save-actions{ width: 100%; }
   .b24x-save-actions > *{ flex: 1 1 auto; }
 }
+
+/* =============================================================================
+   8. КНОПКА УДАЛЕНИЯ СЕГМЕНТА
+   Добавлена вместе с возможностью убрать добавленный сегмент: «Add another
+   segment» раньше был дорогой в одну сторону.
+
+   ЗАМЕТНА, НО НЕ СПОРИТ С ПОЛЯМИ. Тело — уменьшенный .b24x-btn-ghost из §7
+   (та же рамка --b24-line, тот же фокус-кольцо), но высотой 28 px против 48 и
+   на прозрачном фоне: рядом с белыми полями ввода она читается как действие
+   над блоком, а не как ещё одно поле. Заливка появляется только на наведении.
+
+   Своих цветов нет. Текст и иконка — --b24p-deep: cross.svg из кита нарисован
+   ровно этим цветом (#063883), и подпись подогнана под него, чтобы иконка и
+   слово не расходились на полтона. Красного здесь нет намеренно — brand-ext
+   §«РЕШЕНИЯ» отдаёт красный одной роли, подсветке невалидного ввода.
+   Иконка — файл кита assets/icons/cross.svg, как alert.svg и badge-check.svg
+   в остальной странице. Эмодзи не используются нигде.
+   ========================================================================== */
+.b24x-seg-del{
+  appearance: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  flex: 0 0 auto;
+  height: 28px; padding: 0 10px 0 8px;
+  font: 700 11.5px var(--b24-font-body); color: var(--b24p-deep);
+  text-transform: uppercase; letter-spacing: .06em;
+  background: transparent;
+  border: 1px solid var(--b24-line); border-radius: var(--b24-r-pill);
+}
+.b24x-seg-del img{ width: 12px; height: 12px; display: block; }
+.b24x-seg-del:hover{ background: var(--b24-white); border-color: var(--b24p-deep); }
+.b24x-seg-del:focus-visible{
+  outline: none; border-color: var(--b24-cyan); box-shadow: 0 0 0 3px rgba(47,199,247,.35);
+}
+/* На узком экране подпись сегмента и кнопка не всегда влезают в строку. */
+@media (max-width: 420px){
+  .b24x-seg-del{ padding: 0 8px 0 6px; letter-spacing: .02em; }
+}

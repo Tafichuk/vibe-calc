@@ -209,8 +209,11 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 @media (max-width:560px){ .sc-grid{grid-template-columns:1fr} }
 .seg{border:1px dashed var(--b24-dashed); border-radius:var(--b24-r-inner);
   padding:var(--b24-s4); margin-top:var(--b24-s4)}
+/* Заголовок сегмента несёт кнопку удаления: подпись слева, действие справа.
+   Кнопка живёт в шапке, а не рядом с полями, чтобы не конкурировать с вводом. */
 .seg-h{font-size:12px; font-weight:700; color:var(--b24-deep); text-transform:uppercase;
-  letter-spacing:.06em; margin-bottom:var(--b24-s3)}
+  letter-spacing:.06em; margin-bottom:var(--b24-s3);
+  display:flex; align-items:center; justify-content:space-between; gap:var(--b24-s3)}
 .btn-add{appearance:none; background:transparent; border:1px dashed var(--b24-dashed);
   color:var(--b24-deep); border-radius:var(--b24-r-pill); padding:8px 16px;
   font:600 13px var(--b24-font-body); cursor:pointer; margin-top:var(--b24-s4)}
@@ -754,16 +757,16 @@ en: {
   "ui.scenariosH":"Choose the scenarios",
   "ui.scenariosNote":"Each scenario is costed independently. Select only what the client will genuinely use — an honest short list is more persuasive than a long one.",
   "ui.summaryH":"Combined effect",
-  "ui.trH":"Essentials to Vibe+",
-  "ui.trNote":"Two independent choices. The target starts out matched to the current plan one to one, and you can point it anywhere in the Vibe+ line-up — including a higher tier, to show the client that even the plan with headroom pays for itself. Prices for the pair you pick are shown below; where the price list has no \u201cbefore\u201d price, the calculator says so instead of guessing.",
+  "ui.trH":"Recommended plan",
+  "ui.trNote":"Two independent choices: what the client pays today — an Essentials plan, or nothing at all if they are not on Bitrix24 yet — and the plan you recommend. The recommendation starts out matched to the current plan and can point anywhere in the Vibe+ line-up, including a tier with headroom. Where the price list has no \u201cbefore\u201d price, the calculator says so instead of guessing.",
   "ui.targetPlan":"Target Vibe+ plan",
   "ui.planNone":"No Bitrix24 yet",
   "ui.seatsUpTo":"up to {n} users",
-  "ui.tgtAuto":"Matched to the current plan. Pick another to quote an upgrade with headroom.",
+  "ui.tgtAuto":"Preselected for you. Pick another to quote a tier with headroom.",
   "ui.tgtManual":"Chosen by you.",
-  "ui.tgtReset":"match to the current plan",
-  "ui.grpMatched":"Matched to Essentials (up to 250 users)",
-  "ui.grpEnterprise":"Enterprise, 500 users and above",
+  "ui.tgtReset":"back to the preselected plan",
+  "ui.grpMatched":"Up to 2,000 users",
+  "ui.grpEnterprise":"Enterprise, 3,000 users and above",
   "ui.fromNone":"Nothing today",
   "ui.fromNoPriceTier":"No published price",
   "ui.fromNoPriceNote":"Essentials is published up to the 2,000-user tier. For {plan} there is no \u201cbefore\u201d price in the price list at all, so the difference cannot be calculated — the figure shown here is the full price of the target plan, not a surcharge. The Vibe+ ladder is linear above 2,000, but that is not a reason to extend someone else\u2019s price list.",
@@ -773,7 +776,7 @@ en: {
   "ui.pairNoteNone":"The client pays nothing today, so the whole target price is new spend — that is what the figures above add up to.",
   "ui.currentPlan":"Client's current plan",
   "ui.eurMissing":"Essentials prices are published in USD only. Switch to USD for the full comparison.",
-  "ui.diffH":"What the move costs",
+  "ui.diffH":"What this costs",
   /* ЦЕНА — ЗА ТАРИФ ЦЕЛИКОМ, НЕ ЗА ПОЛЬЗОВАТЕЛЯ.
      Проверено по прайсу: начиная с Enterprise-1000 цена растёт РОВНО пропорционально
      числу мест в тире (мест ×2 → цена ×2.00, ×1.5 → ×1.50), то есть число мест уже
@@ -887,7 +890,7 @@ en: {
   "ui.loadOk":"Loaded: {n} scenario(s), {plan}. Everything you entered is back.",
   "ui.loadOkPartial":"Loaded: {n} scenario(s), {plan}. This file was saved by an older version, so the numbers inside each scenario were refilled from the company data — check them before sending a report.",
   "ui.loadBad":"That file is not a saved calculation from this calculator ({why}).",
-  "ui.from":"Currently", "ui.to":"After migration",
+  "ui.from":"Currently", "ui.to":"Recommended",
   "ui.perPlanMonth":"per month for the whole account, billed annually",
   "ui.planPriceNote":"Plan prices are for the whole account, not per user: the number in an Enterprise tier (250, 500, 1000 …) is the seat limit the plan includes, and it is already priced in. Nothing here is multiplied by the client's headcount.",
   "ui.monthly":"Monthly", "ui.annualPerMonth":"Annual, per month", "ui.annualTotal":"Annual total",
@@ -921,6 +924,9 @@ en: {
   "ui.fotMonth":"Payroll saving, month", "ui.fotYear":"Payroll saving, year",
   "ui.revDefault":"Revenue uplift", "ui.revBase":"Existing-base potential",
   "ui.addSeg":"Add another segment", "ui.segN":"Segment {n}",
+  /* Первый сегмент — базовый, он и есть сама карточка: удалять его нечем и незачем.
+     Кнопка появляется только у добавленных, поэтому подпись всегда про сегмент 2+. */
+  "ui.delSeg":"Remove", "ui.delSegAria":"Remove segment {n}",
   "ui.grpCrm":"CRM scenarios", "ui.grpAgents":"AI agents", "ui.grpOther":"General scenarios",
   "ui.grpVibe":"Vibecode and CoPilot",
   "ui.more":"Learn more",
@@ -1451,6 +1457,41 @@ function fieldHtml(sc, f, vals, segIdx){
   </div>`;
 }
 
+/* Один добавленный сегмент. Вынесено из scHtml(), потому что ровно этот же
+   кусок разметки рисует renderSegments() после добавления и после удаления —
+   иначе нумерация и кнопка разъехались бы между двумя копиями. Индекс i идёт
+   от нуля и всегда печатается как i+2: базовый набор полей — сегмент 1. */
+function segHtml(sc, vis, sv, i){
+  const label = t("ui.delSegAria", {n:i+2});
+  return `
+        <div class="seg">
+          <div class="seg-h"><span>${t("ui.segN",{n:i+2})}</span>
+            <button type="button" class="b24x-seg-del" data-delseg="${sc.id}" data-segidx="${i}"
+                    aria-label="${label}" title="${label}">
+              <img src="assets/icons/cross.svg" alt="" aria-hidden="true">${t("ui.delSeg")}
+            </button>
+          </div>
+          <div class="sc-grid b24x-field-row">${vis.map(f=>fieldHtml(sc,f,sv,i)).join("")}</div>
+        </div>`;
+}
+const segsHtml = (sc, vis) => (state[sc.id].segments || []).map((sv,i)=>segHtml(sc,vis,sv,i)).join("");
+
+/* ПЕРЕРИСОВЫВАЕТ ТОЛЬКО КОНТЕЙНЕР СЕГМЕНТОВ одной карточки и заново вешает
+   обработчики на его поля.
+   Почему не buildScenarios(): тот пересобирает #groups целиком — все одиннадцать
+   карточек вместе с .sc-body, полем цены услуг и охватом. Именно так в этом
+   проекте дважды терялся ввод и фокус (INVENTORY.md §e). Здесь трогается один
+   узел, всё за его пределами — включая соседние поля этой же карточки — остаётся
+   тем же DOM-элементом со своим значением, выделением и фокусом. */
+function renderSegments(sc){
+  const box = document.getElementById("segs-" + sc.id);
+  if(!box) return;
+  const vis = sc.fields.filter(f=>!f.revOnly || SHOW_REVENUE);
+  box.innerHTML = segsHtml(sc, vis);
+  box.querySelectorAll(".num-in").forEach(wireNumInput);
+  box.querySelectorAll("[data-delseg]").forEach(wireSegDelete);
+}
+
 function buildScenarios(){
   const groups = [["crm","ui.grpCrm"],["agents","ui.grpAgents"],
                   ["other","ui.grpOther"],["vibe","ui.grpVibe"]];
@@ -1524,14 +1565,50 @@ function scHtml(sc){
       </div>`:`
       <p class="cov-hint cov-hint--none">${t("ui.coverageNone")}</p>`}
       <div class="sc-grid b24x-field-row">${vis.map(f=>fieldHtml(sc,f,st.values,null)).join("")}</div>
-      <div id="segs-${sc.id}">${(st.segments||[]).map((sv,i)=>`
-        <div class="seg"><div class="seg-h">${t("ui.segN",{n:i+2})}</div>
-          <div class="sc-grid b24x-field-row">${vis.map(f=>fieldHtml(sc,f,sv,i)).join("")}</div>
-        </div>`).join("")}</div>
+      <div id="segs-${sc.id}">${segsHtml(sc, vis)}</div>
       ${sc.segments?`<button class="btn-add" data-addseg="${sc.id}">${t("ui.addSeg")}</button>`:""}
       <div class="res" id="res-${sc.id}"></div>
     </div>
   </div>`;
+}
+
+/* Обработчик одного числового поля. Именованный, потому что его вешают двое:
+   wireScenarios() на всю страницу и renderSegments() — только на свой контейнер.
+   Вешать wireScenarios() повторно нельзя: обработчики удвоились бы на карточках,
+   которые никто не перерисовывал. */
+function wireNumInput(inp){
+  inp.addEventListener("input", ()=>{
+    const card = inp.closest(".sc"); const id = +card.id.slice(5);
+    const k = inp.dataset.k, segIdx = inp.dataset.seg;
+    const raw = onNumInput(inp);
+    const sc = scenarios.find(s=>s.id===id);
+    const f = sc.fields.find(x=>x.k===k);
+    const val = f.suf === "share" ? raw/100 : raw;
+    if(segIdx == null){ state[id].values[k] = val; state[id].dirty[k] = true; }
+    else { state[id].segments[+segIdx][k] = val; }
+    recompute();
+  });
+}
+
+/* Удаление сегмента. splice сдвигает хвост, renderSegments() рисует его заново
+   от нуля — поэтому нумерация всегда подряд: удалили второй из трёх, бывший
+   третий печатается как «Segment 2» и его поля получают data-seg="1".
+   recompute() зовётся тут же, а не откладывается: он переписывает и #res-N
+   этого сценария, и общий итог (paintTotals). */
+function wireSegDelete(b){
+  b.addEventListener("click", ()=>{
+    const id = +b.dataset.delseg, i = +b.dataset.segidx;
+    const sc = scenarios.find(s=>s.id===id);
+    if(!sc || !state[id].segments[i]) return;
+    state[id].segments.splice(i, 1);
+    renderSegments(sc);
+    recompute();
+    /* Кнопки, на которой стоял фокус, больше нет. Уводим фокус на «добавить» —
+       ближайший постоянный элемент, иначе клавиатурный обход начинается заново
+       с начала документа. */
+    const add = document.querySelector(`[data-addseg="${id}"]`);
+    if(add) add.focus();
+  });
 }
 
 function wireScenarios(){
@@ -1556,25 +1633,15 @@ function wireScenarios(){
     });
     card.classList.toggle("on", cb.checked);
   });
-  document.querySelectorAll(".num-in").forEach(inp=>{
-    inp.addEventListener("input", ()=>{
-      const card = inp.closest(".sc"); const id = +card.id.slice(5);
-      const k = inp.dataset.k, segIdx = inp.dataset.seg;
-      const raw = onNumInput(inp);
-      const sc = scenarios.find(s=>s.id===id);
-      const f = sc.fields.find(x=>x.k===k);
-      const val = f.suf === "share" ? raw/100 : raw;
-      if(segIdx == null){ state[id].values[k] = val; state[id].dirty[k] = true; }
-      else { state[id].segments[+segIdx][k] = val; }
-      recompute();
-    });
-  });
+  document.querySelectorAll(".num-in").forEach(wireNumInput);
   document.querySelectorAll("[data-addseg]").forEach(b=>{
     b.addEventListener("click", ()=>{
       const id = +b.dataset.addseg, sc = scenarios.find(s=>s.id===id);
       const v = {}; sc.fields.forEach(f=> v[f.k] = f.def);
       state[id].segments.push(v);
-      buildScenarios(); recompute();
+      /* Раньше здесь стоял buildScenarios() — полная пересборка всех карточек
+         ради одного нового блока. Теперь перерисовывается только #segs-N. */
+      renderSegments(sc); recompute();
     });
   });
   /* coverage: re-derives the autofilled headcount, then a full recompute.
@@ -2150,6 +2217,15 @@ function renderPartnerPanel(model){
    (scripts/check-parity.mjs) asserts the report renders the same ones. */
 function reportState(){
   const m = lastModel || computeModel();
+  /* Подписи полей одного набора значений. Один и тот же формат нужен и базовому
+     набору, и каждому сегменту — поэтому вынесено. */
+  const fieldsOf = (sc, vals) => sc.fields
+    .filter(f=>!f.revOnly || SHOW_REVENUE)
+    .map(f=>({label: t(`sc.${sc.id}.f.${f.k}`),
+              value: f.suf==="share"
+                ? fmtPct(vals[f.k])
+                : (f.suf==="money" ? fmtMoney(vals[f.k])
+                                   : fmtInt(vals[f.k]) + " " + t(SUF[f.suf]))}));
   const items = m.items.map(it=>{
     const sc = it.sc;
     return {
@@ -2163,13 +2239,14 @@ function reportState(){
       rev: sc.effect.includes("rev") ? it.rev : 0,
       revLabel: sc.effect.includes("rev") ? t(sc.revLabel || "ui.revDefault") : null,
       service: it.service,                  // null = not quoted
-      fields: sc.fields
-        .filter(f=>!f.revOnly || SHOW_REVENUE)
-        .map(f=>({label: t(`sc.${sc.id}.f.${f.k}`),
-                  value: f.suf==="share"
-                    ? fmtPct(state[sc.id].values[f.k])
-                    : (f.suf==="money" ? fmtMoney(state[sc.id].values[f.k])
-                                       : fmtInt(state[sc.id].values[f.k]) + " " + t(SUF[f.suf]))})),
+      fields: fieldsOf(sc, state[sc.id].values),
+      /* СЕГМЕНТЫ ЕДУТ В ОБА ОТЧЁТА. Итог их и раньше учитывал (computeScenario
+         суммирует базовый набор и все сегменты), а страница «The numbers we
+         entered» показывала только базовый — то есть клиенту предлагалось
+         проверить сумму по неполному списку входных данных. Здесь лежат наборы
+         полей ДОБАВЛЕННЫХ сегментов, по одному массиву на сегмент; базовый —
+         по-прежнему в fields. Пустой массив = сегментов нет. */
+      segments: (state[sc.id].segments || []).map(sv=>fieldsOf(sc, sv)),
     };
   });
   const svc = m.svc;
@@ -2285,7 +2362,7 @@ function reportState(){
 function buildReport(S, {mode, assets}) {
   const isPartner = mode === "partner";
   const ROWS_PER_PAGE = 7;          // scenario rows per A4 sheet — deliberately conservative
-  const FIELD_ROWS_PER_PAGE = 5;    // scenario input blocks per A4 sheet
+  const FIELD_ROWS_PER_PAGE = 5;    // строк-наборов значений на A4: сценарий без сегментов весит 1, с сегментами — 1 + их число
 
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const LOC = S.lang === "de" ? "de-DE" : "en-US";
@@ -2297,6 +2374,22 @@ function buildReport(S, {mode, assets}) {
     .format(Math.round((v || 0) * 10) / 10);
   const today = new Date(S.generatedAt || Date.now()).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" });
   const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
+  /* Как chunk, но набирает страницу по ВЕСУ элемента, а не по их числу.
+     Нужно странице «The numbers we entered»: блок сценария с сегментами занимает
+     не одну строку, а одну на каждый набор значений, и пять таких блоков на A4
+     уже не помещаются. Вес = 1 + число сегментов. Один элемент кладётся на
+     страницу всегда, даже если он тяжелее лимита, — иначе цикл не сдвинется.
+     Без сегментов вес каждого равен 1 и разбиение совпадает с chunk(arr, n). */
+  const chunkByWeight = (arr, budget, weight) => {
+    const o = []; let cur = [], load = 0;
+    for (const it of arr) {
+      const w = weight(it);
+      if (cur.length && load + w > budget) { o.push(cur); cur = []; load = 0; }
+      cur.push(it); load += w;
+    }
+    if (cur.length) o.push(cur);
+    return o;
+  };
 
 const T = S.totals, P = S.plan, PT = S.partner || {};
 
@@ -2480,17 +2573,32 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
 </section>`).join("");
 
 /* ---------- inputs used, chunked (transparency: the client can check our numbers) ---------- */
-const inputPages = () => chunk(S.items, FIELD_ROWS_PER_PAGE).map((group, i, all) => `
+const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
+                                       it => 1 + (it.segments || []).length).map((group, i, all) => `
 <section class="page page--sky">
   ${runhead("Inputs used")}
   <h1 class="b24-h1">The numbers we entered${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
-  ${group.map(it => `
+  ${group.map(it => {
+    /* СЕГМЕНТЫ. Сценарий может быть посчитан по нескольким наборам значений:
+       базовый плюс добавленные в калькуляторе сегменты. Итог всегда учитывал их
+       все, а эта страница печатала только базовый набор — клиенту предлагалось
+       сверить сумму по неполным входным данным. Теперь каждый набор идёт своей
+       строкой. Пока сегментов нет, страница выглядит ровно как раньше: одна
+       строка полей без заголовка «Segment 1». */
+    const segs = it.segments || [];
+    const line = fs => fs.map(f => `${esc(f.label)}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ");
+    const para = (n, fs) => `
+    <p class="b24-p" style="margin:${n === null ? "0" : "6px 0 0"}; font-size:13px;">
+      ${n === null ? "" : `<span class="b24-strong">Segment ${n}</span> — `}${line(fs)}
+    </p>`;
+    return `
   <div class="b24-card b24-card--white" style="margin-bottom:var(--b24-s4); padding:var(--b24-s4) var(--b24-s5);">
-    <p class="b24-label" style="margin:0 0 6px;">${esc(it.title)}</p>
-    <p class="b24-p" style="margin:0; font-size:13px;">
-      ${it.fields.map(f => `${esc(f.label)}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ")}
-    </p>
-  </div>`).join("")}
+    <p class="b24-label" style="margin:0 0 6px;">${esc(it.title)}${
+      segs.length ? ` <span style="font-weight:600; text-transform:none;">(${int(segs.length + 1)} segments)</span>` : ""}</p>
+    ${para(segs.length ? 1 : null, it.fields)}
+    ${segs.map((fs, k) => para(k + 2, fs)).join("")}
+  </div>`;
+  }).join("")}
   ${footer()}
 </section>`).join("");
 
@@ -2790,7 +2898,12 @@ function applyLoadedState(st){
   if(pt) PARTNER_FIELDS.forEach(k=>{ if(pt[k] != null) partner[k] = pt[k]; });
   savePartner();
 
-  scenarios.forEach(sc=>{ state[sc.id].selected = false; });
+  /* Сегменты сбрасываются вместе с выбором. Без этого добавленные в текущей
+     сессии сегменты переживали загрузку файла: строка сценария в файле могла
+     их не нести (старый формат) или сценарий мог быть в файле не выбран — и
+     старые сегменты оставались в state, продолжая участвовать в расчёте и
+     уезжая в следующий экспорт. Загрузка обязана давать ровно то, что в файле. */
+  scenarios.forEach(sc=>{ state[sc.id].selected = false; state[sc.id].segments = []; });
   const svc = {};
   const rows = R ? R.scenarios : (st.items || []);
   rows.forEach(row=>{
