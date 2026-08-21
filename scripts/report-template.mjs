@@ -35,6 +35,16 @@ export function buildReport(S, {mode, assets}) {
     .format(Math.round((v || 0) * 10) / 10);
   const today = new Date(S.generatedAt || Date.now()).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" });
   const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
+  /* СЦЕНАРИИ С ЭФФЕКТОМ НА ВЫРУЧКУ, А НЕ НА ФОТ.
+     У них экономии ФОТ нет вообще, и «$0» в колонке экономии читается как
+     «сценарий ничего не даёт», хотя данные введены и посчитаны. На экране в шаге 4
+     там прочерк (paintServices в index.html) — здесь то же самое.
+     Признак — hasFot из состояния, то есть состав effect, а НЕ равенство нулю:
+     сценарий с эффектом на ФОТ и нулём на входных данных обязан печатать $0.
+     Сравнение именно с false: у файлов, сохранённых до появления признака, его
+     нет вовсе, и они должны печататься по-старому, а не уйти в сплошной прочерк. */
+  const noFot = it => it.hasFot === false;
+  const DASH = "\u2014";
   /* Как chunk, но набирает страницу по ВЕСУ элемента, а не по их числу.
      Нужно странице «The numbers we entered»: блок сценария с сегментами занимает
      не одну строку, а одну на каждый набор значений, и пять таких блоков на A4
@@ -223,13 +233,16 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
           <td>${esc(it.title)}</td>
           <td>${esc(it.role)}</td>
           <td>${it.coverage === null ? "n/a" : int(it.coverage) + "%"}</td>
-          <td>${money(it.fotMonth)}</td>
-          <td>${money(it.fotYear)}</td>
+          <td>${noFot(it) ? DASH : money(it.fotMonth)}</td>
+          <td>${noFot(it) ? DASH : money(it.fotYear)}</td>
           ${isPartner ? `<td>${it.service === null ? "not quoted" : money(it.service)}</td>` : ""}
         </tr>`).join("")}
       </tbody>
     </table>
   </div>
+  ${rows.some(noFot) ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
+    ${DASH} in the saving columns: the scenario works on revenue, not on the payroll fund,
+    so it has no payroll saving to show.</p>` : ""}
   ${footer()}
 </section>`).join("");
 

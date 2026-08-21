@@ -163,11 +163,30 @@ if (D.diffPerMonth != null) {
 
 /* per-scenario figures must match too — that is where the rounding used to differ */
 for (const p of (D.perScenario || [])) {
+  /* Сценарий с эффектом только на выручку экономии ФОТ не имеет вообще. Экран не
+     показывает по нему суммы нигде, отчёт печатает прочерк — сверять с «$0»
+     нечего, и раньше это совпадение проходило само собой, потому что «$0»
+     встречается в документе где угодно. hasFot отсутствует у состояний, снятых
+     до появления признака: там поведение прежнее. */
+  if (p.hasFot === false) continue;
   for (const mode of ["client", "partner"]) {
     const text = visible(built[mode]);
     if (!text.includes(p.fotMonth))
       problems.push({ what: `scenario ${p.id} saving/month — missing from ${mode} report`,
                       a: p.fotMonth, b: "(not found in report text)" });
+  }
+}
+
+/* Прочерк без объяснения — такая же ловушка, как «$0»: в таблице появляется знак,
+   которого читатель не заказывал. Если хоть один сценарий печатается прочерком,
+   оба отчёта обязаны нести подпись под таблицей. */
+if ((D.perScenario || []).some(p => p.hasFot === false)) {
+  for (const mode of ["client", "partner"]) {
+    const text = visible(built[mode]);
+    if (!/in the saving columns/i.test(text))
+      problems.push({ what: `dash note missing — ${mode} report`,
+                      a: "a row prints a dash instead of a payroll saving",
+                      b: "(no line under the table explains it)" });
   }
 }
 
