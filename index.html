@@ -141,6 +141,16 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .in-wrap .suf{position:absolute; right:14px; font-size:12.5px; color:var(--b24-text);
   pointer-events:none; font-weight:600}
 .in-wrap input{padding-right:64px}
+/* РЕЗЕРВ ПОД ЕДИНИЦУ-СЛОВО. Прежняя «pcs» была 22px, и фиксированных 64px хватало
+   всем. Слова шире: замерено на 1440/1280/1024/390 — calls 40, lookups 51,
+   enquiries 60, bookings 60, meetings 61, operations 69, documents 74. Под самое
+   широкое нужно 74 + 14 (отступ справа) + 8 (воздух) = 96, берём 100.
+   Ключ в селекторе — тот же f.suf, что у поля: ничего не угадывается, и новая
+   единица без своей строки здесь сразу видна по наезду. */
+.in-wrap[data-suf="calls"] input, .in-wrap[data-suf="ops"] input,
+.in-wrap[data-suf="enq"] input, .in-wrap[data-suf="lookups"] input,
+.in-wrap[data-suf="bookings"] input, .in-wrap[data-suf="docs"] input,
+.in-wrap[data-suf="meetings"] input{padding-right:100px}
 .field .err{display:none; font-size:12px; color:var(--b24x-error-ink); font-weight:600}
 .field.invalid .err{display:block}
 .est{display:inline-block; background:var(--b24-card); color:var(--b24-deep);
@@ -437,7 +447,7 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
           <label for="days"><span data-i18n="ui.days"></span></label>
           <div class="in-wrap">
             <input class="b24x-input" id="days" type="text" inputmode="decimal">
-            <span class="suf" data-i18n="suf.pcs"></span>
+            <span class="suf" data-i18n="suf.days"></span>
           </div>
           <span class="hint" data-i18n="ui.daysHint"></span>
         </div>
@@ -934,7 +944,26 @@ en: {
   "ui.intSummaryInfo":"The one-off integrator fee across all selected scenarios: connection, configuration for the client's processes and staff training. Defaults are estimates — the integrator overwrites them per scenario. This amount is subtracted from the first-year benefit.",
 
   // ---- units ----
-  "suf.ppl":"ppl", "suf.pcs":"pcs", "suf.min":"min", "suf.share":"%", "suf.money":"",
+  /* ЕДИНИЦЫ. «pcs» была калькой с «шт.»: к клиентам и людям она приклеивала
+     складскую номенклатуру — «Size of the customer base: 100 pcs».
+     Правило теперь одно и читается по строкам ниже:
+       считаем ЛЮДЕЙ или КЛИЕНТОВ — суффикса нет вовсе. Подпись поля и так
+         говорит, кого считают («Number of managers», «Total employees»,
+         «Size of the customer base»), а «ppl» после числа ничего не добавляет;
+       считаем СОБЫТИЯ — суффикс называет само событие: calls, operations,
+         enquiries, lookups, bookings, documents, meetings, days;
+       период в суффикс НЕ дублируется, если он уже в подписи поля
+         («Calls per manager per day» -> «calls»). У поля «Of those, closed by AI»
+         периода в подписи не было — он молча наследовался от соседнего поля,
+         поэтому период дописан в саму подпись: «(per day)». Так единица везде
+         одно слово, а период везде в одном месте.
+     Теги ppl и clients остаются в коде осмысленными, просто печатают пустоту:
+     так видно, что поле считает, и правка остаётся правкой ПОДПИСЕЙ. */
+  "suf.ppl":"", "suf.clients":"", "suf.min":"min", "suf.share":"%", "suf.money":"",
+  "suf.days":"days",
+  "suf.calls":"calls", "suf.ops":"operations", "suf.enq":"enquiries",
+  "suf.lookups":"lookups",
+  "suf.bookings":"bookings", "suf.docs":"documents", "suf.meetings":"meetings",
   "suf.moneyMonth":"/mo",
 
   // ---- company block ----
@@ -1002,7 +1031,7 @@ en: {
   "sc.2.sub":"A CoPilot Agent handles inbound customer enquiries. It closes part of them itself and passes the rest to an operator.",
   "sc.2.role":"Support specialist",
   "sc.2.f.spec":"Number of support specialists", "sc.2.f.sal":"Specialist salary (gross)",
-  "sc.2.f.total":"Enquiries per day (total)", "sc.2.f.ai":"Of those, closed by AI",
+  "sc.2.f.total":"Enquiries per day (total)", "sc.2.f.ai":"Of those, closed by AI (per day)",
   "sc.2.f.time":"Handling time per enquiry",
   "sc.2.err.ai":"Cannot exceed total enquiries",
   "info.2":"How many enquiries a day the AI closes instead of a specialist, and how many minutes one enquiry used to take. Converted to hours per month (x {days} working days) and multiplied by the specialist's hourly cost.",
@@ -1144,7 +1173,14 @@ function onNumInput(inp){
    Salary and fee defaults are NEUTRAL ESTIMATES, flagged in the UI. They are
    not conversions of the RU figures.
    ========================================================================== */
-const SUF = {ppl:"suf.ppl", pcs:"suf.pcs", min:"suf.min", share:"suf.share", money:"suf.money"};
+/* Ключ suf у поля — это СМЫСЛ величины, а не готовая надпись: по нему решается
+   и единица, и поведение («share» делится на 100, «money» берёт знак валюты).
+   Поэтому у каждого события своя единица, а не общая «штука». */
+const SUF = {ppl:"suf.ppl", clients:"suf.clients", min:"suf.min", share:"suf.share",
+             money:"suf.money", days:"suf.days",
+             calls:"suf.calls", ops:"suf.ops", enq:"suf.enq",
+             lookups:"suf.lookups", bookings:"suf.bookings", docs:"suf.docs",
+             meetings:"suf.meetings"};
 
 const scenarios = [
   { id:1, group:"crm", driver:"daily", cov:{src:"mgrCount", target:"mgr", def:100}, link:"https://helpdesk.bitrix24.com/open/25855535/",
@@ -1152,7 +1188,7 @@ const scenarios = [
     fields:[
       {k:"mgr",  def:1,     suf:"ppl"},
       {k:"sal",  def:4000,  suf:"money", est:true},
-      {k:"calls",def:20,    suf:"pcs"},
+      {k:"calls",def:20,    suf:"calls"},
       {k:"time", def:10,    suf:"min"},
       {k:"plan", def:40000, suf:"money", est:true, revOnly:true},
       {k:"coef", def:0.3,   suf:"share", revOnly:true},
@@ -1178,7 +1214,7 @@ const scenarios = [
   { id:5, group:"crm", driver:"monthly", link:null,
     effect:["rev"], revLabel:"ui.revBase", segments:true,
     fields:[
-      {k:"base", def:1000, suf:"pcs"},
+      {k:"base", def:1000, suf:"clients"},
       {k:"check",def:2000, suf:"money", est:true},
       {k:"conv", def:0.10, suf:"share"},
     ],
@@ -1189,7 +1225,7 @@ const scenarios = [
     fields:[
       {k:"mgr", def:1,    suf:"ppl",   src:"empCount"},
       {k:"sal", def:4000, suf:"money", src:"empSal", est:true},
-      {k:"ops", def:30,   suf:"pcs"},
+      {k:"ops", def:30,   suf:"ops"},
       {k:"time",def:3,    suf:"min"},
     ],
     compute:v=>{
@@ -1202,8 +1238,8 @@ const scenarios = [
     fields:[
       {k:"spec", def:1,    suf:"ppl"},
       {k:"sal",  def:3000, suf:"money", est:true},
-      {k:"total",def:40,   suf:"pcs"},
-      {k:"ai",   def:30,   suf:"pcs"},
+      {k:"total",def:40,   suf:"enq"},
+      {k:"ai",   def:30,   suf:"enq"},
       {k:"time", def:7,    suf:"min"},
     ],
     validate:v=> v.ai > v.total ? {ai:"sc.2.err.ai"} : null,
@@ -1218,7 +1254,7 @@ const scenarios = [
     fields:[
       {k:"emp",  def:50,   suf:"ppl",   src:"empCount"},
       {k:"sal",  def:4000, suf:"money", src:"empSal", est:true},
-      {k:"q",    def:3,    suf:"pcs"},
+      {k:"q",    def:3,    suf:"lookups"},
       {k:"t",    def:10,   suf:"min"},
       {k:"share",def:0.7,  suf:"share"},
     ],
@@ -1246,8 +1282,8 @@ const scenarios = [
   { id:12, group:"agents", driver:"monthly", link:null,
     effect:["fot"],
     fields:[
-      {k:"visits",def:800,  suf:"pcs"},
-      {k:"perRec",def:2,    suf:"pcs"},
+      {k:"visits",def:800,  suf:"bookings"},
+      {k:"perRec",def:2,    suf:"calls"},
       {k:"time",  def:3,    suf:"min"},
       {k:"admSal",def:2600, suf:"money", est:true},
     ],
@@ -1261,7 +1297,7 @@ const scenarios = [
     fields:[
       {k:"emp", def:5,    suf:"ppl",   src:"empCount"},
       {k:"sal", def:4000, suf:"money", src:"empSal", est:true},
-      {k:"docs",def:5,    suf:"pcs"},
+      {k:"docs",def:5,    suf:"docs"},
       {k:"time",def:20,   suf:"min"},
     ],
     compute:v=>{
@@ -1272,7 +1308,7 @@ const scenarios = [
   { id:6, group:"other", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/25345201/",
     effect:["fot"],
     fields:[
-      {k:"meet",def:8,    suf:"pcs"},
+      {k:"meet",def:8,    suf:"meetings"},
       {k:"dur", def:60,   suf:"min"},
       {k:"part",def:6,    suf:"ppl"},
       {k:"psal",def:4000, suf:"money", est:true},
@@ -1459,7 +1495,7 @@ function fieldHtml(sc, f, vals, segIdx){
   return `
   <div class="field" data-field="${f.k}">
     <label>${t(`sc.${sc.id}.f.${f.k}`)}${f.est?`<span class="est">${t("ui.estimate")}</span>`:""}</label>
-    <div class="in-wrap">
+    <div class="in-wrap" data-suf="${f.suf}">
       <input class="b24x-input num-in" data-k="${f.k}"${seg} type="text" inputmode="decimal" value="${disp}">
       <span class="suf">${sufText(f.suf)}</span>
     </div>
@@ -2235,7 +2271,9 @@ function reportState(){
               value: f.suf==="share"
                 ? fmtPct(vals[f.k])
                 : (f.suf==="money" ? fmtMoney(vals[f.k])
-                                   : fmtInt(vals[f.k]) + " " + t(SUF[f.suf]))}));
+                                   /* у полей, считающих людей и клиентов, единицы нет —
+                                      печатаем голое число, а не число с висящим пробелом */
+                                   : (u => fmtInt(vals[f.k]) + (u ? " " + u : ""))(t(SUF[f.suf])))}));
   const items = m.items.map(it=>{
     const sc = it.sc;
     return {
@@ -2351,7 +2389,7 @@ function reportState(){
        ровно одно сравнение с именем тарифа, а не догадка по порядку в массиве. */
     aiForPlan: tgtPlanName === "Alaio Basic Vibe+" ? t("ai.forBasic") : t("ai.forStandard"),
     /* ВОССТАНОВЛЕНИЕ РАСЧЁТА. items[].fields — это подписи для отчёта
-       («20 pcs», «$4,000»), из них ввод обратно не собрать. Поэтому сырые
+       («20 calls», «$4,000»), из них ввод обратно не собрать. Поэтому сырые
        значения едут отдельным блоком: только он делает файл настоящим
        «сохранением», а не выгрузкой для печати. Отчёты этот блок игнорируют. */
     restore: {
