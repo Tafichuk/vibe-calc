@@ -159,10 +159,13 @@ buttons in the last step:
 
 | Button | What you get |
 |---|---|
-| **Client report — PDF** | the client-facing build |
-| **Partner report — PDF** | the same plus your service fees per scenario |
+| **Report for the client — PDF** | the document you hand over |
 
-Each button lays the report out as A4 pages and opens your browser's print dialog —
+There is one report. Your own economics — the fee you set per scenario, the partner
+summary — stay on the screen and are not printed. The cost of your services is in the
+report as a single total line, because the net saving would be overstated without it.
+
+The button lays the report out as A4 pages and opens your browser's print dialog —
 choose **Save as PDF** as the destination. That dialog is the only way a web page can
 write a file to your disk, and it is also what keeps the text real text: selectable,
 searchable, printed with the Bitrix24 font instead of a screenshot. Verified in Chrome,
@@ -178,27 +181,27 @@ so the two cannot drift apart:
 
 ```bash
 # press "Save calculation (JSON)", then:
-node scripts/build-report.mjs calc-state.json --mode=client  --out=build/report-client.html
-node scripts/build-report.mjs calc-state.json --mode=partner --out=build/report-partner.html
+node scripts/build-report.mjs calc-state.json --out=build/report.html
 ```
 
-Then render each to A4 with the Bitrix24 partner brand kit renderer, or print the HTML
-from the browser — the pages are already A4-sized.
+Then render it to A4 with the Bitrix24 partner brand kit renderer, or print the HTML from
+the browser — the pages are already A4-sized.
 
 A `calc-state.json` is included as a worked example: five scenarios, a 50-person company.
 
-### The two builds differ
+### What is in the report
 
-| | Client report | Partner report |
-|---|---|---|
-| Scenarios, saving, coverage | yes | yes |
-| Recommended plan and price | yes | yes |
-| Implementation services | one total line | itemised per scenario |
-| Credibility warning | yes | yes |
+| | In the report |
+|---|---|
+| Scenarios, saving, coverage | yes |
+| Recommended plan and price | yes |
+| Implementation services | yes — one total line among the first-year costs |
+| Credibility warning | yes |
+| Implementation services per scenario | **no** |
 
-The client build is audited before it is written: `build-report.mjs` checks the visible
-text and **refuses to produce the file** if partner-only content appears in it. Keep your
-own additions inside the `isPartner` branches.
+The report is audited before it is written: `build-report.mjs` checks the visible text and
+**refuses to produce the file** if internal, partner-only content appears in it. There is
+only one build, so there is nowhere for that material to go.
 
 ---
 
@@ -206,7 +209,7 @@ own additions inside the `isPartner` branches.
 
 ```bash
 node scripts/check-prices.mjs      # embedded prices match config/pricing.json
-node scripts/check-parity.mjs      # the screen and both reports show the same numbers
+node scripts/check-parity.mjs      # the screen and the report show the same numbers
 ```
 
 `check-parity.mjs` guards one rule that is easy to break: every figure comes from

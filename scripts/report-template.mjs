@@ -20,8 +20,15 @@
  *                              разрешались от каталога страницы в iframe.
  */
 
-export function buildReport(S, {mode, assets}) {
-  const isPartner = mode === "partner";
+export function buildReport(S, {assets}) {
+  /* ОДНА СБОРКА. Раньше их было две — клиентская и партнёрская, и партнёрская
+     несла разрыв Essentials-vs-Vibe+, промо-механику, постатейные цены услуг и
+     страницу с пометкой о внутреннем использовании. Решение заказчика: отчёт нужен только
+     клиентский — партнёр работает с экраном, а клиенту отдаёт один документ.
+     Поэтому у buildReport() больше нет режима, и допустимой сборки для
+     внутренних данных не осталось: аудит ниже применяется ВСЕГДА.
+     На экране при этом ничего не убрано — шаг с ценами услуг, Partner summary,
+     разрыв и промо остаются, просто не печатаются. */
   const ROWS_PER_PAGE = 7;          // scenario rows per A4 sheet — deliberately conservative
   const FIELD_ROWS_PER_PAGE = 5;    // строк-наборов значений на A4: сценарий без сегментов весит 1, с сегментами — 1 + их число
 
@@ -70,7 +77,7 @@ export function buildReport(S, {mode, assets}) {
      другой. Поэтому режим тесной вёрстки включается по числу колонок, а не по
      наличию выручки: 5 (клиент без выручки) — как в ките, 6 и 7 — тесно.
      Замер после правки: 656px во всех сочетаниях. */
-  const wideTable = showRev || isPartner;
+  const wideTable = showRev;
   /* Базовый набор значений — это сегмент 1, поэтому их всегда на один больше,
      чем в items[].segments. Пометку ставим только когда сегмент не один: она
      нужна, чтобы сумма в строке не читалась как одно значение. Разбивки в
@@ -315,7 +322,7 @@ const cover = () => `
   </div>
 
   <div class="b24-content-z" style="margin-top:auto; margin-bottom:40px;">
-    <span class="b24-pill" style="margin-bottom:22px;">${isPartner ? "Partner copy — internal" : "Value assessment"}</span>
+    <span class="b24-pill" style="margin-bottom:22px;">Value assessment</span>
     <h1 class="b24-display">What AI in Bitrix24 is<br>worth to <span class="b24-hl">${esc(clientName || "your business")}</span></h1>
     <p class="b24-lead" style="margin-top:22px; max-width:86%; font-size:17px;">
       ${int(S.items.length)} selected scenarios, costed on your own numbers.
@@ -408,8 +415,7 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
   <div class="b24-table-wrap">
     <table class="b24-table${wideTable ? " b24x-table--wide" : ""}">
       <thead><tr><th>Scenario</th><th>Who</th><th>Coverage</th><th>Saving / month</th><th>Saving / year</th>${
-        showRev ? `<th>Revenue / month<span class="b24x-th-sub">estimate</span></th>` : ""}${
-        isPartner ? "<th>My services</th>" : ""}</tr></thead>
+        showRev ? `<th>Revenue / month<span class="b24x-th-sub">estimate</span></th>` : ""}</tr></thead>
       <tbody>
         ${rows.map(it => `<tr>
           <td>${esc(it.title)}${segCount(it) > 1
@@ -419,7 +425,6 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
           <td>${noFot(it) ? DASH : money(it.fotMonth)}</td>
           <td>${noFot(it) ? DASH : money(it.fotYear)}</td>
           ${showRev ? `<td class="b24x-est">${noRev(it) ? DASH : money(it.rev)}</td>` : ""}
-          ${isPartner ? `<td>${it.service === null ? "not quoted" : money(it.service)}</td>` : ""}
         </tr>`).join("")}
       </tbody>
     </table>
@@ -537,29 +542,6 @@ const planPage = () => `
   ${footer()}
 </section>`;
 
-/* ---------- PARTNER-ONLY pages ----------
-   The partner build adds the partner's own service fees. Programme economics
-   (gap %, promo mechanics, margin) are not part of this build at all. */
-const partnerServicePages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => `
-<section class="page page--sky">
-  ${runhead("My services — internal")}
-  <h1 class="b24-h1">My services${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
-  <div class="b24-table-wrap">
-    <table class="b24-table">
-      <thead><tr><th>Scenario</th><th>Fee</th></tr></thead>
-      <tbody>
-        ${rows.map(it => `<tr><td>${esc(it.title)}</td>
-          <td>${it.service === null ? "not quoted" : money(it.service)}</td></tr>`).join("")}
-        ${i === all.length - 1 ? `<tr><td><strong>Total — priced scenarios only, ${int(T.serviceQuoted)} of ${int(S.items.length)}</strong></td>
-            <td><strong>${money(T.serviceSum)}</strong></td></tr>` : ""}
-      </tbody>
-    </table>
-  </div>
-  ${(i === all.length - 1 && T.serviceUnquoted) ? `<div class="b24-quote">
-    ${int(T.serviceUnquoted)} scenario(s) left unpriced. They are excluded from the total and from
-    the average — not counted as zero. Price them before sending the client a quote.</div>` : ""}
-  ${footer()}
-</section>`).join("");
 
 /* ---------- closing CTA + partner contacts ---------- */
 const closing = () => `
@@ -598,7 +580,6 @@ const pages = [
   scenarioPages(),
   inputPages(),
   planPage(),
-  isPartner ? partnerServicePages() : "",
   closing(),
 ].filter(Boolean).join("\n");
 
@@ -606,7 +587,7 @@ const html = `<!DOCTYPE html>
 <html lang="${esc(S.lang || "en")}">
 <head>
 <meta charset="UTF-8">
-<title>${esc(clientName || partnerName)} — AI value ${isPartner ? "assessment (partner copy)" : "assessment"}</title>
+<title>${esc(clientName || partnerName)} — AI value assessment</title>
 ${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags}
 <style>
   @media screen { body { padding: 24px 0; } }
@@ -645,16 +626,20 @@ ${pages}
 `;
 
   const pageCount = (html.match(/<section class="page/g) || []).length;
-  const hits = isPartner ? [] : auditClient(html, P, money);
+  /* Аудит без исключений: сборка одна, и «партнёрской» сборки, где внутреннее
+     было бы допустимо, больше нет. */
+  const hits = auditClient(html, P, money);
   return {html, pageCount, hits};
 }
 
 /* =============================================================================
-   CLIENT-BUILD AUDIT — общий для терминала и браузера.
-   Клиенту достаётся ОДНА итоговая строка внедрения. Разбивка по сценариям и любая
-   страница, помеченная как партнёрская копия, — дело только партнёра.
+   АУДИТ ОТЧЁТА — общий для терминала и браузера.
+   Сборка одна, и она клиентская: постатейные цены услуг и любая страница,
+   помеченная как внутренняя, в документ попасть не должны. Итоговая строка
+   внедрения при этом остаётся — она стоит в затратах первого года, без неё
+   чистая экономия была бы завышена. Запрещена разбивка, а не сам факт затрат.
    Возвращает находки, а не падает: build-report.mjs отказывается писать файл,
-   браузер отказывается печатать.
+   браузер отказывается печатать. Правило одно, реакция — по месту.
    ========================================================================== */
 /* Audit the VISIBLE TEXT, not the markup. Auditing raw HTML gives false positives:
    CSS declarations contain `margin:` and `gap:`, and class names contain `gap-rows`,

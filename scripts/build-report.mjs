@@ -2,8 +2,7 @@
 /**
  * build-report.mjs — turn a calculator state snapshot into report HTML for the kit renderer.
  *
- *   node scripts/build-report.mjs calc-state.json --mode=client   [--out FILE]
- *   node scripts/build-report.mjs calc-state.json --mode=partner  [--out FILE]
+ *   node scripts/build-report.mjs calc-state.json [--out FILE]
  *
  * then:
  *   python3 ~/.claude/skills/bitrix24-partner-style/scripts/render.py OUT.html --format a4
@@ -23,28 +22,42 @@
  * reflow — it is CLIPPED. So rows are chunked conservatively and a page is added rather
  * than squeezed. ROWS_PER_PAGE below is the knob.
  *
- * CLIENT VS PARTNER — the whole point of this script:
- *   client  : scenarios, saving, recommended plan + price, partner contacts, and the
- *             implementation fee as ONE total line.
- *   partner : the above PLUS the partner's service fees itemised per scenario.
- * A client build is audited before it is written (assertClientClean) and the script
- * REFUSES to emit a file that carries partner-only content.
+ * ONE BUILD, AND IT IS THE CLIENT'S. There used to be a second, partner build
+ * carrying the per-scenario service fees and a page marked for internal use. It is
+ * gone: the partner works from the screen and hands the client a single document.
+ * So there is no longer a build in which internal material is allowed. Each report
+ * is audited before it is written and the script REFUSES to emit a leaking file.
+ * The implementation fee stays in the report as ONE total line among the first-year
+ * costs: without it the net saving would be overstated. What went away is the
+ * per-scenario breakdown, not the cost itself.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 const argv = process.argv.slice(2);
 const input = argv.find(a => !a.startsWith("--"));
-const mode = (argv.find(a => a.startsWith("--mode=")) || "").split("=")[1];
 const outArg = (argv.find(a => a.startsWith("--out=")) || "").split("=")[1];
+/* --mode пережил удаление партнёрской сборки только как совместимость: он стоит в
+   README, в check-parity и в пальцах. --mode=client принимается и ничего не значит.
+   --mode=partner НЕ игнорируется молча: команда, которая раньше давала другой
+   документ, обязана сказать, что документа больше нет, а не тихо выдать клиентский. */
+const mode = (argv.find(a => a.startsWith("--mode=")) || "").split("=")[1];
 
-if (!input || !["client", "partner"].includes(mode)) {
-  console.error("usage: build-report.mjs STATE.json --mode=client|partner [--out=FILE]");
+if (!input) {
+  console.error("usage: build-report.mjs STATE.json [--out=FILE]");
+  process.exit(2);
+}
+if (mode === "partner") {
+  console.error("\n  build-report: the partner build was removed — there is one report and it is the client's.");
+  console.error("  Drop --mode=partner. The partner's own economics stay on screen and are not printed.\n");
+  process.exit(2);
+}
+if (mode && mode !== "client") {
+  console.error(`build-report: unknown --mode=${mode}. There is one report; --mode=client is accepted and means nothing.`);
   process.exit(2);
 }
 
 const S = JSON.parse(fs.readFileSync(input, "utf8"));
-const isPartner = mode === "partner";
 
 /* ---------- helpers ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -134,7 +147,6 @@ function inlinedKitCss(){
 import { buildReport } from "./report-template.mjs";
 
 const { html, pageCount, hits } = buildReport(S, {
-  mode,
   assets: {
     lockupDark:  LOCKUP.dark,
     lockupWhite: LOCKUP.white,
@@ -158,23 +170,23 @@ ${inlinedKitCss()}
 const T = S.totals, P = S.plan;
 
 if (hits.length) {
-  console.error("\n  REFUSED: client build would leak partner-only content:\n");
+  console.error("\n  REFUSED: the report would carry internal, partner-only content:\n");
   hits.forEach(h => console.error("   - " + h));
-  console.error("  Keep partner-only content inside the isPartner branches.\n");
+  console.error("  There is one report and it goes to the client, so there is nowhere");
+  console.error("  for internal material to go.\n");
   process.exit(1);
 }
 
-const out = outArg || input.replace(/\.json$/, "") + `-report-${mode}.html`;
+const out = outArg || input.replace(/\.json$/, "") + "-report.html";
 /* build/ is generated output and therefore gitignored, so it does not exist in a fresh
    clone. Create the directory rather than failing the first command a new user runs. */
 fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
 fs.writeFileSync(out, html, "utf8");
 
-console.log(`build-report: ${mode} report -> ${path.relative(process.cwd(), out)}`);
+console.log(`build-report: report -> ${path.relative(process.cwd(), out)}`);
 console.log(`  pages            ${pageCount}`);
 console.log(`  scenarios        ${S.items.length}`);
 console.log(`  currency / lang  ${S.currency} / ${S.lang}`);
 console.log(`  revenue shown    ${S.showRevenue}`);
-console.log(isPartner
-  ? `  partner page     yes (service fees ${money(T.serviceSum)})`
-  : `  client audit     passed — no partner-only content`);
+console.log(`  services total   ${money(T.serviceSum)} (one line among the first-year costs)`);
+console.log(`  audit            passed — no gap %, no promo mechanics, no partner levels, no per-scenario fees`);

@@ -558,14 +558,17 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
     <h2 data-i18n="ui.reportH"></h2>
     <p class="note-line" data-i18n="ui.reportNote"></p>
     <div class="card">
-      <!-- PDF ПРЯМО ИЗ БРАУЗЕРА. Обе сборки строятся той же функцией, что и в
+      <!-- PDF ПРЯМО ИЗ БРАУЗЕРА. Отчёт строится той же функцией, что и в
            терминале (копия scripts/report-template.mjs ниже в этом файле), и
-           отдаются печатному движку браузера: кит уже печатный (@page A4,
+           отдаётся печатному движку браузера: кит уже печатный (@page A4,
            margin 0, .page 210x297mm), поэтому PDF выходит постранично верным
-           без единой внешней библиотеки. -->
+           без единой внешней библиотеки.
+           КНОПКА ОДНА. Партнёрской сборки больше нет: партнёр работает с
+           экраном, а клиенту отдаёт один документ. На экране при этом ничего не
+           убрано — шаг с ценами услуг, Partner summary, разрыв и промо на месте,
+           просто не печатаются. -->
       <div class="b24x-pdf-row">
         <button type="button" class="btn-primary" id="pdf-client" data-i18n="ui.pdfClient"></button>
-        <button type="button" class="btn-primary" id="pdf-partner" data-i18n="ui.pdfPartner"></button>
       </div>
       <p class="hint" style="margin:var(--b24-s3) 0 0" data-i18n="ui.pdfHint"></p>
       <div id="pdf-err" class="warn" hidden style="margin-top:var(--b24-s4)">
@@ -886,15 +889,14 @@ en: {
 
   // ---- report ----
   "ui.reportH":"Report",
-  "ui.reportNote":"Two builds, both straight from this page: the client report for the client, and a partner copy that also lists your service fees per scenario. Nothing to install.",
-  "ui.pdfClient":"Client report — PDF",
-  "ui.pdfPartner":"Partner report — PDF",
-  "ui.pdfHint":"Each button lays the report out as A4 pages and hands them to your browser's print dialog — pick \u201cSave as PDF\u201d as the destination. That dialog is the only way a page can write a PDF to your disk, and it is also what makes the text real text: selectable, searchable and printed with the Bitrix24 font rather than a screenshot.",
+  "ui.reportNote":"One document, straight from this page: the report you hand to the client. It carries no per-scenario fees — the cost of your services is in it as a single total line, because the net saving would be overstated without it. Nothing to install.",
+  "ui.pdfClient":"Report for the client — PDF",
+  "ui.pdfHint":"The button lays the report out as A4 pages and hands them to your browser's print dialog — pick \u201cSave as PDF\u201d as the destination. That dialog is the only way a page can write a PDF to your disk, and it is also what makes the text real text: selectable, searchable and printed with the Bitrix24 font rather than a screenshot.",
   "ui.pdfBuilding":"Laying out the report…",
-  "ui.pdfRefused":"The client report was not built: it would have carried partner-only content ({what}). This is a bug — report it rather than sending the partner build to a client.",
+  "ui.pdfRefused":"The report was not built: it would have carried internal, partner-only content ({what}). This is a bug — report it. Do not work around it: there is one report and it goes to the client.",
   "ui.pdfNoScenarios":"Pick at least one scenario in Step 3 — there is nothing to put in a report yet.",
   "ui.saveH":"Save the calculation",
-  "ui.saveHint":"A JSON file with everything you entered, so you can reopen this calculation later or hand it to a colleague. It is not the report — the two buttons above are.",
+  "ui.saveHint":"A JSON file with everything you entered, so you can reopen this calculation later or hand it to a colleague. It is not the report — the button above is.",
   "ui.dlState":"Save calculation (JSON)",
   "ui.loadState":"Open a saved calculation",
   "ui.loadOk":"Loaded: {n} scenario(s), {plan}. Everything you entered is back.",
@@ -2432,8 +2434,15 @@ function reportState(){
  *                              разрешались от каталога страницы в iframe.
  */
 
-function buildReport(S, {mode, assets}) {
-  const isPartner = mode === "partner";
+function buildReport(S, {assets}) {
+  /* ОДНА СБОРКА. Раньше их было две — клиентская и партнёрская, и партнёрская
+     несла разрыв Essentials-vs-Vibe+, промо-механику, постатейные цены услуг и
+     страницу с пометкой о внутреннем использовании. Решение заказчика: отчёт нужен только
+     клиентский — партнёр работает с экраном, а клиенту отдаёт один документ.
+     Поэтому у buildReport() больше нет режима, и допустимой сборки для
+     внутренних данных не осталось: аудит ниже применяется ВСЕГДА.
+     На экране при этом ничего не убрано — шаг с ценами услуг, Partner summary,
+     разрыв и промо остаются, просто не печатаются. */
   const ROWS_PER_PAGE = 7;          // scenario rows per A4 sheet — deliberately conservative
   const FIELD_ROWS_PER_PAGE = 5;    // строк-наборов значений на A4: сценарий без сегментов весит 1, с сегментами — 1 + их число
 
@@ -2482,7 +2491,7 @@ function buildReport(S, {mode, assets}) {
      другой. Поэтому режим тесной вёрстки включается по числу колонок, а не по
      наличию выручки: 5 (клиент без выручки) — как в ките, 6 и 7 — тесно.
      Замер после правки: 656px во всех сочетаниях. */
-  const wideTable = showRev || isPartner;
+  const wideTable = showRev;
   /* Базовый набор значений — это сегмент 1, поэтому их всегда на один больше,
      чем в items[].segments. Пометку ставим только когда сегмент не один: она
      нужна, чтобы сумма в строке не читалась как одно значение. Разбивки в
@@ -2727,7 +2736,7 @@ const cover = () => `
   </div>
 
   <div class="b24-content-z" style="margin-top:auto; margin-bottom:40px;">
-    <span class="b24-pill" style="margin-bottom:22px;">${isPartner ? "Partner copy — internal" : "Value assessment"}</span>
+    <span class="b24-pill" style="margin-bottom:22px;">Value assessment</span>
     <h1 class="b24-display">What AI in Bitrix24 is<br>worth to <span class="b24-hl">${esc(clientName || "your business")}</span></h1>
     <p class="b24-lead" style="margin-top:22px; max-width:86%; font-size:17px;">
       ${int(S.items.length)} selected scenarios, costed on your own numbers.
@@ -2820,8 +2829,7 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
   <div class="b24-table-wrap">
     <table class="b24-table${wideTable ? " b24x-table--wide" : ""}">
       <thead><tr><th>Scenario</th><th>Who</th><th>Coverage</th><th>Saving / month</th><th>Saving / year</th>${
-        showRev ? `<th>Revenue / month<span class="b24x-th-sub">estimate</span></th>` : ""}${
-        isPartner ? "<th>My services</th>" : ""}</tr></thead>
+        showRev ? `<th>Revenue / month<span class="b24x-th-sub">estimate</span></th>` : ""}</tr></thead>
       <tbody>
         ${rows.map(it => `<tr>
           <td>${esc(it.title)}${segCount(it) > 1
@@ -2831,7 +2839,6 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
           <td>${noFot(it) ? DASH : money(it.fotMonth)}</td>
           <td>${noFot(it) ? DASH : money(it.fotYear)}</td>
           ${showRev ? `<td class="b24x-est">${noRev(it) ? DASH : money(it.rev)}</td>` : ""}
-          ${isPartner ? `<td>${it.service === null ? "not quoted" : money(it.service)}</td>` : ""}
         </tr>`).join("")}
       </tbody>
     </table>
@@ -2949,29 +2956,6 @@ const planPage = () => `
   ${footer()}
 </section>`;
 
-/* ---------- PARTNER-ONLY pages ----------
-   The partner build adds the partner's own service fees. Programme economics
-   (gap %, promo mechanics, margin) are not part of this build at all. */
-const partnerServicePages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => `
-<section class="page page--sky">
-  ${runhead("My services — internal")}
-  <h1 class="b24-h1">My services${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
-  <div class="b24-table-wrap">
-    <table class="b24-table">
-      <thead><tr><th>Scenario</th><th>Fee</th></tr></thead>
-      <tbody>
-        ${rows.map(it => `<tr><td>${esc(it.title)}</td>
-          <td>${it.service === null ? "not quoted" : money(it.service)}</td></tr>`).join("")}
-        ${i === all.length - 1 ? `<tr><td><strong>Total — priced scenarios only, ${int(T.serviceQuoted)} of ${int(S.items.length)}</strong></td>
-            <td><strong>${money(T.serviceSum)}</strong></td></tr>` : ""}
-      </tbody>
-    </table>
-  </div>
-  ${(i === all.length - 1 && T.serviceUnquoted) ? `<div class="b24-quote">
-    ${int(T.serviceUnquoted)} scenario(s) left unpriced. They are excluded from the total and from
-    the average — not counted as zero. Price them before sending the client a quote.</div>` : ""}
-  ${footer()}
-</section>`).join("");
 
 /* ---------- closing CTA + partner contacts ---------- */
 const closing = () => `
@@ -3010,7 +2994,6 @@ const pages = [
   scenarioPages(),
   inputPages(),
   planPage(),
-  isPartner ? partnerServicePages() : "",
   closing(),
 ].filter(Boolean).join("\n");
 
@@ -3018,7 +3001,7 @@ const html = `<!DOCTYPE html>
 <html lang="${esc(S.lang || "en")}">
 <head>
 <meta charset="UTF-8">
-<title>${esc(clientName || partnerName)} — AI value ${isPartner ? "assessment (partner copy)" : "assessment"}</title>
+<title>${esc(clientName || partnerName)} — AI value assessment</title>
 ${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags}
 <style>
   @media screen { body { padding: 24px 0; } }
@@ -3057,16 +3040,20 @@ ${pages}
 `;
 
   const pageCount = (html.match(/<section class="page/g) || []).length;
-  const hits = isPartner ? [] : auditClient(html, P, money);
+  /* Аудит без исключений: сборка одна, и «партнёрской» сборки, где внутреннее
+     было бы допустимо, больше нет. */
+  const hits = auditClient(html, P, money);
   return {html, pageCount, hits};
 }
 
 /* =============================================================================
-   CLIENT-BUILD AUDIT — общий для терминала и браузера.
-   Клиенту достаётся ОДНА итоговая строка внедрения. Разбивка по сценариям и любая
-   страница, помеченная как партнёрская копия, — дело только партнёра.
+   АУДИТ ОТЧЁТА — общий для терминала и браузера.
+   Сборка одна, и она клиентская: постатейные цены услуг и любая страница,
+   помеченная как внутренняя, в документ попасть не должны. Итоговая строка
+   внедрения при этом остаётся — она стоит в затратах первого года, без неё
+   чистая экономия была бы завышена. Запрещена разбивка, а не сам факт затрат.
    Возвращает находки, а не падает: build-report.mjs отказывается писать файл,
-   браузер отказывается печатать.
+   браузер отказывается печатать. Правило одно, реакция — по месту.
    ========================================================================== */
 /* Audit the VISIBLE TEXT, not the markup. Auditing raw HTML gives false positives:
    CSS declarations contain `margin:` and `gap:`, and class names contain `gap-rows`,
@@ -3136,24 +3123,24 @@ function pdfSay(msgKey, params){
   box.hidden = false;
 }
 
-function reportToPdf(mode){
+function reportToPdf(){
   pdfSay(null);
   const model = computeModel();
   if(!model.any){ pdfSay("ui.pdfNoScenarios"); return; }
 
   const st = reportState();
-  const {html, hits} = buildReport(st, {mode, assets: reportAssets()});
+  const {html, hits} = buildReport(st, {assets: reportAssets()});
 
-  /* Тот же аудит, что в терминале, и та же реакция по смыслу: клиентскую сборку
-     с партнёрскими данными не печатаем вообще. Правило одно на два потребителя. */
-  if(mode === "client" && hits.length){
+  /* Тот же аудит, что в терминале, и та же реакция по смыслу. Раньше он
+     пропускался для партнёрской сборки — сборка теперь одна, исключения нет. */
+  if(hits.length){
     pdfSay("ui.pdfRefused", {what: hits.join(", ")});
     return;
   }
 
   const frame = document.createElement("iframe");
   frame.setAttribute("aria-hidden", "true");
-  frame.title = mode === "partner" ? "Partner report" : "Client report";
+  frame.title = "Report for the client";
   /* Не display:none: скрытый фрейм в части браузеров не раскладывается и печать
      уходит пустой. Уводим за край экрана, оставляя реальный размер листа. */
   frame.style.cssText = "position:fixed; left:-10000px; top:0; width:210mm; height:297mm; border:0;";
@@ -3776,8 +3763,7 @@ document.getElementById("show-rev").addEventListener("change", e=>{
   recompute();
 });
 document.getElementById("dl-state").addEventListener("click", downloadState);
-document.getElementById("pdf-client").addEventListener("click", ()=> reportToPdf("client"));
-document.getElementById("pdf-partner").addEventListener("click", ()=> reportToPdf("partner"));
+document.getElementById("pdf-client").addEventListener("click", ()=> reportToPdf());
 document.getElementById("load-state").addEventListener("change", e=> loadStateFile(e.target));
 
 /* ---- boot ---- */

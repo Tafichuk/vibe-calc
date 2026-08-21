@@ -4,13 +4,21 @@
  *
  *   node scripts/check-parity.mjs [STATE.json]        # default: calc-state.json
  *
- * Exit 0 = every checked quantity matches across screen / client report / partner
- *          report. Exit 1 = a mismatch, naming the quantity and all three values.
+ * Exit 0 = every checked quantity matches between the screen and the report.
+ * Exit 1 = a mismatch, naming the quantity and both values.
  * Exit 2 = could not run the comparison (never reported as "matching").
+ *
+ * ONE REPORT. There used to be two builds, client and partner, and every check ran
+ * twice. The partner build is gone — the partner works from the screen — so there is
+ * one document to compare against. Nothing was dropped in the collapse: every
+ * quantity that was checked in both builds is still checked, once.
+ * The leak guard did not move either. build-report.mjs audits the report and REFUSES
+ * to write a file carrying internal material, so a leak makes the build fail and this
+ * script dies at step 2 with that message rather than quietly comparing figures.
  *
  * HOW IT COMPARES
  * The calculator exports `display`: the exact strings it is rendering at the moment
- * of export. This script builds both report modes from the same state and pulls the
+ * of export. This script builds the report from the same state and pulls the
  * corresponding figures out of the generated HTML. If a report re-derives a figure
  * instead of displaying the model's, or rounds an intermediate, the strings differ
  * and this fails.
@@ -65,22 +73,23 @@ if (!near(S.totals.netFirstYear, S.totals.fotYear - S.totals.firstYearCost))
    of rounding in the producer. Warn only — it can legitimately be whole. */
 const looksPreRounded = S.items.length > 1 && S.items.every(i => Number.isInteger(i.fotMonth));
 
-/* ---------- 2. build both reports from this state ---------- */
+/* ---------- 2. build the report from this state ---------- */
+/* Сборка одна. Если build-report.mjs откажется её писать — а он отказывается,
+   когда в документ попало внутреннее, — мы падаем ЗДЕСЬ с его текстом, а не идём
+   сверять цифры в файле, которого нет. Это и есть лик-гейт на стороне parity. */
 const tmp = fs.mkdtempSync(path.join(ROOT, ".parity-"));
-const built = {};
+let report;
 try {
-  for (const mode of ["client", "partner"]) {
-    const out = path.join(tmp, `${mode}.html`);
-    try {
-      execFileSync(process.execPath,
-        [path.join(ROOT, "scripts", "build-report.mjs"), STATE, `--mode=${mode}`, `--out=${out}`],
-        { stdio: "pipe" });
-    } catch (e) {
-      die(2, `check-parity: build-report.mjs failed for --mode=${mode}\n` +
-             (e.stderr ? e.stderr.toString().slice(0, 900) : e.message));
-    }
-    built[mode] = fs.readFileSync(out, "utf8");
+  const out = path.join(tmp, "report.html");
+  try {
+    execFileSync(process.execPath,
+      [path.join(ROOT, "scripts", "build-report.mjs"), STATE, `--out=${out}`],
+      { stdio: "pipe" });
+  } catch (e) {
+    die(2, "check-parity: build-report.mjs failed — the report was not written.\n" +
+           (e.stderr ? e.stderr.toString().slice(0, 900) : e.message));
   }
+  report = fs.readFileSync(out, "utf8");
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }
@@ -93,20 +102,22 @@ const visible = doc => doc
   .replace(/&nbsp;/g, " ")
   .replace(/\s+/g, " ");
 
-/* ---------- 3. compare the screen's strings against each report ---------- */
+/* ---------- 3. compare the screen's strings against the report ---------- */
 const D = S.display;
+const reportText = visible(report);
 
-/* Each check: the quantity, the string the SCREEN shows, and whether a report is
-   expected to show it at all (the client build omits partner-only figures). */
+/* Each check: the quantity and the string the SCREEN shows. The `in:` field is gone
+   with the second build — there is one report and every quantity below belongs in
+   it. */
 const checks = [
-  { what: "payroll saving / month",  screen: D.fotMonth,         in: ["client", "partner"] },
-  { what: "payroll saving / year",   screen: D.fotYear,          in: ["client", "partner"] },
-  { what: "Vibe+ subscription/year", screen: D.subscriptionYear, in: ["client", "partner"] },
-  { what: "implementation services", screen: D.serviceSum,       in: ["client", "partner"] },
-  { what: "first-year cost",         screen: D.firstYearCost,    in: ["client", "partner"] },
-  { what: "net first-year saving",   screen: D.netFirstYear,     in: ["client", "partner"] },
-  { what: "plan price, current",     screen: D.planFromAnnual,   in: ["client", "partner"] },
-  { what: "plan price, target",      screen: D.planToAnnual,     in: ["client", "partner"] },
+  { what: "payroll saving / month",  screen: D.fotMonth },
+  { what: "payroll saving / year",   screen: D.fotYear },
+  { what: "Vibe+ subscription/year", screen: D.subscriptionYear },
+  { what: "implementation services", screen: D.serviceSum },
+  { what: "first-year cost",         screen: D.firstYearCost },
+  { what: "net first-year saving",   screen: D.netFirstYear },
+  { what: "plan price, current",     screen: D.planFromAnnual },
+  { what: "plan price, target",      screen: D.planToAnnual },
   /* The pair is now chosen freely (any Essentials or "no Bitrix24 yet" against any
      of the 15 Vibe+ tiers), so the difference is no longer derivable from the plan
      names — it has to travel and match. When the "before" price is not published
@@ -120,29 +131,23 @@ const checks = [
 /* With no published "before" price, both reports must SAY so rather than quietly
    dropping the row — that is the whole point of the honest-gap rule. */
 if (S.plan && S.plan.fromPriceKnown === false) {
-  for (const mode of ["client", "partner"]) {
-    const text = visible(built[mode]);
-    if (!/no published price|not published in/i.test(text))
-      problems.push({ what: `missing "no published price" note — ${mode} report`,
-                      a: "expected an explicit note next to the plan table",
-                      b: "(report shows neither)" });
-  }
+  if (!/no published price|not published in/i.test(reportText))
+    problems.push({ what: `missing "no published price" note`,
+                    a: "expected an explicit note next to the plan table",
+                    b: "(the report shows neither)" });
 }
 
 for (const c of checks) {
   if (c.screen == null) continue;                 // not applicable (e.g. no price published)
-  for (const mode of c.in) {
-    const text = visible(built[mode]);
-    if (!text.includes(c.screen)) {
-      // find what the report shows instead, for a useful message
-      const cur = (S.currency === "EUR" ? "€" : "$");
-      const shown = [...text.matchAll(new RegExp(`\\${cur}[\\d.,]+`, "g"))].map(m => m[0]);
-      problems.push({
-        what: `${c.what} — missing from ${mode} report`,
-        a: c.screen,
-        b: shown.length ? `report shows: ${[...new Set(shown)].slice(0, 12).join(", ")}` : "(no figures found)",
-      });
-    }
+  if (!reportText.includes(c.screen)) {
+    // find what the report shows instead, for a useful message
+    const cur = (S.currency === "EUR" ? "€" : "$");
+    const shown = [...reportText.matchAll(new RegExp(`\\${cur}[\\d.,]+`, "g"))].map(m => m[0]);
+    problems.push({
+      what: `${c.what} — missing from the report`,
+      a: c.screen,
+      b: shown.length ? `report shows: ${[...new Set(shown)].slice(0, 12).join(", ")}` : "(no figures found)",
+    });
   }
 }
 
@@ -176,13 +181,11 @@ const diffInReport = text => {
 };
 if (D.diffPerMonth != null) {
   const want = signedAmount(D.diffPerMonth);
-  for (const mode of ["client", "partner"]) {
-    const shown = diffInReport(visible(built[mode]));
-    if (signedAmount(shown) !== want)
-      problems.push({ what: `plan difference next to its label — ${mode} report`,
-                      a: D.diffPerMonth, b: shown === null ? "(no Difference row found)" : shown,
-                      note: "plan prices are per account; the difference must not be scaled by headcount" });
-  }
+  const shown = diffInReport(reportText);
+  if (signedAmount(shown) !== want)
+    problems.push({ what: `plan difference next to its label`,
+                    a: D.diffPerMonth, b: shown === null ? "(no Difference row found)" : shown,
+                    note: "plan prices are per account; the difference must not be scaled by headcount" });
 }
 
 /* per-scenario figures must match too — that is where the rounding used to differ */
@@ -193,12 +196,9 @@ for (const p of (D.perScenario || [])) {
      встречается в документе где угодно. hasFot отсутствует у состояний, снятых
      до появления признака: там поведение прежнее. */
   if (p.hasFot === false) continue;
-  for (const mode of ["client", "partner"]) {
-    const text = visible(built[mode]);
-    if (!text.includes(p.fotMonth))
-      problems.push({ what: `scenario ${p.id} saving/month — missing from ${mode} report`,
-                      a: p.fotMonth, b: "(not found in report text)" });
-  }
+  if (!reportText.includes(p.fotMonth))
+    problems.push({ what: `scenario ${p.id} saving/month — missing from the report`,
+                    a: p.fotMonth, b: "(not found in report text)" });
 }
 
 /* КОЛОНКА ВЫРУЧКИ. Появляется в таблице сценариев ТОЛЬКО при включённом
@@ -206,13 +206,10 @@ for (const p of (D.perScenario || [])) {
    карточка на экране, а не только общий итог на первой странице. Проверяется в обе
    стороны: включён — колонка есть, выключен — колонки нет. */
 if (S.showRevenue) {
-  for (const mode of ["client", "partner"]) {
-    const text = visible(built[mode]);
-    if (!/Revenue \/ month/.test(text))
-      problems.push({ what: `revenue column missing — ${mode} report`,
-                      a: "the revenue switch is on",
-                      b: "(no Revenue / month column in the scenario table)" });
-  }
+  if (!/Revenue \/ month/.test(reportText))
+    problems.push({ what: `revenue column missing`,
+                    a: "the revenue switch is on",
+                    b: "(no Revenue / month column in the scenario table)" });
   /* Читаем ИМЕННО ячейку строки сценария. «Цифра есть где-то в документе» здесь не
      работает: при включённом переключателе те же суммы стоят общим итогом на первой
      странице, поэтому удвоенное значение в колонке такую проверку проходит —
@@ -240,45 +237,35 @@ if (S.showRevenue) {
   for (const it of (S.items || [])) {
     const p = (D.perScenario || []).find(x => x.id === it.id);
     if (!p || p.hasRev === false || p.revMonth == null) continue;
-    for (const mode of ["client", "partner"]) {
-      const {idx, cell} = revCellFor(built[mode], it.title);
-      if (idx < 0) continue;                       // отсутствие колонки уже поймано выше
-      if (cell !== p.revMonth)
-        problems.push({ what: `scenario ${it.id} revenue/month in its own row — ${mode} report`,
-                        a: p.revMonth,
-                        b: cell === null ? "(no row found for this scenario)" : `report shows: ${cell}`,
-                        note: "read from the scenario's own cell, not from anywhere in the document" });
-    }
+    const {idx, cell} = revCellFor(report, it.title);
+    if (idx < 0) continue;                         // отсутствие колонки уже поймано выше
+    if (cell !== p.revMonth)
+      problems.push({ what: `scenario ${it.id} revenue/month in its own row`,
+                      a: p.revMonth,
+                      b: cell === null ? "(no row found for this scenario)" : `report shows: ${cell}`,
+                      note: "read from the scenario's own cell, not from anywhere in the document" });
   }
 } else {
-  for (const mode of ["client", "partner"]) {
-    if (/Revenue \/ month/.test(visible(built[mode])))
-      problems.push({ what: `revenue column present while the switch is off — ${mode} report`,
-                      a: "showRevenue is false", b: "(the scenario table carries a revenue column)" });
-  }
+  if (/Revenue \/ month/.test(reportText))
+    problems.push({ what: `revenue column present while the switch is off`,
+                    a: "showRevenue is false", b: "(the scenario table carries a revenue column)" });
 }
 
 /* Прочерк без объяснения — такая же ловушка, как «$0»: в таблице появляется знак,
    которого читатель не заказывал. Если хоть один сценарий печатается прочерком,
-   оба отчёта обязаны нести подпись под таблицей. */
+   отчёт обязан нести подпись под таблицей. */
 if ((D.perScenario || []).some(p => p.hasFot === false)) {
-  for (const mode of ["client", "partner"]) {
-    const text = visible(built[mode]);
-    if (!/in the saving columns/i.test(text))
-      problems.push({ what: `dash note missing — ${mode} report`,
-                      a: "a row prints a dash instead of a payroll saving",
-                      b: "(no line under the table explains it)" });
-  }
+  if (!/in the saving columns/i.test(reportText))
+    problems.push({ what: `dash note missing`,
+                    a: "a row prints a dash instead of a payroll saving",
+                    b: "(no line under the table explains it)" });
 }
 
 /* the credibility warning, when it is on, must carry the same percentage */
 if (S.overlap && !S.overlap.ok) {
-  for (const mode of ["client", "partner"]) {
-    const text = visible(built[mode]);
-    if (!text.includes(`${D.overlapPct}%`))
-      problems.push({ what: `overlap warning percentage — ${mode} report`,
-                      a: `${D.overlapPct}%`, b: "(not found; warning missing or differently rounded)" });
-  }
+  if (!reportText.includes(`${D.overlapPct}%`))
+    problems.push({ what: `overlap warning percentage`,
+                    a: `${D.overlapPct}%`, b: "(not found; warning missing or differently rounded)" });
 }
 
 /* ---------- 4. the cost of the move must NOT depend on headcount ----------
@@ -288,7 +275,7 @@ if (S.overlap && !S.overlap.ok) {
    the bug this guard exists to stop from coming back ("+ $108,000 across 50 users"
    where the real figure was $2,160 a year).
 
-   Behavioural, not textual: rebuild both reports from the same state with the headcount
+   Behavioural, not textual: rebuild the report from the same state with the headcount
    tripled and demand every plan figure comes out identical. Only payroll may move. */
 let seatGuard = null;
 if (S.company && S.company.empCount) {
@@ -298,35 +285,33 @@ if (S.company && S.company.empCount) {
   const scaledFile = path.join(tmp2, "scaled.json");
   fs.writeFileSync(scaledFile, JSON.stringify(scaled));
   try {
-    for (const mode of ["client", "partner"]) {
-      const out = path.join(tmp2, `${mode}.html`);
-      try {
-        execFileSync(process.execPath,
-          [path.join(ROOT, "scripts", "build-report.mjs"), scaledFile, `--mode=${mode}`, `--out=${out}`],
-          { stdio: "pipe" });
-      } catch (e) {
-        die(2, `check-parity: build-report.mjs failed on the tripled-headcount state (--mode=${mode})\n` +
-               (e.stderr ? e.stderr.toString().slice(0, 600) : e.message));
-      }
-      const text = visible(fs.readFileSync(out, "utf8"));
-      if (D.diffPerMonth != null) {
-        const shown = diffInReport(text);
-        if (signedAmount(shown) !== signedAmount(D.diffPerMonth))
-          problems.push({ what: `plan difference changed when headcount tripled — ${mode} report`,
-                          a: `${D.diffPerMonth} at ${S.company.empCount} users`,
-                          b: `${shown === null ? "(no Difference row)" : shown} at ${scaled.company.empCount} users`,
-                          note: "plan cost is per account and must not scale with seats" });
-      }
-      for (const [label, figure] of [["target plan price", D.planToAnnual],
-                                     ["current plan price", D.planFromAnnual],
-                                     ["subscription/year", D.subscriptionYear]]) {
-        if (figure == null) continue;
-        if (!text.includes(figure))
-          problems.push({ what: `${label} changed when headcount tripled — ${mode} report`,
-                          a: `${figure} at ${S.company.empCount} users`,
-                          b: `missing at ${scaled.company.empCount} users`,
-                          note: "plan cost is per account and must not scale with seats" });
-      }
+    const out = path.join(tmp2, "report.html");
+    try {
+      execFileSync(process.execPath,
+        [path.join(ROOT, "scripts", "build-report.mjs"), scaledFile, `--out=${out}`],
+        { stdio: "pipe" });
+    } catch (e) {
+      die(2, "check-parity: build-report.mjs failed on the tripled-headcount state\n" +
+             (e.stderr ? e.stderr.toString().slice(0, 600) : e.message));
+    }
+    const text = visible(fs.readFileSync(out, "utf8"));
+    if (D.diffPerMonth != null) {
+      const shown = diffInReport(text);
+      if (signedAmount(shown) !== signedAmount(D.diffPerMonth))
+        problems.push({ what: `plan difference changed when headcount tripled`,
+                        a: `${D.diffPerMonth} at ${S.company.empCount} users`,
+                        b: `${shown === null ? "(no Difference row)" : shown} at ${scaled.company.empCount} users`,
+                        note: "plan cost is per account and must not scale with seats" });
+    }
+    for (const [label, figure] of [["target plan price", D.planToAnnual],
+                                   ["current plan price", D.planFromAnnual],
+                                   ["subscription/year", D.subscriptionYear]]) {
+      if (figure == null) continue;
+      if (!text.includes(figure))
+        problems.push({ what: `${label} changed when headcount tripled`,
+                        a: `${figure} at ${S.company.empCount} users`,
+                        b: `missing at ${scaled.company.empCount} users`,
+                        note: "plan cost is per account and must not scale with seats" });
     }
     seatGuard = `${S.company.empCount} and ${scaled.company.empCount} users`;
   } finally {
@@ -336,7 +321,7 @@ if (S.company && S.company.empCount) {
 
 /* ---------- report ---------- */
 if (problems.length) {
-  console.error(`\n  PARITY FAILURE — the screen and a report disagree (${problems.length}):\n`);
+  console.error(`\n  PARITY FAILURE — the screen and the report disagree (${problems.length}):\n`);
   for (const p of problems) {
     console.error(`  ${p.what}`);
     console.error(`      screen : ${p.a}`);
@@ -349,7 +334,7 @@ if (problems.length) {
   process.exit(1);
 }
 
-console.log(`check-parity: OK — screen, client report and partner report agree`);
+console.log(`check-parity: OK — the screen and the report agree`);
 console.log(`  state            ${path.relative(ROOT, STATE)}`);
 console.log(`  scenarios        ${S.items.length}`);
 console.log(`  saving / month   ${D.fotMonth}`);
@@ -360,8 +345,8 @@ console.log(`  net first year   ${D.netFirstYear}`);
    которой не было, — хуже отсутствия строки. */
 if (seatGuard) console.log(`  headcount guard  plan cost identical at ${seatGuard}`);
 else           console.log(`  headcount guard  SKIPPED — state has no company.empCount`);
-console.log(`  checks run       ${checks.filter(c=>c.screen!=null).length} totals x2 builds`
-            + ` + ${(D.perScenario||[]).length} per-scenario x2`
+console.log(`  checks run       ${checks.filter(c=>c.screen!=null).length} totals`
+            + ` + ${(D.perScenario||[]).length} per-scenario`
             + (S.overlap && !S.overlap.ok ? " + overlap warning" : ""));
 if (looksPreRounded)
   console.log(`  note             every per-scenario value is a whole number — check that the`
