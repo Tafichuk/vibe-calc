@@ -2494,6 +2494,28 @@ const partnerLogo = PT.logo && String(PT.logo).trim() ? String(PT.logo).trim() :
    max-width guard (.b24-plogo). We only add a sibling and the clear space between
    them. maxW caps the partner mark so the pair can never outgrow the A4 content
    width — .page is overflow:hidden, and a clipped logo is worse than a small one. */
+/* Светлота знака разбирается ОДИН раз: плашка нужна и на тёмных полотнах
+   (обложка, закрывающая), и в верхнем колонтитуле светлых страниц. */
+const logoInk = PT.logoInk === "light" || PT.logoInk === "dark" ? PT.logoInk : null;
+
+/* ОДИН НАБОР ПРАВИЛ ПЛАШКИ НА ВСЕ МЕСТА. Меняются только два входа — токен
+   отбивки и то, тёмное ли под ней полотно; всё остальное общее, поэтому шапка не
+   может разъехаться с обложкой по правилам:
+     заливка  — по светлоте знака: белая под тёмным и цветным, --b24p-deep-2 под
+                светлым (то же, что на navy);
+     радиус   — --b24-r-tile, токен кита, свой не вводим;
+     отбивка  — токен кита, свой размер на каждое место (плашка на обложке в два
+                с лишним раза крупнее той, что влезает в колонтитул);
+     рамка    — волосяная rgba(255,255,255,.22) ТОЛЬКО когда и плашка, и полотно
+                тёмные: на navy она отделяет одно от другого, а на светлой
+                странице тёмная плашка отделена сама собой и рамка была бы
+                невидимой линией ради симметрии кода. */
+const plateStyle = (ink, padVar, darkPage) =>
+    `background:${ink === "light" ? "var(--b24p-deep-2)" : "var(--b24-white)"};`
+  + `padding:var(${padVar}); border-radius:var(--b24-r-tile);`
+  + (ink === "light" && darkPage ? "border:1px solid rgba(255,255,255,.22);" : "")
+  + "display:inline-flex; align-items:center; flex:0 0 auto;";
+
 /* ПОДЛОЖКА ПОД ЗНАКОМ ПАРТНЁРА НА ТЁМНЫХ ПОЛОТНАХ.
    У партнёра один файл логотипа, и он же печатается на светлых страницах и на
    тёмно-синей обложке с закрывающей страницей. Тёмный знак на navy пропадает.
@@ -2519,17 +2541,14 @@ const partnerLogo = PT.logo && String(PT.logo).trim() ? String(PT.logo).trim() :
    плашки, то есть строже, чем от знака до знака.
    Локап не трогается вообще: официальный белый файл, свои пропорции и цвет. */
 const cobrand = (lockup, kitClass, h, maxW, {onDark = false, padVar = "--b24-s3"} = {}) => {
-  const ink = PT.logoInk === "light" || PT.logoInk === "dark" ? PT.logoInk : null;
+  const ink = logoInk;
   const plated = onDark && !!partnerLogo && !!ink;
   const mark = partnerLogo
     ? `<img src="${esc(partnerLogo)}" alt="${esc(partnerName)}"
         style="max-height:${h}px; max-width:${maxW}px; height:auto; width:auto;
                object-fit:contain; display:block; flex:0 1 auto;">`
     : "";
-  const plate = `background:${ink === "light" ? "var(--b24p-deep-2)" : "var(--b24-white)"};`
-    + `padding:var(${padVar}); border-radius:var(--b24-r-tile);`
-    + (ink === "light" ? "border:1px solid rgba(255,255,255,.22);" : "")
-    + "display:inline-flex; align-items:center; flex:0 0 auto;";
+  const plate = plateStyle(ink, padVar, true);
   return `
   <span style="display:inline-flex; align-items:center; justify-content:flex-end;
                gap:${(h * 0.63).toFixed(1)}px; min-width:0; flex:0 1 auto;">
@@ -2584,12 +2603,45 @@ const cobrand = (lockup, kitClass, h, maxW, {onDark = false, padVar = "--b24-s3"
 const PARTNER_MARK_H = 24;
 const PARTNER_MARK_W = 180;
 
+/* ПЛАШКА В КОЛОНТИТУЛЕ — ТОЛЬКО ПОД СВЕТЛЫМ ЗНАКОМ.
+   Тёмный и цветной знак на светлой странице читаются сами (замерено: тёмный
+   #102A43 на --b24-page-cool даёт 14.2:1), и плашка под ними была бы заплаткой.
+   Белый знак там бледнеет — 1.1:1, практически ничего, — и колонтитул, который
+   теперь целиком принадлежит партнёру, остаётся без марки автора. Заливка,
+   радиус и логика те же, что на navy: plateStyle(). Рамки нет — на светлой
+   странице тёмная плашка отделена сама собой.
+   Светлота неизвестна -> плашки нет, как и на тёмных полотнах.
+
+   ВЫСОТА КОЛОНТИТУЛА НЕ РАСТЁТ, И ЭТО ГЛАВНОЕ ОГРАНИЧЕНИЕ ЗДЕСЬ.
+   Высоту шапки задаёт её самый высокий ребёнок. Плашка поверх 24-пиксельного
+   знака дала бы 24 + 2x4 = 32px и шапку 45px вместо 37px. Поэтому плашка не
+   надстраивается над знаком, а ЗАБИРАЕТ ЕГО ЖЕ 24 пикселя: отбивка 4px с каждой
+   стороны, знак внутри 16px. Внешний габарит тот же, полоса набора не двигается.
+   Цена честная и сознательная: у светлого знака глиф 16px вместо 24px. Читаемые
+   16px стоят больше нечитаемых 24px, и платит эту цену только светлый логотип —
+   тёмный и цветной остаются 24px, как были. */
+const HEAD_PLATE_PAD_VAR = "--b24-s1";   /* 4px по киту */
+const HEAD_PLATE_PAD_PX  = 4;            /* должно совпадать с токеном выше */
+const headPlated = !!partnerLogo && logoInk === "light";
+const headMarkH = PARTNER_MARK_H - (headPlated ? 2 * HEAD_PLATE_PAD_PX : 0);
+const headMarkW = PARTNER_MARK_W - (headPlated ? 2 * HEAD_PLATE_PAD_PX : 0);
+const headMark = partnerLogo
+  ? `<img src="${esc(partnerLogo)}" alt="${esc(partnerName)}"
+        style="max-height:${headMarkH}px; max-width:${headMarkW}px;
+               height:auto; width:auto; object-fit:contain; display:block; flex:0 0 auto;">`
+  : "";
+
 const runhead = title => `
   <div class="b24-runhead">
+    <!-- Отступ 10px здесь — между знаком партнёра и его же названием, то есть
+         внутри одной марки. Охранное поле локапа Bitrix24 к этой паре не
+         относится: локапа в шапке нет вообще, он живёт в подвале. На обложке
+         охранное поле как было — 0.63 высоты локапа до края плашки. -->
     <span style="display:inline-flex; align-items:center; gap:10px; min-width:0; flex:1 1 auto;">
-      ${partnerLogo ? `<img src="${esc(partnerLogo)}" alt="${esc(partnerName)}"
-          style="max-height:${PARTNER_MARK_H}px; max-width:${PARTNER_MARK_W}px;
-                 height:auto; width:auto; object-fit:contain; display:block; flex:0 0 auto;">` : ""}
+      ${headPlated
+        ? `<span class="b24x-plate" data-ink="light" data-where="runhead"
+                 style="${plateStyle("light", HEAD_PLATE_PAD_VAR, false)}">${headMark}</span>`
+        : headMark}
       <span style="font-weight:700; color:var(--b24-text); white-space:nowrap;
                    overflow:hidden; text-overflow:ellipsis;">${esc(partnerName)}</span>
     </span>
