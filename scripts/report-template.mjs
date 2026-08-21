@@ -464,6 +464,22 @@ const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
   ${footer()}
 </section>`).join("");
 
+/* AI-СТУПЕНЬ ВЫБРАННОГО ТАРИФА. Блок называется «What <тариф> adds», значит в нём
+   и должно стоять то, что даёт ЭТОТ тариф. Раньше сюда печаталась вся лестница
+   (Essentials / Basic Vibe+ / Standard и выше), и при выбранном Professional Vibe+
+   клиент читал про два чужих тарифа подряд.
+   Строку выбирает состояние (index.html, aiForPlan) — там же, где известен
+   целевой тариф. Здесь только запасной путь для файлов, сохранённых до этой
+   правки: у них есть массив aiAllowance и нет aiForPlan, и печатать им нечего,
+   кроме прежней лестницы — молча потерять содержимое хуже.
+   Числовых квот нет ни в одном варианте: их не публикуют. Об этом же говорит
+   сноска под блоком. */
+const aiLine = () => {
+  const one = typeof S.aiForPlan === "string" && S.aiForPlan.trim() ? S.aiForPlan.trim() : null;
+  if (one) return `<li class="is-yes">${esc(one)}</li>`;
+  return (S.aiAllowance || []).map(a => `<li class="is-yes">${esc(a)}</li>`).join("");
+};
+
 /* ---------- plan recommendation (client-safe: names + prices only) ---------- */
 const planPage = () => `
 <section class="page page--sky">
@@ -496,7 +512,15 @@ const planPage = () => `
 
   <h1 class="b24-h1" style="margin-top:var(--b24-s8); font-size:22px;">What ${esc(P.to)} adds</h1>
   <ul class="b24-checklist">
-    ${S.aiAllowance.map(a => `<li class="is-yes">${esc(a)}</li>`).join("")}
+    ${aiLine()}
+    <!-- ОСТАЛЬНЫЕ ТРИ ПУНКТА — СВОЙСТВА ВСЕЙ ЛИНЕЙКИ VIBE+, НЕ ОТДЕЛЬНЫХ ТАРИФОВ.
+         config/pricing.json, lineup.vibe_plus: «Adds Vibecode, MCP server, higher
+         AI allowance, unlimited REST API + Market» — сказано про линейку целиком.
+         vibe_plus_pillars перечисляет Vibecode и MCP тоже без привязки к тарифу, а
+         vibe_plus_headline_limits даёт rest_api и bitrix24_market как unlimited без
+         разбивки. Различий между тарифами в источнике НЕТ, поэтому эти три пункта
+         печатаются для любой цели. Если различия появятся — их место здесь, рядом
+         с AI-строкой, которая уже выбирается по тарифу. -->
     <li class="is-yes">Vibecode — build custom AI-powered business apps</li>
     <li class="is-yes">MCP server — connect external AI agents to Bitrix24</li>
     <li class="is-yes">Unlimited REST API and Bitrix24 Market</li>

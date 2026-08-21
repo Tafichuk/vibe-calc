@@ -111,7 +111,10 @@ const checks = [
      of the 15 Vibe+ tiers), so the difference is no longer derivable from the plan
      names — it has to travel and match. When the "before" price is not published
      the screen sends null and there is nothing to compare. */
-  { what: "plan price difference",   screen: D.diffPerMonth,     in: ["client", "partner"] },
+  /* plan price difference НЕ проверяется здесь вхождением строки: у пары с
+     понижением экран печатает «-$30», а отчёт «− $30», и это разные строки при
+     одном и том же числе. Настоящая проверка — позиционная, рядом с подписью
+     Difference, и она строже: см. diffInReport() ниже. */
 ];
 
 /* With no published "before" price, both reports must SAY so rather than quietly
@@ -146,15 +149,36 @@ for (const c of checks) {
 /* The loose "figure appears somewhere in the document" test is not enough for the
    plan difference: a report that multiplies it by headcount simply prints another
    number, and the absence of the right one is all we would learn. Read the figure
-   that sits next to the "Difference" label and compare it exactly. */
+   that sits next to the "Difference" label and compare it exactly.
+
+   СРАВНИВАЕМ ЧИСЛО СО ЗНАКОМ, А НЕ СТРОКУ, и это не послабление, а исправление
+   ложного срабатывания. Экран печатает отрицательную разницу через Intl —
+   «-$30». Отчёт разводит знак и сумму и ставит настоящий минус: «− $30» (U+2212).
+   Расхождение в форме тут СДЕЛАНО НАРОЧНО: пока знак был частью числа, у пары с
+   понижением выходило «+ -$220». А пары с понижением реальны — Standard за $99
+   против Alaio Basic Vibe+ за $69 даёт −$30. Проверка строк объявляла такую пару
+   расхождением, хотя обе стороны показывают одно и то же число. Величина и знак
+   сверяются по-прежнему строго, вплоть до единицы. */
+const signedAmount = s => {
+  if (s == null) return null;
+  const str = String(s);
+  const neg = /^[^\d]*[-\u2212]/.test(str);        // минус ДО первой цифры
+  const digits = str.replace(/\D/g, "");           // money() печатает без копеек
+  if (!digits) return null;
+  return neg ? -Number(digits) : Number(digits);
+};
 const diffInReport = text => {
-  const m = text.match(/Difference[^$€]*([$€]\s?[\d.,]+)/);
-  return m ? m[1].replace(/\s/g, " ").trim() : null;
+  /* Пропуск до суммы ЛЕНИВЫЙ: жадный [^$€\d]* съедал бы сам минус вместе со
+     словом «downgrade» перед ним, и отрицательная разница читалась бы как
+     положительная — ровно та ошибка, которую эта проверка должна ловить. */
+  const m = text.match(/Difference[^$€\d]*?([-\u2212+]\s?)?([$€]\s?[\d.,\s]*\d)/);
+  return m ? ((m[1] || "") + m[2]).replace(/\s+/g, " ").trim() : null;
 };
 if (D.diffPerMonth != null) {
+  const want = signedAmount(D.diffPerMonth);
   for (const mode of ["client", "partner"]) {
     const shown = diffInReport(visible(built[mode]));
-    if (shown !== D.diffPerMonth)
+    if (signedAmount(shown) !== want)
       problems.push({ what: `plan difference next to its label — ${mode} report`,
                       a: D.diffPerMonth, b: shown === null ? "(no Difference row found)" : shown,
                       note: "plan prices are per account; the difference must not be scaled by headcount" });
@@ -287,7 +311,7 @@ if (S.company && S.company.empCount) {
       const text = visible(fs.readFileSync(out, "utf8"));
       if (D.diffPerMonth != null) {
         const shown = diffInReport(text);
-        if (shown !== D.diffPerMonth)
+        if (signedAmount(shown) !== signedAmount(D.diffPerMonth))
           problems.push({ what: `plan difference changed when headcount tripled — ${mode} report`,
                           a: `${D.diffPerMonth} at ${S.company.empCount} users`,
                           b: `${shown === null ? "(no Difference row)" : shown} at ${scaled.company.empCount} users`,
