@@ -26,6 +26,17 @@
     "payrollMonth": 260000,
     "text": null
   },
+  "revGuard": {
+    "ok": true,
+    "measured": false,
+    "pct": 12.5,
+    "threshold": 25,
+    "poolYear": 2400000,
+    "poolTargetYear": 2400000,
+    "poolBaseYear": 0,
+    "projectedYear": 300000,
+    "text": null
+  },
   "agentGate": {
     "planHasAgents": false,
     "minPlan": "Alaio Professional Vibe+",
@@ -250,6 +261,9 @@
     "planToAnnualTotal": "$1,728",
     "diffPerMonth": "$45",
     "overlapPct": "15.5%",
+    "revGuardPct": null,
+    "revGuardPool": null,
+    "revGuardProjected": null,
     "agentGatedFotYear": "$157,950",
     "perScenario": [
       {

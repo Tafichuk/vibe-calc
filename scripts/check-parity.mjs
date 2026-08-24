@@ -305,6 +305,28 @@ if (S.overlap && !S.overlap.ok) {
                     a: D.overlapPct, b: "(not found; warning missing or differently rounded)" });
 }
 
+/* ПРЕДУПРЕЖДЕНИЕ ПО ВЫРУЧКЕ — тем же порядком, что и предупреждение о перекрытии.
+   Проверяются ТРИ величины, а не одна: доля, пул и сам прогноз. Одной доли мало —
+   «61.4%» может уцелеть в документе, пока обе суммы под ней разъехались, и
+   читатель получит правдоподобный процент от неверных денег.
+   Ветка идёт только когда предохранитель сработал: у состояния, где он молчит,
+   строк нет ни на экране, ни в отчёте, и искать нечего. */
+if (S.revGuard && !S.revGuard.ok) {
+  for (const [what, screen] of [
+    ["revenue warning percentage",       D.revGuardPct],
+    ["revenue warning pool, year",       D.revGuardPool],
+    ["revenue warning projection, year", D.revGuardProjected],
+  ]) {
+    if (screen == null)
+      problems.push({ what: `${what} missing from the state`,
+                      a: "the guard fired, so the screen must export the figure",
+                      b: "(display carries null)" });
+    else if (!reportText.includes(screen))
+      problems.push({ what, a: screen,
+                      b: "(not found; warning missing or differently rounded)" });
+  }
+}
+
 /* ---------- 4. the cost of the move must NOT depend on headcount ----------
    Plan prices are for the whole account: from Enterprise-1000 up the published price
    scales exactly with the seat count in the tier name, so the seats are already inside
@@ -384,7 +406,8 @@ if (seatGuard) console.log(`  headcount guard  plan cost identical at ${seatGuar
 else           console.log(`  headcount guard  SKIPPED — state has no company.empCount`);
 console.log(`  checks run       ${checks.filter(c=>c.screen!=null).length} totals`
             + ` + ${(D.perScenario||[]).length} per-scenario`
-            + (S.overlap && !S.overlap.ok ? " + overlap warning" : ""));
+            + (S.overlap && !S.overlap.ok ? " + overlap warning" : "")
+            + (S.revGuard && !S.revGuard.ok ? " + revenue warning" : ""));
 if (looksPreRounded)
   console.log(`  note             every per-scenario value is a whole number — check that the`
               + `\n                   producer is not rounding before summing`);

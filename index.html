@@ -366,17 +366,51 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .nav-fig .l-long{display:none}
 
 /* Узко: ведущее слово уходит, период берёт полную форму, цифра чуть меньше.
-   Счётчик — своей строкой. Полоса остаётся в две строки, а не в три-четыре. */
+   Счётчик — своей строкой. Полоса остаётся в две строки, а не в три-четыре.
+
+   ПОДПИСЬ ВСТАЁТ В СТРОКУ СО ЗНАЧЕНИЕМ, А НЕ НАД НИМ. Замер на 390x844: полоса
+   занимала 147px, то есть 17% экрана в браузере без адресной строки и заметно
+   больше в настоящем — поле ввода под ней оказывалось наполовину перекрытым.
+   147px складывались из отбивки 24, строки счётчика 19 и ДВУХ рядов цифр по 44
+   (подпись над плашкой), плюс зазоры. Столбик «подпись сверху, плашка снизу»
+   стоит здесь дороже всего: он удваивает высоту каждого ряда ради выравнивания,
+   которого на телефоне всё равно не видно — рядов-то один-два.
+   Кладём подпись слева от плашки по базовой линии: ряд с 44px падает до 26px.
+   Обе цифры с периодами остаются на месте, и подпись выручки остаётся полной
+   («Revenue + base potential, month») — она называет оба слагаемых, и сокращать
+   её обратно до «Potential» нельзя, это разошлось бы с решением приёмки.
+   Стало 90px вместо 147 — на 39% ниже. Отступ снизу у страницы считается от
+   ФАКТИЧЕСКОЙ высоты (syncNavbarInset + ResizeObserver), поэтому цифры в этом
+   правиле ничего не фиксируют: полоса станет выше или ниже — отступ поедет
+   следом сам. */
 @media (max-width:560px){
-  .navbar-in{gap:var(--b24-s2) var(--b24-s3); padding:var(--b24-s3) var(--b24-s6)}
-  .navbar .cnt{flex:1 1 100%; font-size:12px}
+  .navbar-in{gap:var(--b24-s1) var(--b24-s3); padding:var(--b24-s2) var(--b24-s6)}
   .hdr-sp{display:none}
-  .nav-k{display:none}
-  .nav-fig .l-short{display:none}
-  .nav-fig .l-long{display:inline}
-  .nav-fig i{font-size:9.5px; letter-spacing:.06em}
-  .nav-fig b{font-size:19px; padding:2px 10px}
-  .nav-tot{gap:var(--b24-s3); width:100%}
+  /* ГРУППА ЦИФР РАСТВОРЯЕТСЯ, И ВСЁ СТАНОВИТСЯ ОДНИМ ПЕРЕНОСЯЩИМСЯ РЯДОМ.
+     display:contents убирает саму коробку .nav-tot из раскладки, оставляя её
+     детей прямыми элементами полосы. Зачем: ведущее слово «Payroll saving»
+     живёт ВНУТРИ этой группы, а нужно оно на строке счётчика — иначе с
+     короткими подписями «Month» и «Year» на телефоне негде прочитать, что это
+     за деньги. Переносить его в разметку нельзя: на широком экране оно стоит
+     справа, у самых цифр, а счётчик — слева. Так одно правило CSS решает то,
+     ради чего пришлось бы держать два разных куска разметки. */
+  .nav-tot{display:contents}
+  .navbar .cnt{flex:0 1 auto; font-size:11px; line-height:1.3}
+  .nav-k{display:inline; order:-1; font-size:11px; line-height:1.3}
+  /* Короткая форма периода: ведущее слово теперь есть на строке выше, и полная
+     форма («Saving / month», 87px) больше не нужна — с ней две плашки в строку
+     не помещались, 187 + 187 против полосы 342. */
+  .nav-fig .l-short{display:inline}
+  .nav-fig .l-long{display:none}
+  /* Подпись и плашка в одну строку по базовой линии: ряд с 44px падает до 24. */
+  .nav-fig{flex-direction:row; align-items:baseline; gap:6px}
+  .nav-fig i{font-size:9px; letter-spacing:.05em}
+  .nav-fig b{font-size:17px; padding:1px 9px; line-height:1.3}
+  /* Строка выручки называет оба слагаемых полностью и уходит своей строкой:
+     сокращать её до «Potential» нельзя — это решение приёмки. */
+  .nav-fig--wide{flex:1 1 100%}
+  .nav-fig--wide .l-short{display:none}
+  .nav-fig--wide .l-long{display:inline}
 }
 
 /* ---- modal ---- */
@@ -708,6 +742,24 @@ const C = {
   // the same working day in several scenarios at once, not a real gain. Warn, never
   // block — the partner may have a defensible case and must stay in control.
   OVERLAP_WARN_PCT: 25,
+  /* ПОРОГ ПРАВДОПОДОБНОСТИ ДЛЯ ВЫРУЧКИ. Тот же 25%, что у экономии ФОТ, и число
+     повторено намеренно, а не сведено в одну константу: рассуждение одинаковое
+     («больше четверти пула — это уже не прирост, а переписывание бизнеса»), но
+     пулы разные, и завтра одна половина может поехать без другой.
+
+     С ЧЕМ СРАВНИВАЕМ. Оборота компании в модели нет и выдумывать его нельзя.
+     Зато у каждой строки выручки есть пул, из которого она черпает, и партнёр
+     уже вписал его сам:
+       • прирост выручки (сценарий 1) — доля годового плана продаж команды,
+         plan x mgr x 12;
+       • потенциал базы (сценарий 5) — доля стоимости всей базы, купившей по
+         одному разу, base x check.
+     Пулы складываются в один годовой ориентир, прогноз сравнивается с ним.
+     Пул объявляется рядом с формулой (поле revPool у сценария), а не собирается
+     здесь по id: сценарий с эффектом на выручку, заведённый завтра, обязан
+     сказать, из чего он черпает, иначе он просто не попадёт в знаменатель и
+     тихо ослабит предохранитель. */
+  REV_WARN_PCT: 25,
 };
 
 /* Live, user-editable economics. */
@@ -913,6 +965,18 @@ en: {
   "ui.overlapH":"Check the coverage — this adds up to {pct} of total payroll",
   "ui.overlapBody":"The selected scenarios claim {pct} of the company's payroll cost ({payroll} a month). That is above the {limit}% we treat as credible. Usually it means the scenarios overlap and the same working day is saved twice. Lower the coverage share on the broad scenarios. A smaller number the client believes is worth more than a big one they do not.",
   "ui.overlapReport":"Coverage warning: the selected scenarios total {pct} of payroll cost, above the {limit}% credibility limit. The scenarios probably overlap. Check the coverage shares before you quote this.",
+  /* ПРЕДУПРЕЖДЕНИЕ ПО ВЫРУЧКЕ. Формулировки держатся того же правила, что и у
+     предупреждения о перекрытии: сказать факт, назвать оба числа, дать что
+     покрутить — и ничего не запрещать. Пул назван словами, а не «знаменателем»:
+     клиент читает этот текст в отчёте. */
+  "ui.revWarnH":"Check the revenue figures — this is {pct} of the sales they could come from",
+  "ui.revWarnBody":"The projected revenue is {projected} a year. The sales it is drawn from come to {pool} a year: {parts}. Claiming {pct} of that as extra revenue from AI is above the {limit}% this model treats as credible. Lower the conversion into a repeat sale, the average deal value, or the share of freed time that turns into sales. A smaller number the client believes is worth more than a big one they do not.",
+  /* Без ведущего «Revenue check:» — жирный зачин блока в отчёте уже говорит то
+     же самое, выходило «Revenue ... Revenue check». И без слова «above»: блок
+     переехал на второй лист, а экономия ФОТ осталась на первом. */
+  "ui.revWarnReport":"The projected revenue is {projected} a year, which is {pct} of the {pool} it could come from ({parts}). That is above the {limit}% credibility limit. These figures are projections, and the payroll saving does not depend on them.",
+  "ui.revPoolTarget":"the sales team's annual target ({v})",
+  "ui.revPoolBase":"one purchase from every client in the base ({v})",
 
   // ---- revenue switch ----
   "ui.revToggleLabel":"Revenue projection",
@@ -1266,6 +1330,15 @@ const fmtPct = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
 /* already-a-percentage formatter (fmtPct takes a 0..1 share) */
 const fmtPct1 = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
   .format(Math.round(v * 10) / 10) + "%";
+/* СЛАГАЕМЫЕ ПУЛА СЛОВАМИ. Перечисляются только ненулевые: сценарий 1 без
+   сценария 5 не должен читать про базу, которой в расчёте нет. Фраза собирается
+   в одном месте, потому что её печатают обе поверхности — экран и отчёт. */
+function revPoolParts(rg){
+  const out = [];
+  if(rg.poolTargetYear > 0) out.push(t("ui.revPoolTarget", {v: fmtMoney(rg.poolTargetYear)}));
+  if(rg.poolBaseYear   > 0) out.push(t("ui.revPoolBase",   {v: fmtMoney(rg.poolBaseYear)}));
+  return out.join(" + ");
+}
 let lastOverlap = {ok:true, pct:0, payroll:0};
 /* the most recent computeModel() result — the one source every surface reads */
 let lastModel = null;
@@ -1332,6 +1405,9 @@ const scenarios = [
       {k:"plan", def:40000, suf:"money", est:true, revOnly:true},
       {k:"coef", def:0.3,   suf:"share", revOnly:true},
     ],
+    /* Пул правдоподобности: годовой план продаж всей команды. Прирост выручки
+       здесь — доля этого плана, и сравнивать его правильно именно с ним. */
+    revPool:v=>({key:"target", year: v.plan * v.mgr * 12}),
     compute:v=>{
       const savedMinDay = v.calls * v.time;
       const savedHoursMonth = savedMinDay * daysMonth / 60;
@@ -1350,13 +1426,50 @@ const scenarios = [
     ],
     compute:v=>({fot: v.sal * burdenMult() * v.share * v.rop, rev:0})},
 
+  /* ДЕФОЛТЫ ЗДЕСЬ СНИЖЕНЫ, И ВОТ ПОЧЕМУ.
+     Было: база 1000, средний чек $2,000, конверсия 10% в месяц. На штатных
+     значениях это давало $200,000 в месяц и $2,400,000 в год — вчетверо больше
+     ВСЕЙ остальной годовой экономии ($607,504) и 77% месячного фонда оплаты
+     труда. Партнёр, включивший переключатель выручки и не тронувший поля,
+     показывал клиенту цифру, которая рассыпается от первого вопроса.
+
+     Источника у этих трёх величин нет и быть не может: они про конкретного
+     клиента. Поэтому подобраны не «правильные» числа, а ЗАВЕДОМО ПЛЕЙСХОЛДЕРЫ,
+     и каждое обосновано тем, что уже есть в модели:
+
+       base 1000 -> 500. Дефолт компании в блоке «О компании» — 50 сотрудников.
+         Тысяча клиентов на пятьдесят человек — это двадцать клиентов на
+         сотрудника, верхний край для среднего B2B, куда продаётся инструмент.
+         Пятьсот (десять на сотрудника) — нижний. Величину партнёр всё равно
+         читает из CRM за минуту, дефолту достаточно не льстить.
+
+       check $2,000 -> $500. Две тысячи молча предполагали крупные B2B-сделки.
+         Пятьсот — мелкая сделка; партнёр, продающий контракты по $20,000,
+         поднимет поле, и цифра вырастет в сорок раз ПРИ КЛИЕНТЕ. Этот разговор
+         и нужен, а не его отсутствие.
+
+       conv 10% -> 2% в месяц. Решающее число. Десять процентов в месяц значат,
+         что ИИ заставляет каждого клиента базы купить снова 1.2 раза в год —
+         больше, чем вся база, купившая по одному разу. Два процента — примерно
+         четверть базы за год делает одну дополнительную покупку; это партнёр
+         может защитить в переговорной.
+
+     Стало: 500 x 0.02 x 500 = $5,000 в месяц, $60,000 в год — десятая часть
+     годовой экономии ФОТ вместо четырёхкратного превышения.
+
+     ВСЕ ТРИ ПОМЕЧЕНЫ est:true. Раньше пометка «estimate» стояла только у чека,
+     хотя выдуманы одинаково все три. Пометка — та же, что у охвата и окладов. */
   { id:5, group:"crm", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/25766347/",
     effect:["rev"], revLabel:"ui.revBase", segments:true,
     fields:[
-      {k:"base", def:1000, suf:"clients"},
-      {k:"check",def:2000, suf:"money", est:true},
-      {k:"conv", def:0.10, suf:"share"},
+      {k:"base", def:500, suf:"clients", est:true},
+      {k:"check",def:500, suf:"money",   est:true},
+      {k:"conv", def:0.02, suf:"share",  est:true},
     ],
+    /* Пул правдоподобности: вся база, купившая по одному разу. Годовой прогноз
+       повторных продаж, превышающий его, означает, что каждый клиент базы
+       покупает больше раза в год ТОЛЬКО из-за ИИ. См. C.REV_WARN_PCT. */
+    revPool:v=>({key:"base", year: v.base * v.check}),
     compute:v=>({fot:0, rev: v.base * v.conv * v.check})},
 
   { id:9, group:"agents", agent:true, driver:"daily", cov:{src:"empCount", target:"mgr", def:20}, link:"https://helpdesk.bitrix24.com/open/25866707/", note:true,
@@ -1924,6 +2037,10 @@ function computeScenario(sc, st){
 function computeModel(){
   const items = [];
   let fot = 0, rev = 0, pot = 0, any = false, qual = false;
+  /* Годовые пулы, из которых черпают строки выручки. Ключи заданы здесь, а не
+     наращиваются на лету: неизвестный ключ у нового сценария должен броситься в
+     глаза при первом же прогоне, а не молча пропасть из знаменателя. */
+  const revPool = {target: 0, base: 0};
 
   const invalid = [];
   scenarios.forEach(sc=>{
@@ -1935,6 +2052,13 @@ function computeModel(){
        Поэтому он едет отдельным списком, и о нём сказано в сводке. */
     if(scenarioErrors(sc, st)){ invalid.push({id: sc.id, title: t(`sc.${sc.id}.title`)}); return; }
     const r = computeScenario(sc, st);
+    /* Пул считается по ТЕМ ЖЕ наборам значений, что и сама выручка: базовый плюс
+       все сегменты. Иначе сценарий с сегментами дал бы большую выручку при
+       маленьком знаменателе и предохранитель срабатывал бы на ровном месте. */
+    if(sc.revPool) [st.values].concat(st.segments || []).forEach(vals=>{
+      const c = sc.revPool(vals);
+      if(c && revPool[c.key] !== undefined) revPool[c.key] += (c.year || 0);
+    });
     any = true;
     if(sc.qualitative) qual = true;
     fot += r.fot;                                          // raw, never rounded
@@ -1957,6 +2081,27 @@ function computeModel(){
 
   const payroll = (company.empCount || 0) * (company.empSal || 0) * burdenMult();
   const pct = payroll ? (fot / payroll * 100) : 0;
+
+  /* ПРЕДОХРАНИТЕЛЬ НА ВЫРУЧКУ — брат-близнец предохранителя на ФОТ выше.
+     Считается ВСЕГДА (иначе строка уехала бы в отчёт из состояния, снятого с
+     выключенным переключателем), а срабатывает только когда выручку показывают:
+     предупреждать о цифрах, которых на экране нет, значит пугать впустую.
+     Знаменатель нулевой — предохранитель молчит, но и «ok» тут значит «нечего
+     мерить», а не «проверено»: об этом говорит поля measured. */
+  const revPoolYear   = revPool.target + revPool.base;
+  const projectedYear = (rev + pot) * 12;
+  const revPct = revPoolYear > 0 ? (projectedYear / revPoolYear * 100) : 0;
+  const revMeasured = SHOW_REVENUE && revPoolYear > 0 && projectedYear > 0;
+  const revGuard = {
+    ok: !revMeasured || revPct <= C.REV_WARN_PCT,
+    measured: revMeasured,
+    pct: revPct,
+    poolYear: revPoolYear,
+    poolTargetYear: revPool.target,
+    poolBaseYear: revPool.base,
+    projectedYear,
+    threshold: C.REV_WARN_PCT,
+  };
 
   /* РАСХОЖДЕНИЕ «СЦЕНАРИИ НА АГЕНТАХ ПРОТИВ ЦЕЛЕВОГО ТАРИФА».
      Формулы это не меняет: fot, fotYear и netFirstYear считаются как раньше, по
@@ -1987,6 +2132,7 @@ function computeModel(){
       pct: any ? pct : 0,
       payroll, threshold: C.OVERLAP_WARN_PCT,
     },
+    revGuard,
   };
 }
 
@@ -2176,14 +2322,18 @@ function paintTotals(model){
   /* Две формы подписи в разметке, выбор — за CSS: на широком экране короткая
      («Month») рядом с ведущим словом, на узком длинная («Saving / month») вместо
      него. Так период виден всегда, а высота полосы на мобильной не растёт. */
-  const fig = (short, long, value) =>
-    `<span class="nav-fig"><i><span class="l-short">${short}</span>`
+  /* wide — строка, у которой короткой формы подписи не существует: «Revenue +
+     base potential» называет два слагаемых, и сократить его до одного слова
+     значило бы вернуть ту самую склейку, которую сняли на приёмке. На узком
+     экране такая строка занимает свою. */
+  const fig = (short, long, value, wide) =>
+    `<span class="nav-fig${wide ? " nav-fig--wide" : ""}"><i><span class="l-short">${short}</span>`
     + `<span class="l-long">${long}</span></i><b>${value}</b></span>`;
   document.getElementById("nav-tot").innerHTML = n
     ? `<span class="nav-k">${t("ui.navSaving")}</span>`
       + fig(t("ui.month"), t("ui.navPerMonth"), fmtMoney(model.totals.fotMonth))
       + fig(t("ui.year"),  t("ui.navPerYear"),  fmtMoney(model.totals.fotYear))
-      + (extra>0 ? fig(t("ui.navPotLabel"), t("ui.navPotLabel"), fmtMoney(extra)) : "")
+      + (extra>0 ? fig(t("ui.navPotLabel"), t("ui.navPotLabel"), fmtMoney(extra), true) : "")
     : "";
   syncNavbarInset();
 }
@@ -2384,6 +2534,7 @@ function renderSummary(model){
     : "";
   if(!model.any){ el.innerHTML = badBlock + `<div class="empty">${t("ui.pickOne")}</div>`; return; }
   /* display only — every figure comes from the model, nothing is derived here */
+  const rg = model.revGuard;
   const {fotMonth:fot, fotYear, revMonth:rev, potMonth:pot,
          subscriptionYear:subYear, firstYearCost:costs, netFirstYear:net} = model.totals;
   const svc = model.svc, qual = model.qual;
@@ -2423,6 +2574,15 @@ function renderSummary(model){
         <div><b>${t("ui.overlapH",{pct:fmtPct1(lastOverlap.pct)})}</b><br>
         ${t("ui.overlapBody",{pct:fmtPct1(lastOverlap.pct), limit:lastOverlap.threshold,
                               payroll:fmtMoney(lastOverlap.payroll)})}</div></div>`}
+      ${/* ВТОРОЙ ПРЕДОХРАНИТЕЛЬ, ОТДЕЛЬНОЙ ПОЛОСОЙ. Свести оба в одну полосу
+           нельзя: они про разные деньги (проверяемая экономия против прогноза) и
+           лечатся разными полями. Полоса та же по виду — один смысл, один вид. */
+        (rg && !rg.ok) ? `<div class="overlap-warn">
+        <img src="assets/icons/alert.svg" alt="">
+        <div><b>${t("ui.revWarnH",{pct:fmtPct1(rg.pct)})}</b><br>
+        ${t("ui.revWarnBody",{pct:fmtPct1(rg.pct), limit:rg.threshold,
+                              projected:fmtMoney(rg.projectedYear),
+                              pool:fmtMoney(rg.poolYear), parts:revPoolParts(rg)})}</div></div>` : ""}
       <div class="verdict${neg?" neg":""}">
         ${neg?"":'<img src="assets/icons/badge-check.svg" alt="">'}
         <span>${neg ? t("ui.verdictNeg",{v:fmtMoney(Math.abs(net))})
@@ -2659,6 +2819,24 @@ function reportState(){
       text: m.overlap.ok ? null
         : t("ui.overlapReport", {pct: fmtPct1(m.overlap.pct), limit: C.OVERLAP_WARN_PCT}),
     },
+    /* ПРЕДОХРАНИТЕЛЬ НА ВЫРУЧКУ едет тем же порядком, что и overlap: сырые
+       числа плюс готовый текст, чтобы формулировка была одна на два носителя и
+       предупреждение не потерялось между экраном и PDF. */
+    revGuard: {
+      ok: m.revGuard.ok,
+      measured: m.revGuard.measured,
+      pct: m.revGuard.pct,                      // raw; formatted on display
+      threshold: m.revGuard.threshold,
+      poolYear: m.revGuard.poolYear,            // raw
+      poolTargetYear: m.revGuard.poolTargetYear,
+      poolBaseYear: m.revGuard.poolBaseYear,
+      projectedYear: m.revGuard.projectedYear,  // raw
+      text: m.revGuard.ok ? null
+        : t("ui.revWarnReport", {pct: fmtPct1(m.revGuard.pct), limit: m.revGuard.threshold,
+                                 projected: fmtMoney(m.revGuard.projectedYear),
+                                 pool: fmtMoney(m.revGuard.poolYear),
+                                 parts: revPoolParts(m.revGuard)}),
+    },
     /* РАСХОЖДЕНИЕ ПО АГЕНТАМ ЕДЕТ ВМЕСТЕ С ДАННЫМИ — по той же причине, что и
        overlap: раскрытие нельзя потерять между экраном и PDF. Готовый текст
        кладём здесь же, чтобы формулировка была одна на два носителя. */
@@ -2698,6 +2876,11 @@ function reportState(){
       planToAnnualTotal: fmtMoney(vibe.annualTotal),
       diffPerMonth: PP.diff ? fmtMoney(PP.diff.perMonth) : null,
       overlapPct:      fmtPct1(m.overlap.pct),
+      /* Доля прогноза выручки в пуле. Пустая строка, когда мерить нечего:
+         check-parity сверяет её с отчётом только когда предохранитель сработал. */
+      revGuardPct:     m.revGuard.ok ? null : fmtPct1(m.revGuard.pct),
+      revGuardPool:    m.revGuard.ok ? null : fmtMoney(m.revGuard.poolYear),
+      revGuardProjected: m.revGuard.ok ? null : fmtMoney(m.revGuard.projectedYear),
       /* Доля итога, недоступная на выбранной цели. Пустая строка, когда
          расхождения нет: check-parity сверяет её с отчётом только при наличии. */
       agentGatedFotYear: m.agentGate.ids.length ? fmtMoney(m.agentGate.fotYear) : null,
@@ -3148,7 +3331,8 @@ const cover = () => `
    разлучать его с ними было бы хуже, чем перенести пояснения. */
 const headlineTwoUp = () =>
   (!!S.showRevenue && ((T.revMonth || 0) > 0 || (T.potMonth || 0) > 0)) ||
-  !!(S.overlap && !S.overlap.ok);
+  !!(S.overlap && !S.overlap.ok) ||
+  !!(S.revGuard && !S.revGuard.ok && S.revGuard.text);
 
 const headline = () => {
   const twoUp = headlineTwoUp();
@@ -3205,14 +3389,46 @@ ${twoUp ? "" : explain}
 </section>`;
   if (!twoUp) return first;
   /* Второй лист называется тем, что на нём лежит, а не «The numbers (2/2)»:
-     цифр на нём нет, там только чтение цифр. */
+     цифр на нём нет, там только чтение цифр.
+
+     ПРЕДУПРЕЖДЕНИЕ ПО ВЫРУЧКЕ СТОИТ ЗДЕСЬ, А НЕ РЯДОМ С ТАБЛИЦЕЙ. Замер: два
+     предупреждения сразу (перекрытие сценариев и выручка) вместе с двумя
+     таблицами не помещаются — низ уезжал на 183px за полосу и срезал подвал.
+     Разносим по смыслу, а не по остатку места: предупреждение о перекрытии —
+     про экономию ФОТ, то есть про главную цифру первого листа, и остаётся с
+     ней; предупреждение по выручке — про то, КАК читать строки прогноза, а этот
+     лист ровно так и называется. Оно стоит на нём первым блоком и в том же
+     янтарном виде, то есть не спрятано, а поставлено под своим заголовком.
+     Лист существует всегда, когда предупреждение может сработать: guard меряет
+     только при показанной выручке, а показанная выручка сама по себе включает
+     разбиение. */
   return first + `
 <section class="page page--sky">
   ${runhead("Headline")}
   <h1 class="b24-h1">How to read these numbers${num(2)}</h1>
+  ${revenueBlock()}
 ${explain}
   ${footer()}
 </section>`;
+};
+
+/* ПРЕДУПРЕЖДЕНИЕ ПО ВЫРУЧКЕ. Та же логика, что у overlapBlock: клиент вправе
+   знать, что прогноз выше уровня, который мы считаем защитимым, — умолчать было
+   бы нечестным выбором. Текст приходит ГОТОВЫМ из состояния (`revGuard.text`),
+   отчёт его не сочиняет и процент не пересчитывает: формулировка обязана быть
+   одна на экране и в документе, иначе партнёр говорит клиенту одно, а бумага
+   другое. Нет текста — нет и блока; состояния, снятые до этой правки, поля не
+   несут и печатать им нечего. */
+const revenueBlock = () => {
+  const g = S.revGuard;
+  if (!g || g.ok || !g.text) return "";
+  return `
+  <div class="b24-dashed" style="margin-top:var(--b24-s5); border-color:#A15C00;">
+    <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
+      <span class="b24-strong" style="color:#A15C00;">Revenue above the credibility limit.</span>
+      ${esc(g.text)}
+    </p>
+  </div>`;
 };
 
 /* Credibility warning — travels in BOTH builds. The client is entitled to know the
