@@ -835,7 +835,10 @@ en: {
      отчёт, а auditClient его там запрещает. */
   "ui.agentReq":"Needs {plan}",
   "ui.agentReqHint":"This scenario runs on an AI agent. AI agents are included from Alaio Professional Vibe+ up. They are not available on Alaio Basic Vibe+ or Alaio Standard Vibe+.",
-  "ui.agentWarnH":"{n} of the selected scenarios need an AI agent, and {plan} does not include one",
+  /* Число согласуем: «1 ... need» читается как опечатка, а инструментом
+     пользуются не носители — им такие мелочи мешают сильнее. */
+  "ui.agentWarnH1":"One selected scenario needs an AI agent, and {plan} does not include one",
+  "ui.agentWarnH":"{n} selected scenarios need an AI agent, and {plan} does not include one",
   "ui.agentWarnBody":"AI agents are included from {min} up. {fot} of the payroll saving a year comes from these scenarios. You can still quote {plan} — nothing is blocked — but the client will not get these scenarios on it. Raise the plan, or present them as a second phase and say so.",
   "ui.agentWarnFix":"Raise the plan to {min}",
   "ui.pdfRefusedGate":"The report was not built: it shows saving from scenarios that need an AI agent, and it does not say the recommended plan has none ({what}). This is a bug — please report it. Do not work around it: a client must not buy a plan on which the promise does not hold.",
@@ -2291,7 +2294,8 @@ function renderAgentWarning(model){
   if(!g || !g.ids.length){ box.hidden = true; return; }
   const plan = planPair().map.to;
   document.getElementById("warn-agents-h").textContent =
-    t("ui.agentWarnH", {n: g.ids.length, plan});
+    g.ids.length === 1 ? t("ui.agentWarnH1", {plan})
+                       : t("ui.agentWarnH", {n: g.ids.length, plan});
   /* Список — узлами, а не innerHTML: названия приходят из I18N, но собирать
      разметку из строк здесь незачем, а textContent снимает вопрос экранирования
      на будущее, когда появится немецкий перевод. */
@@ -3123,7 +3127,7 @@ const planPage = () => {
        Ссылка на строки таблицы держится на том же знаке †, что и сноска. -->
   <div class="b24-dashed" style="margin-top:var(--b24-s6); border-color:#A15C00;">
     <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
-      <span class="b24-strong" style="color:#A15C00;">${int(gated.length)} of these scenarios need an AI agent.</span>
+      <span class="b24-strong" style="color:#A15C00;">${gated.length === 1 ? "One of these scenarios needs an AI agent." : `${int(gated.length)} of these scenarios need an AI agent.`}</span>
       AI agents are included from ${esc(gate.minPlan)} up, so they are not available on ${esc(P.to)}:
       ${gate.titles.map(x => esc(x)).join(", ")}.
       ${money(gate.fotYear)} of the payroll saving a year comes from them.

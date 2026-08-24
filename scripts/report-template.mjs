@@ -546,7 +546,7 @@ const planPage = () => {
        Ссылка на строки таблицы держится на том же знаке †, что и сноска. -->
   <div class="b24-dashed" style="margin-top:var(--b24-s6); border-color:#A15C00;">
     <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
-      <span class="b24-strong" style="color:#A15C00;">${int(gated.length)} of these scenarios need an AI agent.</span>
+      <span class="b24-strong" style="color:#A15C00;">${gated.length === 1 ? "One of these scenarios needs an AI agent." : `${int(gated.length)} of these scenarios need an AI agent.`}</span>
       AI agents are included from ${esc(gate.minPlan)} up, so they are not available on ${esc(P.to)}:
       ${gate.titles.map(x => esc(x)).join(", ")}.
       ${money(gate.fotYear)} of the payroll saving a year comes from them.
