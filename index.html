@@ -180,6 +180,15 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
   border:1px solid currentColor; border-radius:var(--b24-r-inner);
   padding:var(--b24-s4); margin-top:var(--b24-s4); font-size:13.5px}
 .overlap-warn img{width:20px; height:20px; flex:0 0 auto; margin-top:1px}
+/* Блок про исключённые по ошибке ввода сценарии. Тело — то же, что у
+   .overlap-warn: один смысл (предостережение внутри тёмной сводки), один вид.
+   Но живёт ВНЕ .sum-grid: он печатается и когда сетки нет вообще — если
+   единственный выбранный сценарий невалиден. Поэтому без grid-column. */
+.sum-invalid{display:flex; gap:var(--b24-s3); align-items:flex-start;
+  background:var(--b24x-warning-surface); color:var(--b24x-warning-ink);
+  border:1px solid currentColor; border-radius:var(--b24-r-inner);
+  padding:var(--b24-s4); margin-bottom:var(--b24-s4); font-size:13.5px}
+.sum-invalid img{width:20px; height:20px; flex:0 0 auto; margin-top:1px}
 .hdr .switch[hidden], .hdr .sw-lab[hidden]{display:none}
 
 /* ---- scenario card ---- */
@@ -219,6 +228,10 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .tag--plan{background:var(--b24x-warning-surface); color:var(--b24x-warning-ink)}
 .sc-body{display:none; padding:0 var(--b24-s6) var(--b24-s6); border-top:1px solid var(--b24-line)}
 .sc.on .sc-body{display:block}
+/* Подпись под прочерком в блоке результатов: сценарий только на выручке при
+   выключенном переключателе. Кегль и цвет — как у .sc-note, но без плашки:
+   это объяснение к строке результата, а не отдельная врезка. */
+.res-note{font-size:12.5px; color:var(--b24-text-mute); margin-top:var(--b24-s2)}
 .sc-note{background:var(--b24-card); border-radius:var(--b24-r-inner);
   padding:var(--b24-s3) var(--b24-s4); font-size:12.5px; margin:var(--b24-s4) 0 0}
 .sc-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
@@ -603,6 +616,15 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
       <div id="pdf-err" class="warn" hidden style="margin-top:var(--b24-s4)">
         <img src="assets/icons/alert.svg" alt=""><span id="pdf-err-text"></span>
       </div>
+      <!-- КОНТАКТЫ ПАРТНЁРА НЕ ЗАПОЛНЕНЫ. Не блокирует: партнёр вправе собрать
+           отчёт для себя. Но документ уходит клиенту подписанным дефолтным
+           «Bitrix24 Partner», без имени, почты и телефона — и об этом надо
+           сказать ДО скачивания, а не после. -->
+      <div id="pdf-warn-pt" class="warn" hidden style="margin-top:var(--b24-s4)">
+        <img src="assets/icons/alert.svg" alt="">
+        <div><b id="pdf-warn-pt-h"></b>
+          <p id="pdf-warn-pt-b" style="margin:var(--b24-s2) 0 0"></p></div>
+      </div>
 
       <!-- Вспомогательное: сохранить/открыть расчёт. Это НЕ отчёт. -->
       <div class="b24x-save-row">
@@ -833,6 +855,12 @@ en: {
   /* AI-АГЕНТЫ И ТАРИФ. Пометка постоянная, предупреждение — только при
      расхождении. Слово «gap» в этих строках не употребляется: они попадают в
      отчёт, а auditClient его там запрещает. */
+  /* ИСКЛЮЧЕНИЕ ПО ОШИБКЕ ВВОДА. Формулировка говорит и что произошло, и что
+     делать: сценарий не выброшен, он ждёт исправления. */
+  "ui.invalidCardNote":"Not counted while the field above is wrong: this scenario is out of every total and out of the report. Fix it and the figures come back.",
+  "ui.invalidH1":"One selected scenario is not counted: its numbers do not add up",
+  "ui.invalidH":"{n} selected scenarios are not counted: their numbers do not add up",
+  "ui.invalidBody":"Fix the field marked in red in the scenario. Until then it stays out of every total on this page and out of the report — the report will not build at all.",
   "ui.agentReq":"Needs {plan}",
   "ui.agentReqHint":"This scenario runs on an AI agent. AI agents are included from Alaio Professional Vibe+ up. They are not available on Alaio Basic Vibe+ or Alaio Standard Vibe+.",
   /* Число согласуем: «1 ... need» читается как опечатка, а инструментом
@@ -841,6 +869,12 @@ en: {
   "ui.agentWarnH":"{n} selected scenarios need an AI agent, and {plan} does not include one",
   "ui.agentWarnBody":"AI agents are included from {min} up. {fot} of the payroll saving a year comes from these scenarios. You can still quote {plan} — nothing is blocked — but the client will not get these scenarios on it. Raise the plan, or present them as a second phase and say so.",
   "ui.agentWarnFix":"Raise the plan to {min}",
+  /* Пустые контакты партнёра — предупреждение, не запрет. */
+  "ui.ptWarnH":"Your details are empty — the report will go out unsigned",
+  "ui.ptWarnBody":"The report is signed by you: the header, the footer and the closing page carry your name and contact details. With Step 7 empty the client gets a document signed \u201cBitrix24 Partner\u201d with no way to reach you. Missing: {what}.",
+  "ui.ptWarnName":"your name or company",
+  "ui.ptWarnContact":"a way to reach you (email, phone or website)",
+  "ui.pdfRefusedInvalid":"The report was not built: {what} selected scenario(s) have an input error and are left out of every total. Fix the field marked in red — a report that quietly drops a scenario you showed the client is worse than no report.",
   "ui.pdfRefusedGate":"The report was not built: it shows saving from scenarios that need an AI agent, and it does not say the recommended plan has none ({what}). This is a bug — please report it. Do not work around it: a client must not buy a plan on which the promise does not hold.",
   "ui.agentReportNote":"Needs {plan} or higher. The recommended plan does not include AI agents.",
   "ui.eurMissing":"Essentials prices are published in USD only. Switch to USD for the full comparison.",
@@ -869,6 +903,9 @@ en: {
 
   // ---- coverage ----
   "ui.coverage":"Coverage — share of staff this affects",
+  /* Единственное число отдельной строкой: «costed for 1 people» читается как
+     опечатка, а инструментом пользуются не носители. */
+  "ui.coverageHint1":"Applied to {src} ({n}) — this scenario is costed for one person. Lower it until it matches who will really use the feature. If every scenario claims the whole company, the same working day gets counted several times.",
   "ui.coverageHint":"Applied to {src} ({n}) — this scenario is costed for {got} people. Lower it until it matches who will really use the feature. If every scenario claims the whole company, the same working day gets counted several times.",
   "ui.coverageNone":"No coverage share here. You enter the monthly volume for this scenario directly, not as a share of staff.",
 
@@ -899,7 +936,9 @@ en: {
   "ui.svcColFee":"Your fee, one-off",
   "ui.svcTotal":"Total, one-off",
   "ui.svcQuotedOf":"{quoted} of {n} priced",
-  "ui.svcAllPriced":"All {n} selected scenarios are priced.",
+  /* Без числа: «All 1 selected scenarios are priced» — та же ловушка с формой
+     числа, что и в остальных строках со счётчиком. */
+  "ui.svcAllPriced":"Every selected scenario is priced.",
   "ui.svcCardLabel":"Your fee for this scenario",
   "ui.svcCardHint":"One-off, your price. Blank = not quoted yet.",
   "ui.svcJump":"Price them now",
@@ -971,7 +1010,14 @@ en: {
      иначе «Month $11,678» осталось бы без указания, что это экономия. */
   "ui.navPerMonth":"Saving / month",
   "ui.navPerYear":"Saving / year",
-  "ui.navPotLabel":"Potential, month",
+  /* Одна цифра под словом «Potential» складывала прирост выручки и потенциал
+     базы — в отчёте это две разные величины с разными оговорками. Подпись
+     называет оба слагаемых, поэтому ничто не сливается молча, а высота липкой
+     панели не растёт (её отдельно просили не трогать). */
+  "ui.navPotLabel":"Revenue + base potential, month",
+  /* Сценарий с эффектом только на выручку при выключенном переключателе. Раньше
+     карточка не показывала НИЧЕГО — ни числа, ни прочерка, ни причины. */
+  "ui.revOffNote":"This scenario works on revenue, not on the payroll fund. Turn on \u201cShow revenue uplift\u201d in Step 1 to see its figure. While the switch is off it adds nothing to the totals.",
   "ui.pickOne":"Select at least one scenario to see the combined effect.",
   "ui.month":"Month", "ui.year":"Year",
   "ui.sumFot":"Total payroll saving",
@@ -1018,7 +1064,7 @@ en: {
      так видно, что поле считает, и правка остаётся правкой ПОДПИСЕЙ. */
   "suf.ppl":"", "suf.clients":"", "suf.min":"min", "suf.share":"%", "suf.money":"",
   "suf.days":"days",
-  "suf.calls":"calls", "suf.ops":"operations", "suf.enq":"enquiries",
+  "suf.calls":"calls", "suf.ops":"operations", "suf.enq":"requests",
   "suf.lookups":"lookups",
   "suf.bookings":"bookings", "suf.docs":"documents", "suf.meetings":"meetings",
   "suf.moneyMonth":"/mo",
@@ -1029,9 +1075,14 @@ en: {
   "co.ropCount":"Heads of sales", "co.ropSal":"Head of sales salary",
 
   // ---- AI allowance ----
-  "ai.essentials":"Essentials — a per-user daily allowance, identical across every Essentials plan.",
-  "ai.basic":"Alaio Basic Vibe+ — ten times the Essentials allowance.",
-  "ai.standard":"Alaio Standard Vibe+ and above — unlimited AI, plus priority in the processing queue under load.",
+  /* ФОРМУЛИРОВКИ ПРО ОБЪЁМ, А НЕ ПРО НАБОР ФУНКЦИЙ. «Unlimited AI» на одной
+     странице отчёта стояло рядом с «AI-агенты на этом тарифе недоступны» на
+     другой — формально это разные вещи (объём против наличия функции), но
+     читается противоречиво. Теперь в каждой строке прямо сказано, что речь о
+     ЧИСЛЕ запросов. */
+  "ai.essentials":"Essentials — a daily cap on the number of AI requests per user, the same on every Essentials plan.",
+  "ai.basic":"Alaio Basic Vibe+ — ten times as many AI requests as the Essentials cap.",
+  "ai.standard":"Alaio Standard Vibe+ and above — no cap on the number of AI requests, plus priority in the processing queue under load.",
   /* Те же три ступени, но БЕЗ имени тарифа в начале: эти строки идут пунктом в
      списке «What <тариф> adds», где тариф уже назван заголовком. На экране в
      шаге 6 остаётся лестница целиком — там блок так и называется, «AI allowance
@@ -1040,8 +1091,8 @@ en: {
      Формулировка Basic намеренно говорит «the Essentials line», а не «your
      current plan»: у клиента Битрикс24 может не быть вообще, и тогда сравнивать
      не с чем — Essentials здесь ориентир по линейке, а не его сегодняшний тариф. */
-  "ai.forBasic":"Ten times the AI allowance of the Essentials line",
-  "ai.forStandard":"Unlimited AI, plus priority in the processing queue under load",
+  "ai.forBasic":"Ten times as many AI requests as the Essentials line",
+  "ai.forStandard":"No cap on the number of AI requests, plus priority in the processing queue under load",
 
   // ---- pillars ----
   "pil.1":"Vibecode — build your own AI-powered business apps",
@@ -1080,14 +1131,14 @@ en: {
   "sc.9.role":"All staff",
   "sc.9.note":"Covers routine operations inside Bitrix24. It leaves out filling the card after a call, because that is the call-transcription scenario. The same time is never counted twice.",
   "sc.9.f.mgr":"Number of employees", "sc.9.f.sal":"Average employee salary",
-  "sc.9.f.ops":"Bitrix24 operations per day", "sc.9.f.time":"Time saved per operation",
+  "sc.9.f.ops":"Bitrix24 operations per employee per day", "sc.9.f.time":"Time saved per operation",
   "info.9":"How many routine Bitrix24 operations an employee does per day, and how many minutes each one saves. We turn that into hours per month (x {days} working days) and multiply it by the hourly cost, for all employees.",
   "int.9":"The integrator configures the agent for the client's processes in CRM, tasks, smart processes and Drive, respecting access rights, drafts the common commands and trains the staff. Cost scales with the number of employees to onboard.",
 
   "sc.2.title":"First-line support agent",
   "sc.2.sub":"A CoPilot Agent handles incoming customer requests. It answers some of them itself and passes the rest to an operator.",
   "sc.2.role":"Support specialist",
-  "sc.2.f.spec":"Number of support specialists", "sc.2.f.sal":"Specialist salary (gross)",
+  "sc.2.f.sal":"Specialist salary (gross)",
   "sc.2.f.total":"Requests per day (total)", "sc.2.f.ai":"Of those, closed by AI (per day)",
   "sc.2.f.time":"Handling time per request",
   "sc.2.err.ai":"Cannot be more than the total requests",
@@ -1099,7 +1150,7 @@ en: {
   "sc.10.role":"All staff",
   "sc.10.note":"We count only the time of the employee who asks. The time of the colleagues who would have been interrupted is a bonus we leave out on purpose. Do not count this twice with the Vibecode scenario.",
   "sc.10.f.emp":"Employees using the knowledge base", "sc.10.f.sal":"Average employee salary",
-  "sc.10.f.q":"Knowledge-base lookups per day", "sc.10.f.t":"Time to find an answer manually",
+  "sc.10.f.q":"Knowledge-base lookups per employee per day", "sc.10.f.t":"Time to find an answer manually",
   "sc.10.f.share":"Share of questions the AI answers",
   "info.10":"How often a day staff look for answers and how long that used to take, times the share of questions the AI answers. We turn that into hours per month (x {days} working days) and multiply it by the hourly cost, for all employees.",
   "int.10":"The integrator helps collect and structure the knowledge base from the client's policies and manuals, configures the agent, checks answer quality and teaches staff to ask and to extend the base. Scope depends on users and documents.",
@@ -1128,7 +1179,7 @@ en: {
   "sc.3.sub":"CoPilot makes documents from templates and writes the text for you: quotes, contracts, letters, manuals, reports.",
   "sc.3.role":"Any employee",
   "sc.3.f.emp":"Employees preparing documents", "sc.3.f.sal":"Average employee salary",
-  "sc.3.f.docs":"Documents or letters per day", "sc.3.f.time":"Time per document",
+  "sc.3.f.docs":"Documents or letters per employee per day", "sc.3.f.time":"Time per document",
   "info.3":"Minutes a day spent preparing documents (documents x minutes). We turn that into hours per month (x {days} working days) and multiply it by the hourly cost, for everyone who prepares documents.",
   "int.3":"The integrator prepares the document templates (quotes, contracts, letters, invoices) with CRM data merged in, sets the house style and mandatory blocks and trains the staff. Cost scales with the number of employees preparing documents.",
 
@@ -1151,7 +1202,12 @@ en: {
   "info.7":"The saving has two parts. Every employee gains the baseline {base} in efficiency (full cost = gross salary x (1 + payroll burden)). Self-starters gain the higher 'work simplified' share instead. We add the two parts together.",
   "int.7":"The integrator runs staff onboarding for CoPilot and Vibecode: standard chat scenarios, copy generation, routine and process automation. Sets up access and walks the first scenarios through to a result. Cost scales with headcount.",
   "bd.7.init":"Self-starters",
-  "qual.7":"Once the active employees are up and running, company processes usually speed up and gain about 20% in efficiency.",
+  /* Число 20% в источнике не подтверждено ничем, а модель сценария 7 считает
+     базовый прирост BASE_UPLIFT = 10%. Два разных числа про одно и то же на
+     одном экране. Цифру убрали, а не подогнали: подгонка выдала бы за расчёт
+     то, что расчётом не является. Заодно сказано, что этот эффект в суммах
+     выше не учтён, — иначе читается как «плюс ещё столько же». */
+  "qual.7":"Once the active employees are up and running, company processes usually speed up as well. That knock-on effect is not counted in any of the figures above.",
 },
 /* German: structure ready, strings pending. Missing keys fall back to English
    through t(), so adding a key here is all a translator needs to do. */
@@ -1187,15 +1243,29 @@ const copyVars = () => ({
    NUMBER AND MONEY FORMATTING — locale driven, never hardcoded
    ========================================================================== */
 const localeOf = () => (LANG === "de" ? "de-DE" : "en-US");
-const fmtMoney = n => new Intl.NumberFormat(localeOf(), {
+/* ОКРУГЛЕНИЕ ЧЕРЕЗ ЦЕНТЫ, А НЕ СРАЗУ ДО ЦЕЛОГО.
+   Сценарий 11 давал ровно $65,487.50 в год, а показывал $65,487. Причина не в
+   модели: month * 12 в двоичной арифметике даёт 65487.49999999999, и округление
+   до целого честно уводит вниз. Сначала снимаем двоичный мусор — округляем до
+   центов, — и только потом до целого. Инвариант «промежуточные не округляем»
+   не нарушен: это происходит в форматтере, в момент вывода.
+   МИНУС ТИПОГРАФСКИЙ. Intl для отрицательной суммы печатает ASCII-дефис, а все
+   строки затрат рядом собираются вручную с U+2212 — в одном блоке выходили два
+   разных минуса. Подменяем ведущий дефис на настоящий минус. */
+const toWhole = n => Math.round(Math.round((n || 0) * 100) / 100);
+const fixMinus = str => str.replace(/^-/, "\u2212");
+const fmtMoney = n => fixMinus(new Intl.NumberFormat(localeOf(), {
   style:"currency", currency:CUR, maximumFractionDigits:0
-}).format(Math.round(n || 0));
-const fmtInt = n => new Intl.NumberFormat(localeOf()).format(Math.round(n || 0));
+}).format(toWhole(n)));
+const fmtInt = n => new Intl.NumberFormat(localeOf()).format(toWhole(n));
+/* ПРОЦЕНТ БЕЗ ПРОБЕЛА. Было «70 %» здесь и «100%» в таблице отчёта — один
+   документ, два вида записи. Приведено к варианту без пробела: он же стоит в
+   шапках колонок и в подписях охвата, и его же ждёт check-parity. */
 const fmtPct = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
-  .format(Math.round(v * 1000) / 10) + " %";
+  .format(Math.round(v * 1000) / 10) + "%";
 /* already-a-percentage formatter (fmtPct takes a 0..1 share) */
 const fmtPct1 = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
-  .format(Math.round(v * 10) / 10) + " %";
+  .format(Math.round(v * 10) / 10) + "%";
 let lastOverlap = {ok:true, pct:0, payroll:0};
 /* the most recent computeModel() result — the one source every surface reads */
 let lastModel = null;
@@ -1302,10 +1372,20 @@ const scenarios = [
       return {fot: h * costHour(v.sal) * v.mgr, rev:0};
     }},
 
+  /* ОБЪЁМ ЗДЕСЬ АБСОЛЮТНЫЙ, И НА ЛЮДЕЙ НЕ УМНОЖАЕТСЯ.
+     Поле называется «Requests per day (total)» — это поток по компании, а не
+     норма на человека. Раньше результат умножался на число специалистов, и при
+     двух специалистах те же тридцать обращений давали вдвое большую экономию:
+     $1,706 -> $3,413. Тридцать обращений нельзя обработать тридцать раз дважды.
+     Модель приведена к сценарию 12 (обзвон): абсолютный объём х время х
+     стоимость часа, без множителя по численности. Поле «число специалистов»
+     удалено, а не оставлено с оговоркой: после снятия множителя оно не влияло
+     ни на что — стоимость часа берётся из зарплаты, а не из количества людей.
+     Ограничения «нельзя высвободить больше часов, чем люди отрабатывают» здесь
+     нет и раньше не было; это отдельный вопрос, не заведён. */
   { id:2, group:"agents", agent:true, driver:"daily", link:null,
     effect:["fot"],
     fields:[
-      {k:"spec", def:1,    suf:"ppl"},
       {k:"sal",  def:3000, suf:"money", est:true},
       {k:"total",def:40,   suf:"enq"},
       {k:"ai",   def:30,   suf:"enq"},
@@ -1313,9 +1393,11 @@ const scenarios = [
     ],
     validate:v=> v.ai > v.total ? {ai:"sc.2.err.ai"} : null,
     compute:v=>{
+      /* Math.min остаётся страховкой формулы, но невалидный ввод до расчёта
+         больше не доходит: computeModel() исключает такой сценарий целиком. */
       const ai = Math.min(v.ai, v.total);
       const h = ai * v.time * daysMonth / 60;
-      return {fot: h * costHour(v.sal) * v.spec, rev:0};
+      return {fot: h * costHour(v.sal), rev:0};
     }},
 
   { id:10, group:"agents", agent:true, driver:"daily", cov:{src:"empCount", target:"emp", def:30}, link:"https://helpdesk.bitrix24.com/open/25970567/", note:true,
@@ -1534,7 +1616,10 @@ function applyCompany(key){
    .sc-body, which recompute() does not rewrite, so it must be refreshed by hand
    whenever the headcount behind it changes — otherwise it goes stale next to a
    correct number, which reads as a broken calculator. */
-const covHintText = sc => t("ui.coverageHint", {
+/* Сколько человек реально попало под охват — по нему же выбирается форма числа
+   в подписи. Значение то же, что печатается в {got}, второго источника нет. */
+const covApplied = sc => Math.round(state[sc.id].values[sc.cov.target] || 0);
+const covHintText = sc => t(covApplied(sc) === 1 ? "ui.coverageHint1" : "ui.coverageHint", {
   src: t("co." + sc.cov.src),
   n:   fmtInt(company[sc.cov.src] || 0),
   got: fmtInt(state[sc.id].values[sc.cov.target] || 0),
@@ -1773,7 +1858,12 @@ function wireScenarios(){
       const id = +inp.dataset.cov;
       const sc = scenarios.find(s=>s.id===id);
       let n = onNumInput(inp);
-      if(n > 100) n = 100;                  // coverage is a share, not a multiplier
+      /* Зажим до 100 был и раньше, но ПОЛЕ оставалось с введённым числом:
+         партнёр вводил 200, видел 200 и думал, что посчитано по 200%. Теперь
+         поле приводится к применённому значению — что видно, то и считается.
+         Пишем только при расхождении, чтобы не сбивать каретку на каждом
+         нажатии внутри допустимого диапазона. */
+      if(n > 100){ n = 100; if(inp.value !== "100") inp.value = "100"; }
       state[id].coverage = n;
       applyCoverage(sc);
       recompute();
@@ -1782,6 +1872,24 @@ function wireScenarios(){
 }
 
 /* ---- compute ---- */
+/* ПРОВЕРКА ВВОДА — ОДНА ФУНКЦИЯ ДЛЯ МОДЕЛИ И ДЛЯ КАРТОЧКИ.
+   Раньше validate() звался только из recompute() при отрисовке карточки: поле
+   краснело, сообщение появлялось, а сценарий всё равно считался и попадал в
+   итог. На «closed by AI = 50» при «total = 40» экономия РОСЛА с $1,706 до
+   $2,275 — партнёр видел ошибку и большую цифру одновременно, и мог печатать
+   отчёт. Теперь ответ один: невалидный сценарий из расчёта исключён целиком.
+   Сегменты проверяются тем же правилом: одна ошибка в любом наборе значений
+   делает сценарий невалидным — считать половину сценария бессмысленно. */
+function scenarioErrors(sc, st){
+  if(!sc.validate) return null;
+  const sets = [st.values].concat(st.segments || []);
+  for(const vals of sets){
+    const e = sc.validate(vals);
+    if(e) return e;
+  }
+  return null;
+}
+
 function computeScenario(sc, st){
   const sets = [st.values].concat(st.segments || []);
   let fot = 0, rev = 0, breakdown = null;
@@ -1817,9 +1925,15 @@ function computeModel(){
   const items = [];
   let fot = 0, rev = 0, pot = 0, any = false, qual = false;
 
+  const invalid = [];
   scenarios.forEach(sc=>{
     const st = state[sc.id];
     if(!st.selected) return;
+    /* Невалидный сценарий не участвует ни в одной сумме и не попадает в items —
+       значит его нет ни на экране в шаге 4, ни в отчёте. Но он остаётся
+       ВЫБРАННЫМ: молча снимать галочку нельзя, партнёр его выбрал сознательно.
+       Поэтому он едет отдельным списком, и о нём сказано в сводке. */
+    if(scenarioErrors(sc, st)){ invalid.push({id: sc.id, title: t(`sc.${sc.id}.title`)}); return; }
     const r = computeScenario(sc, st);
     any = true;
     if(sc.qualitative) qual = true;
@@ -1860,7 +1974,7 @@ function computeModel(){
   };
 
   return {
-    any, qual, n: items.length, items, svc, agentGate,
+    any, qual, n: items.length, items, svc, agentGate, invalid,
     plan: {from: essPlan, map, vibe, pair: PP, fromPrice: from},
     totals: {
       fotMonth: fot, fotYear,
@@ -1888,7 +2002,7 @@ function recompute(){
     if(!card || !res) return;
 
     card.querySelectorAll(".field").forEach(f=>f.classList.remove("invalid"));
-    const errs = sc.validate ? sc.validate(st.values) : null;
+    const errs = scenarioErrors(sc, st);
     if(errs) Object.entries(errs).forEach(([k,msgKey])=>{
       const f = card.querySelector(`.field[data-field="${k}"]`);
       if(f){ f.classList.add("invalid"); f.querySelector(".err").textContent = t(msgKey);
@@ -1897,6 +2011,16 @@ function recompute(){
     if(!errs) card.querySelectorAll("input[aria-invalid]").forEach(i=>i.removeAttribute("aria-invalid"));
 
     if(!st.selected){ res.innerHTML = ""; return; }
+
+    /* ВЫБРАН, НО ИСКЛЮЧЁН ПО ОШИБКЕ ВВОДА. В модели такого сценария нет вовсе,
+       поэтому byId[] по нему пуст: дальше идти нельзя, читать .breakdown у
+       undefined — падение. Вместо результатов печатаем прочерк и причину: карточка
+       обязана сказать, почему цифры исчезли, иначе выглядит как поломка. */
+    if(errs){
+      res.innerHTML = row(t("ui.fotMonth"), SCREEN_DASH)
+                    + `<div class="res-note">${t("ui.invalidCardNote")}</div>`;
+      return;
+    }
 
     const r = byId[sc.id];        // from the model — the card does not recompute
     let html = "";
@@ -1914,6 +2038,15 @@ function recompute(){
       const rl = t(sc.revLabel || "ui.revDefault");
       html += row(rl + ", " + t("ui.month").toLowerCase(), fmtMoney(r.rev), "rev");
       html += row(rl + ", " + t("ui.year").toLowerCase(),  fmtMoney(r.rev*12), "rev");
+    }
+    /* СЦЕНАРИЙ ТОЛЬКО НА ВЫРУЧКЕ ПРИ ВЫКЛЮЧЕННОМ ПЕРЕКЛЮЧАТЕЛЕ. Без этой ветки
+       карточка не печатала ничего: ни числа, ни прочерка, ни причины. Партнёр
+       выбирал сценарий, вводил данные и получал пустоту, а сводка при этом
+       показывала нулевую экономию и отрицательный вердикт. Прочерк — тот же
+       знак, что в отчёте у таких строк, плюс объяснение и адрес переключателя. */
+    if(!sc.effect.includes("fot") && !SHOW_REVENUE){
+      html += row(t("ui.fotMonth"), SCREEN_DASH);
+      html += `<div class="res-note">${t("ui.revOffNote")}</div>`;
     }
     /* Цены услуг в блоке результатов больше нет вообще — ни поля, ни эха.
        Поле переехало наверх карточки (.svc-strip) и в шаг 4. Эхо я сначала
@@ -2033,6 +2166,7 @@ function paintTotals(model){
   renderSummary(model);
   renderTransition(model);
   renderPartnerPanel(model);
+  renderPartnerWarning();
   const n = model.n;
   document.getElementById("nav-cnt").textContent = n
     ? t("ui.selected", {n, total:scenarios.length}) : t("ui.nothing");
@@ -2069,6 +2203,9 @@ if(typeof ResizeObserver === "function"){
 } else {
   addEventListener("resize", syncNavbarInset);
 }
+/* Тот же знак, что печатает отчёт в колонках экономии у сценария без эффекта
+   на ФОТ. Держим рядом с row(), чтобы экран и документ не разъехались. */
+const SCREEN_DASH = "\u2014";
 const row = (l,v,cls) => `<div class="res-row"><span class="lbl">${l}</span><span class="val ${cls||""}">${v}</span></div>`;
 
 /* selected Essentials plan -> Vibe+ target */
@@ -2234,13 +2371,24 @@ function targetPlan(){
 
 function renderSummary(model){
   const el = document.getElementById("sum-body");
-  if(!model.any){ el.innerHTML = `<div class="empty">${t("ui.pickOne")}</div>`; return; }
+  /* ИСКЛЮЧЁННЫЕ ПО ОШИБКЕ ВВОДА — показываем ДО проверки model.any.
+     Если единственный выбранный сценарий невалиден, any=false, и без этого
+     блока партнёр увидел бы «выберите хотя бы один сценарий» при выбранном
+     сценарии — то есть интерфейс спорил бы сам с собой. */
+  const badBlock = model.invalid && model.invalid.length
+    ? `<div class="sum-invalid"><img src="assets/icons/alert.svg" alt="">
+         <div><b>${t(model.invalid.length === 1 ? "ui.invalidH1" : "ui.invalidH",
+                    {n: model.invalid.length})}</b>
+         <ul class="warn-list">${model.invalid.map(x=>`<li>${x.title}</li>`).join("")}</ul>
+         <p style="margin:var(--b24-s2) 0 0">${t("ui.invalidBody")}</p></div></div>`
+    : "";
+  if(!model.any){ el.innerHTML = badBlock + `<div class="empty">${t("ui.pickOne")}</div>`; return; }
   /* display only — every figure comes from the model, nothing is derived here */
   const {fotMonth:fot, fotYear, revMonth:rev, potMonth:pot,
          subscriptionYear:subYear, firstYearCost:costs, netFirstYear:net} = model.totals;
   const svc = model.svc, qual = model.qual;
   const neg = net < 0;
-  el.innerHTML = `
+  el.innerHTML = badBlock + `
     <div class="sum-grid">
       <div class="h"></div><div class="h">${t("ui.month")}</div><div class="h year">${t("ui.year")}</div>
       <div class="lbl">${t("ui.sumFot")}</div>
@@ -2258,7 +2406,13 @@ function renderSummary(model){
       ${svc.unquoted>0?`<div class="fullrow"><span style="font-size:12.5px;color:var(--b24-on-navy-soft)">
         ${t("ui.svcUnquoted",{n:svc.unquoted})}
         <button type="button" class="svc-jump svc-jump--navy" data-svc-jump
-          aria-label="${t("ui.svcJumpAria")}">${t("ui.svcJump")}</button></span><span></span></div>`:""}
+          aria-label="${t("ui.svcJumpAria")}">${t("ui.svcJump")}</button></span><span></span></div>`
+        /* Подтверждение, что оценены все. Строка ui.svcAllPriced существовала, но
+           не была подключена ни к чему: при всех оценённых сценариях
+           предупреждение просто исчезало, и партнёр не знал, посчитано ли всё
+           или он что-то пропустил. */
+        :(svc.quoted>0?`<div class="fullrow"><span style="font-size:12.5px;color:var(--b24-on-navy-soft)">
+        ${t("ui.svcAllPriced")}</span><span></span></div>`:"")}
       <div class="fullrow"><span>${t("ui.sumSub")} · ${targetPlan().map.to}</span>
         <span class="v">− ${fmtMoney(subYear)}</span></div>
       <div class="sum-line"></div>
@@ -2287,6 +2441,28 @@ function renderSummary(model){
    доля итога уже посчитаны там, и второй раз их считать здесь нельзя, иначе
    экран и отчёт разъедутся. Модель может быть не передана (первый рендер до
    recompute) — тогда просто прячем блок. */
+/* КОНТАКТЫ ПАРТНЁРА ПЕРЕД СКАЧИВАНИЕМ. Отдельная функция, а не проверка внутри
+   обработчика кнопки: предупреждение должно стоять на экране ДО нажатия, иначе
+   партнёр узнаёт о проблеме, когда PDF уже у него. Ничего не блокирует.
+   Условий два, и они про разное: подпись (имя или компания) и канал связи.
+   Отсутствие любого из них делает документ бесполезным для клиента, поэтому
+   считаются оба, а в тексте перечисляется то, чего не хватает. */
+function renderPartnerWarning(){
+  const box = document.getElementById("pdf-warn-pt");
+  if(!box) return;
+  const has = k => !!String(partner[k] || "").trim();
+  const noName    = !has("person") && !has("company");
+  const noContact = !has("email") && !has("phone") && !has("site");
+  if(!noName && !noContact){ box.hidden = true; return; }
+  const what = [];
+  if(noName)    what.push(t("ui.ptWarnName"));
+  if(noContact) what.push(t("ui.ptWarnContact"));
+  document.getElementById("pdf-warn-pt-h").textContent = t("ui.ptWarnH");
+  document.getElementById("pdf-warn-pt-b").textContent =
+    t("ui.ptWarnBody", {what: what.join(", ")});
+  box.hidden = false;
+}
+
 function renderAgentWarning(model){
   const box = document.getElementById("warn-agents");
   if(!box) return;
@@ -2495,6 +2671,9 @@ function reportState(){
       fotYear: m.agentGate.fotYear,          // raw
       rowNote: t("ui.agentReportNote", {plan: m.agentGate.minPlan}),
     },
+    /* Список исключённых по ошибке ввода едет вместе с данными: сборка отчёта
+       обязана отказаться, а не решать это по своим догадкам. */
+    invalid: (m.invalid || []).map(x => ({id: x.id, title: x.title})),
     company: {...company},
     items,
     totals: {
@@ -2615,8 +2794,19 @@ function buildReport(S, {assets}) {
 
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const LOC = S.lang === "de" ? "de-DE" : "en-US";
-  const money = n => new Intl.NumberFormat(LOC, { style: "currency", currency: S.currency, maximumFractionDigits: 0 }).format(Math.round(n || 0));
-  const int = n => new Intl.NumberFormat(LOC).format(Math.round(n || 0));
+  /* ОКРУГЛЕНИЕ ЧЕРЕЗ ЦЕНТЫ, А НЕ СРАЗУ ДО ЦЕЛОГО.
+     Сценарий 11 давал ровно $65,487.50 в год, а показывал $65,487. Причина не в
+     модели: month * 12 в двоичной арифметике даёт 65487.49999999999, и округление
+     до целого честно уводит вниз. Сначала снимаем двоичный мусор — округляем до
+     центов, — и только потом до целого. Инвариант «промежуточные не округляем»
+     не нарушен: это происходит в форматтере, в момент вывода.
+     МИНУС ТИПОГРАФСКИЙ. Intl для отрицательной суммы печатает ASCII-дефис, а все
+     строки затрат рядом собираются вручную с U+2212 — в одном блоке выходили два
+     разных минуса. Подменяем ведущий дефис на настоящий минус. */
+  const toWhole = n => Math.round(Math.round((n || 0) * 100) / 100);
+  const fixMinus = str => String(str).replace(/^-/, "\u2212");
+  const money = n => fixMinus(new Intl.NumberFormat(LOC, { style: "currency", currency: S.currency, maximumFractionDigits: 0 }).format(toWhole(n)));
+  const int = n => new Intl.NumberFormat(LOC).format(toWhole(n));
   /* one-decimal percent, identical rule to fmtPct1() on screen. The state carries the
      raw ratio; rounding happens here, on display, once. */
   const pct1 = v => new Intl.NumberFormat(LOC, {maximumFractionDigits:1})
@@ -3303,11 +3493,17 @@ ${pages}
   /* ОБЯЗАТЕЛЬНОЕ РАСКРЫТИЕ — это не «внутреннее в отчёте», а наоборот: то, что
      обязано в нём быть. Поэтому список отдельный: у него другая причина и другая
      формулировка отказа. Реакция та же — сборка не состоится. */
+  /* ОШИБКА ВВОДА БЛОКИРУЕТ СБОРКУ. Состояние с невалидным сценарием внутренне
+     согласовано — модель его просто исключила, — и именно поэтому отчёт из него
+     опасен: он молча не содержит сценария, который партнёр выбрал и показал
+     клиенту на экране. Отказ, а не оговорка. */
+  const blocked = (S.invalid || []).map(x =>
+    `scenario "${x.title}" has an input error and was left out of every total`);
   const missing = requiredDisclosures(html, gate, gated, GATE_MARK, money, {
     required: disclosureRequired, planCarriesAgents,
     ids: AGENT_SCENARIO_IDS, items: S.items || [],
   });
-  return {html, pageCount, hits, missing};
+  return {html, pageCount, hits, missing, blocked};
 }
 
 /* =============================================================================
@@ -3464,10 +3660,16 @@ function reportToPdf(){
   if(!model.any){ pdfSay("ui.pdfNoScenarios"); return; }
 
   const st = reportState();
-  const {html, hits, missing} = buildReport(st, {assets: reportAssets()});
+  const {html, hits, missing, blocked} = buildReport(st, {assets: reportAssets()});
 
   /* Тот же аудит, что в терминале, и та же реакция по смыслу. Раньше он
      пропускался для партнёрской сборки — сборка теперь одна, исключения нет. */
+  /* Ошибка ввода останавливает печать первой: отчёт из такого состояния молча
+     не содержит сценария, который партнёр выбрал и показал клиенту на экране. */
+  if(blocked && blocked.length){
+    pdfSay("ui.pdfRefusedInvalid", {what: blocked.length});
+    return;
+  }
   /* Отсутствие обязательного раскрытия останавливает печать так же, как утечка
      внутреннего: и то и другое означает, что документ нельзя отдавать клиенту. */
   if(missing && missing.length){
@@ -3817,6 +4019,9 @@ function buildPartner(){
     inp.addEventListener("input", ()=>{
       partner[inp.dataset.pt] = inp.value;
       savePartner();
+      /* Предупреждение о пустых контактах должно гаснуть по мере заполнения, а
+         не ждать следующего пересчёта: партнёр печатает и сразу видит результат. */
+      renderPartnerWarning();
       if(inp.dataset.pt === "logo") applyPartnerLogo();
     });
   });

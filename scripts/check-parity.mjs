@@ -200,6 +200,17 @@ for (const p of (D.perScenario || [])) {
   if (!reportText.includes(p.fotMonth))
     problems.push({ what: `scenario ${p.id} saving/month — missing from the report`,
                     a: p.fotMonth, b: "(not found in report text)" });
+  /* И ГОДОВАЯ ТОЖЕ. Сверялась только месячная, а в таблице сценариев стоят обе
+     колонки. Дырой это перестало быть теоретическим на сценарии 11: ровно
+     $65,487.50 в год печаталось как $65,487, потому что month*12 в двоичной
+     арифметике чуть меньше половины. Экран и отчёт тогда совпадали (правило
+     округления одно), но стоит правилу разъехаться между ними — а живут они в
+     двух функциях, fmtMoney и money, — и заметить это было бы нечем.
+     fotYear отсутствует у состояний, снятых до его появления: там как раньше. */
+  if (p.fotYear && !reportText.includes(p.fotYear))
+    problems.push({ what: `scenario ${p.id} saving/year — missing from the report`,
+                    a: p.fotYear, b: "(not found in report text)",
+                    note: "the screen and the report must round by the same rule" });
 }
 
 /* КОЛОНКА ВЫРУЧКИ. Появляется в таблице сценариев ТОЛЬКО при включённом
@@ -284,9 +295,14 @@ if (D.agentGatedFotYear) {
 
 /* the credibility warning, when it is on, must carry the same percentage */
 if (S.overlap && !S.overlap.ok) {
-  if (!reportText.includes(`${D.overlapPct}%`))
+  /* Знак процента теперь ВНУТРИ строки display.overlapPct: экранный fmtPct1
+     печатает «208.3%», отчёт — pct1()+«%», то есть то же самое. Раньше здесь
+     дописывался ещё один «%», и проверка искала «208.3 %%» — совпасть это не
+     могло никогда. Не срабатывало только потому, что у штатной фикстуры
+     предохранитель выключен и до этой ветки дело не доходило. */
+  if (!reportText.includes(D.overlapPct))
     problems.push({ what: `overlap warning percentage`,
-                    a: `${D.overlapPct}%`, b: "(not found; warning missing or differently rounded)" });
+                    a: D.overlapPct, b: "(not found; warning missing or differently rounded)" });
 }
 
 /* ---------- 4. the cost of the move must NOT depend on headcount ----------

@@ -34,8 +34,19 @@ export function buildReport(S, {assets}) {
 
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const LOC = S.lang === "de" ? "de-DE" : "en-US";
-  const money = n => new Intl.NumberFormat(LOC, { style: "currency", currency: S.currency, maximumFractionDigits: 0 }).format(Math.round(n || 0));
-  const int = n => new Intl.NumberFormat(LOC).format(Math.round(n || 0));
+  /* ОКРУГЛЕНИЕ ЧЕРЕЗ ЦЕНТЫ, А НЕ СРАЗУ ДО ЦЕЛОГО.
+     Сценарий 11 давал ровно $65,487.50 в год, а показывал $65,487. Причина не в
+     модели: month * 12 в двоичной арифметике даёт 65487.49999999999, и округление
+     до целого честно уводит вниз. Сначала снимаем двоичный мусор — округляем до
+     центов, — и только потом до целого. Инвариант «промежуточные не округляем»
+     не нарушен: это происходит в форматтере, в момент вывода.
+     МИНУС ТИПОГРАФСКИЙ. Intl для отрицательной суммы печатает ASCII-дефис, а все
+     строки затрат рядом собираются вручную с U+2212 — в одном блоке выходили два
+     разных минуса. Подменяем ведущий дефис на настоящий минус. */
+  const toWhole = n => Math.round(Math.round((n || 0) * 100) / 100);
+  const fixMinus = str => String(str).replace(/^-/, "\u2212");
+  const money = n => fixMinus(new Intl.NumberFormat(LOC, { style: "currency", currency: S.currency, maximumFractionDigits: 0 }).format(toWhole(n)));
+  const int = n => new Intl.NumberFormat(LOC).format(toWhole(n));
   /* one-decimal percent, identical rule to fmtPct1() on screen. The state carries the
      raw ratio; rounding happens here, on display, once. */
   const pct1 = v => new Intl.NumberFormat(LOC, {maximumFractionDigits:1})
@@ -722,11 +733,17 @@ ${pages}
   /* ОБЯЗАТЕЛЬНОЕ РАСКРЫТИЕ — это не «внутреннее в отчёте», а наоборот: то, что
      обязано в нём быть. Поэтому список отдельный: у него другая причина и другая
      формулировка отказа. Реакция та же — сборка не состоится. */
+  /* ОШИБКА ВВОДА БЛОКИРУЕТ СБОРКУ. Состояние с невалидным сценарием внутренне
+     согласовано — модель его просто исключила, — и именно поэтому отчёт из него
+     опасен: он молча не содержит сценария, который партнёр выбрал и показал
+     клиенту на экране. Отказ, а не оговорка. */
+  const blocked = (S.invalid || []).map(x =>
+    `scenario "${x.title}" has an input error and was left out of every total`);
   const missing = requiredDisclosures(html, gate, gated, GATE_MARK, money, {
     required: disclosureRequired, planCarriesAgents,
     ids: AGENT_SCENARIO_IDS, items: S.items || [],
   });
-  return {html, pageCount, hits, missing};
+  return {html, pageCount, hits, missing, blocked};
 }
 
 /* =============================================================================

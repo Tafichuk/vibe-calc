@@ -146,7 +146,7 @@ function inlinedKitCss(){
    ========================================================================== */
 import { buildReport } from "./report-template.mjs";
 
-const { html, pageCount, hits, missing } = buildReport(S, {
+const { html, pageCount, hits, missing, blocked } = buildReport(S, {
   assets: {
     lockupDark:  LOCKUP.dark,
     lockupWhite: LOCKUP.white,
@@ -168,6 +168,16 @@ ${inlinedKitCss()}
 });
 
 const T = S.totals, P = S.plan;
+
+/* ОТКАЗ ПО ОШИБКЕ ВВОДА. Первым: пока цифры не сходятся, обсуждать состав
+   отчёта бессмысленно. */
+if (blocked && blocked.length) {
+  console.error("\n  REFUSED: the calculation carries an input error, so the report would be");
+  console.error("  built on a set of scenarios the partner did not actually get:\n");
+  blocked.forEach(m => console.error("   - " + m));
+  console.error("\n  Fix the flagged field in the calculator and export the state again.\n");
+  process.exit(1);
+}
 
 /* ОТКАЗ ПО ОТСУТСТВИЮ РАСКРЫТИЯ. Отдельно от лика: там документ несёт лишнее,
    здесь — не несёт обязательного. Формулировка своя, потому что и лечится это

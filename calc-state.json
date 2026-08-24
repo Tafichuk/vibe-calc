@@ -41,6 +41,7 @@
     "fotYear": 157950,
     "rowNote": "Needs Alaio Professional Vibe+ or higher. The recommended plan does not include AI agents."
   },
+  "invalid": [],
   "company": {
     "empCount": 50,
     "empSal": 4000,
@@ -108,7 +109,7 @@
           "value": "$4,000"
         },
         {
-          "label": "Bitrix24 operations per day",
+          "label": "Bitrix24 operations per employee per day",
           "value": "30 operations"
         },
         {
@@ -142,7 +143,7 @@
           "value": "$4,000"
         },
         {
-          "label": "Knowledge-base lookups per day",
+          "label": "Knowledge-base lookups per employee per day",
           "value": "3 lookups"
         },
         {
@@ -151,7 +152,7 @@
         },
         {
           "label": "Share of questions the AI answers",
-          "value": "70 %"
+          "value": "70%"
         }
       ],
       "segments": []
@@ -180,7 +181,7 @@
           "value": "$4,000"
         },
         {
-          "label": "Documents or letters per day",
+          "label": "Documents or letters per employee per day",
           "value": "5 documents"
         },
         {
@@ -211,11 +212,11 @@
         },
         {
           "label": "Share of self-starters",
-          "value": "10 %"
+          "value": "10%"
         },
         {
           "label": "Share of work simplified",
-          "value": "30 %"
+          "value": "30%"
         },
         {
           "label": "Average salary",
@@ -248,7 +249,7 @@
     "planToAnnual": "$144",
     "planToAnnualTotal": "$1,728",
     "diffPerMonth": "$45",
-    "overlapPct": "15.5 %",
+    "overlapPct": "15.5%",
     "agentGatedFotYear": "$157,950",
     "perScenario": [
       {
@@ -307,7 +308,7 @@
     "effectiveFrom": "2026-08-17",
     "grandfatheredUntil": "2026-11-17"
   },
-  "aiForPlan": "Unlimited AI, plus priority in the processing queue under load",
+  "aiForPlan": "No cap on the number of AI requests, plus priority in the processing queue under load",
   "restore": {
     "version": 1,
     "burdenPct": 30,
