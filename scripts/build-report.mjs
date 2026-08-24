@@ -146,7 +146,7 @@ function inlinedKitCss(){
    ========================================================================== */
 import { buildReport } from "./report-template.mjs";
 
-const { html, pageCount, hits } = buildReport(S, {
+const { html, pageCount, hits, missing } = buildReport(S, {
   assets: {
     lockupDark:  LOCKUP.dark,
     lockupWhite: LOCKUP.white,
@@ -168,6 +168,19 @@ ${inlinedKitCss()}
 });
 
 const T = S.totals, P = S.plan;
+
+/* ОТКАЗ ПО ОТСУТСТВИЮ РАСКРЫТИЯ. Отдельно от лика: там документ несёт лишнее,
+   здесь — не несёт обязательного. Формулировка своя, потому что и лечится это
+   иначе: не «вырезать», а «дописать». */
+if (missing && missing.length) {
+  console.error("\n  REFUSED: the report is built on scenarios that the recommended plan does not");
+  console.error("  include, and it does not say so. Missing:\n");
+  missing.forEach(m => console.error("   - " + m));
+  console.error("\n  AI agents are available from Alaio Professional Vibe+ up. A report that shows");
+  console.error("  their saving without naming the requirement sells the client a plan on which");
+  console.error("  the promise does not hold. Add the disclosure — do not remove the guard.\n");
+  process.exit(1);
+}
 
 if (hits.length) {
   console.error("\n  REFUSED: the report would carry internal, partner-only content:\n");

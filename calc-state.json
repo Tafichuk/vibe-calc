@@ -9,7 +9,8 @@
     "email": "",
     "phone": "",
     "site": "",
-    "logo": ""
+    "logo": "",
+    "logoInk": null
   },
   "economics": {
     "daysMonth": 21,
@@ -24,6 +25,21 @@
     "threshold": 25,
     "payrollMonth": 260000,
     "text": null
+  },
+  "agentGate": {
+    "planHasAgents": false,
+    "minPlan": "Alaio Professional Vibe+",
+    "ids": [
+      9,
+      10
+    ],
+    "titles": [
+      "Running Bitrix24 from chat",
+      "Knowledge-base agent"
+    ],
+    "fotMonth": 13162.5,
+    "fotYear": 157950,
+    "rowNote": "Needs Alaio Professional Vibe+ or higher. The recommended plan does not include AI agents."
   },
   "company": {
     "empCount": 50,
@@ -45,10 +61,13 @@
       "rev": 25000,
       "revLabel": "Revenue uplift",
       "service": 2400,
+      "hasFot": true,
+      "hasRev": true,
+      "needsAgent": false,
       "fields": [
         {
           "label": "Number of managers",
-          "value": "5 ppl"
+          "value": "5"
         },
         {
           "label": "Manager salary (gross)",
@@ -56,13 +75,14 @@
         },
         {
           "label": "Calls per manager per day",
-          "value": "20 pcs"
+          "value": "20 calls"
         },
         {
           "label": "Handling time per call",
           "value": "10 min"
         }
-      ]
+      ],
+      "segments": []
     },
     {
       "id": 9,
@@ -75,10 +95,13 @@
       "rev": 0,
       "revLabel": null,
       "service": 5200,
+      "hasFot": true,
+      "hasRev": false,
+      "needsAgent": true,
       "fields": [
         {
           "label": "Number of employees",
-          "value": "10 ppl"
+          "value": "10"
         },
         {
           "label": "Average employee salary",
@@ -86,13 +109,14 @@
         },
         {
           "label": "Bitrix24 operations per day",
-          "value": "30 pcs"
+          "value": "30 operations"
         },
         {
           "label": "Time saved per operation",
           "value": "3 min"
         }
-      ]
+      ],
+      "segments": []
     },
     {
       "id": 10,
@@ -105,10 +129,13 @@
       "rev": 0,
       "revLabel": null,
       "service": null,
+      "hasFot": true,
+      "hasRev": false,
+      "needsAgent": true,
       "fields": [
         {
           "label": "Employees using the knowledge base",
-          "value": "15 ppl"
+          "value": "15"
         },
         {
           "label": "Average employee salary",
@@ -116,7 +143,7 @@
         },
         {
           "label": "Knowledge-base lookups per day",
-          "value": "3 pcs"
+          "value": "3 lookups"
         },
         {
           "label": "Time to find an answer manually",
@@ -126,7 +153,8 @@
           "label": "Share of questions the AI answers",
           "value": "70 %"
         }
-      ]
+      ],
+      "segments": []
     },
     {
       "id": 3,
@@ -139,10 +167,13 @@
       "rev": 0,
       "revLabel": null,
       "service": null,
+      "hasFot": true,
+      "hasRev": false,
+      "needsAgent": false,
       "fields": [
         {
           "label": "Employees preparing documents",
-          "value": "6 ppl"
+          "value": "6"
         },
         {
           "label": "Average employee salary",
@@ -150,13 +181,14 @@
         },
         {
           "label": "Documents or letters per day",
-          "value": "5 pcs"
+          "value": "5 documents"
         },
         {
           "label": "Time per document",
           "value": "20 min"
         }
-      ]
+      ],
+      "segments": []
     },
     {
       "id": 7,
@@ -169,24 +201,28 @@
       "rev": 0,
       "revLabel": null,
       "service": 3200,
+      "hasFot": true,
+      "hasRev": false,
+      "needsAgent": false,
       "fields": [
         {
           "label": "Total employees",
-          "value": "15 ppl"
+          "value": "15"
         },
         {
           "label": "Share of self-starters",
           "value": "10 %"
         },
         {
-          "label": "Work simplification achieved",
+          "label": "Share of work simplified",
           "value": "30 %"
         },
         {
           "label": "Average salary",
           "value": "$4,000"
         }
-      ]
+      ],
+      "segments": []
     }
   ],
   "totals": {
@@ -213,39 +249,53 @@
     "planToAnnualTotal": "$1,728",
     "diffPerMonth": "$45",
     "overlapPct": "15.5 %",
+    "agentGatedFotYear": "$157,950",
     "perScenario": [
       {
         "id": 1,
+        "hasFot": true,
+        "hasRev": true,
         "fotMonth": "$10,833",
-        "fotYear": "$130,000"
+        "fotYear": "$130,000",
+        "revMonth": "$25,000"
       },
       {
         "id": 9,
+        "hasFot": true,
+        "hasRev": false,
         "fotMonth": "$9,750",
-        "fotYear": "$117,000"
+        "fotYear": "$117,000",
+        "revMonth": "$0"
       },
       {
         "id": 10,
+        "hasFot": true,
+        "hasRev": false,
         "fotMonth": "$3,413",
-        "fotYear": "$40,950"
+        "fotYear": "$40,950",
+        "revMonth": "$0"
       },
       {
         "id": 3,
+        "hasFot": true,
+        "hasRev": false,
         "fotMonth": "$6,500",
-        "fotYear": "$78,000"
+        "fotYear": "$78,000",
+        "revMonth": "$0"
       },
       {
         "id": 7,
+        "hasFot": true,
+        "hasRev": false,
         "fotMonth": "$9,880",
-        "fotYear": "$118,560"
+        "fotYear": "$118,560",
+        "revMonth": "$0"
       }
     ]
   },
   "plan": {
     "from": "Standard",
     "fromKind": "essentials",
-    "fromPriceKnown": true,
-    "fromNoPriceReason": null,
     "fromAnnualPerMonth": 99,
     "fromMonthly": 144,
     "matchedPair": true,
@@ -257,11 +307,7 @@
     "effectiveFrom": "2026-08-17",
     "grandfatheredUntil": "2026-11-17"
   },
-  "aiAllowance": [
-    "Essentials — a per-user daily allowance, identical across every Essentials plan.",
-    "Alaio Basic Vibe+ — ten times the Essentials allowance.",
-    "Alaio Standard Vibe+ and above — unlimited AI, plus priority in the processing queue under load."
-  ],
+  "aiForPlan": "Unlimited AI, plus priority in the processing queue under load",
   "restore": {
     "version": 1,
     "burdenPct": 30,
@@ -281,7 +327,8 @@
       "email": "",
       "phone": "",
       "site": "",
-      "logo": ""
+      "logo": "",
+      "logoInk": null
     },
     "plan": {
       "essPlan": "Standard",

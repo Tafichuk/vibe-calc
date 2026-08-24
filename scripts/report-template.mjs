@@ -78,6 +78,36 @@ export function buildReport(S, {assets}) {
      наличию выручки: 5 (клиент без выручки) — как в ките, 6 и 7 — тесно.
      Замер после правки: 656px во всех сочетаниях. */
   const wideTable = showRev;
+  /* AI-АГЕНТЫ ПРОТИВ РЕКОМЕНДОВАННОГО ТАРИФА. Расхождение приезжает готовым в
+     S.agentGate: состав, доля итога и текст пометки считаются на экране, здесь
+     их только печатают — иначе экран и документ разъедутся.
+     Старые сохранения блока не несут: тогда gate пуст и отчёт выглядит как
+     прежде. Это не «молча пропустить» — у таких файлов признака agent:true не
+     было ни у одного сценария, значит и раскрывать было нечего. */
+  const gate = S.agentGate || null;
+  const gated = gate && !gate.planHasAgents ? (gate.ids || []) : [];
+  const gatedIds = new Set(gated);
+  const isGated = it => gatedIds.has(it.id);
+  /* НАДО ЛИ РАСКРЫВАТЬ — ОТВЕЧАЕМ САМИ, НЕ ТОЛЬКО ПО ГОТОВОМУ БЛОКУ.
+     Состояние, снятое до этой правки, agentGate не несёт, и «нет блока» нельзя
+     читать как «расхождения нет»: у файла из calc-state-legacy.json выбран
+     сценарий 9 на агентах и цель Alaio Standard Vibe+, то есть раскрывать надо,
+     а сказать об этом файл не может. Молчащий отчёт тут — худший исход.
+     Поэтому обязанность раскрыть определяется по id сценариев и по имени цели:
+     и то и другое есть в любом сохранении, включая самые старые. Числа отсюда НЕ
+     выводятся — сумма приходит только из agentGate, иначе отчёт начал бы считать
+     сам, а этого в проекте нельзя.
+     Оба списка — зеркала того, что живёт в index.html (agent:true и
+     planHasAgents). Чтобы они не разъехались тихо, ниже стоит сверка: когда
+     состояние несёт признаки, расхождение определений роняет сборку. */
+  const AGENT_SCENARIO_IDS = new Set([2, 9, 10, 11, 12]);
+  const AGENT_PLAN_RE = /^Alaio (?:Professional|Enterprise-\d+) Vibe\+$/;
+  const planCarriesAgents = AGENT_PLAN_RE.test(String((S.plan || {}).to || ""));
+  const agentItems = (S.items || []).filter(it => AGENT_SCENARIO_IDS.has(it.id));
+  const disclosureRequired = !planCarriesAgents && agentItems.length > 0;
+  const GATE_MARK = "\u2020";              /* † — не звёздочка: сноска про прочерк
+                                              уже занимает знак «—», а звёздочку
+                                              читатель ищет у цены */
   /* Базовый набор значений — это сегмент 1, поэтому их всегда на один больше,
      чем в items[].segments. Пометку ставим только когда сегмент не один: она
      нужна, чтобы сумма в строке не читалась как одно значение. Разбивки в
@@ -403,7 +433,7 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
         showRev ? `<th>Revenue / month<span class="b24x-th-sub">estimate</span></th>` : ""}</tr></thead>
       <tbody>
         ${rows.map(it => `<tr>
-          <td>${esc(it.title)}${segCount(it) > 1
+          <td>${esc(it.title)}${isGated(it) ? `<sup class="b24x-gate-mark">${GATE_MARK}</sup>` : ""}${segCount(it) > 1
               ? `<span class="b24x-td-sub">${int(segCount(it))} segments</span>` : ""}</td>
           <td>${esc(it.role)}</td>
           <td>${it.coverage === null ? "n/a" : int(it.coverage) + "%"}</td>
@@ -417,6 +447,8 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
   ${rows.some(noFot) ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
     ${DASH} in the saving columns: the scenario works on revenue, not on the payroll fund,
     so it has no payroll saving to show.</p>` : ""}
+  ${rows.some(isGated) ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
+    ${GATE_MARK} ${esc(gate.rowNote)}</p>` : ""}
   ${showRev ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
     Revenue / month is a projection, not a saving the client can verify. It never enters the net first-year figure${rows.some(noRev) ? `; ${DASH} means the scenario has no revenue effect` : ""}.
     The first page shows the same amount split into revenue uplift and existing-base potential.</p>` : ""}
@@ -470,10 +502,21 @@ const aiLine = () => {
 };
 
 /* ---------- plan recommendation (client-safe: names + prices only) ---------- */
-const planPage = () => `
+/* ДВЕ СТРАНИЦЫ ИЛИ ОДНА — ПО НАЛИЧИЮ РАСКРЫТИЯ. .page — фиксированный A4 с
+   overflow:hidden, и раскрытие про AI-агентов занимает ~173px: с ним пара
+   «таблица + что даёт тариф + сноска про квоты» перестаёт влезать. Замер:
+   низ последнего блока уезжал на 1206px при высоте страницы 1123, вместе с ним
+   уезжал колонтитул. Ужимать текст раскрытия нельзя — это его смысл, — поэтому
+   когда оно есть, «What <тариф> adds» и сноска про квоты уходят на вторую
+   страницу. Без расхождения страница остаётся ровно такой, как была: одна.
+   Нумерация (1/2) — та же, что у разбитых страниц сценариев. */
+const planPage = () => {
+  const twoUp = gated.length > 0;
+  const num = i => twoUp ? ` <span style="font-size:.6em;font-weight:600">(${i}/2)</span>` : "";
+  const first = `
 <section class="page page--sky">
   ${runhead("Recommended plan")}
-  <h1 class="b24-h1">Recommended plan</h1>
+  <h1 class="b24-h1">Recommended plan${num(1)}</h1>
 
   <div class="b24-table-wrap">
     <table class="b24-table">
@@ -494,8 +537,27 @@ const planPage = () => `
       </tbody>
     </table>
   </div>
+  ${gated.length ? `
+  <!-- РАСКРЫТИЕ РАСХОЖДЕНИЯ. Стоит на странице тарифа, а не на первой: читатель
+       здесь как раз выбирает тариф, и решение принимается тут. Первую страницу
+       не трогаем намеренно — итог там честный (экономию считали по всем
+       выбранным сценариям, формулы не менялись), а дублировать оговорку на
+       каждой странице значит превратить продающий документ в дисклеймер.
+       Ссылка на строки таблицы держится на том же знаке †, что и сноска. -->
+  <div class="b24-dashed" style="margin-top:var(--b24-s6); border-color:#A15C00;">
+    <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
+      <span class="b24-strong" style="color:#A15C00;">${int(gated.length)} of these scenarios need an AI agent.</span>
+      AI agents are included from ${esc(gate.minPlan)} up, so they are not available on ${esc(P.to)}:
+      ${gate.titles.map(x => esc(x)).join(", ")}.
+      ${money(gate.fotYear)} of the payroll saving a year comes from them.
+      Two honest ways forward: move to ${esc(gate.minPlan)}, which includes agents, or start with the
+      other scenarios and add these in a second step once the plan allows it.
+    </p>
+  </div>` : ""}
+
   <p class="b24-p">Plan prices are for the whole account, not per user. The number in an Enterprise tier (250, 500, 1000 …) is the seat limit the plan includes, and the price already covers it. Nothing above is multiplied by headcount.</p>
 
+${twoUp ? "" : `
   <h1 class="b24-h1" style="margin-top:var(--b24-s8); font-size:22px;">What ${esc(P.to)} adds</h1>
   <ul class="b24-checklist">
     ${aiLine()}
@@ -517,8 +579,42 @@ const planPage = () => `
       AI is set by plan, not by a request count. No per-request quotas are published, so no numeric AI limits are quoted here. Prices apply from ${esc(P.effectiveFrom)}. Existing clients keep their current pricing until the end of their period or ${esc(P.grandfatheredUntil)}, whichever is later.
     </p>
   </div>
+`}
   ${footer()}
 </section>`;
+  if (!twoUp) return first;
+  /* На второй странице заголовок страницы и есть «What <тариф> adds» — двух
+     заголовков подряд быть не должно. Поэтому здесь он полноразмерный и с
+     нумерацией, а внутри одностраничного варианта остаётся уменьшенным
+     подзаголовком, как был. */
+  return first + `
+<section class="page page--sky">
+  ${runhead("Recommended plan")}
+  <h1 class="b24-h1">What ${esc(P.to)} adds${num(2)}</h1>
+  <ul class="b24-checklist">
+    ${aiLine()}
+    <!-- ОСТАЛЬНЫЕ ТРИ ПУНКТА — СВОЙСТВА ВСЕЙ ЛИНЕЙКИ VIBE+, НЕ ОТДЕЛЬНЫХ ТАРИФОВ.
+         config/pricing.json, lineup.vibe_plus: «Adds Vibecode, MCP server, higher
+         AI allowance, unlimited REST API + Market» — сказано про линейку целиком.
+         vibe_plus_pillars перечисляет Vibecode и MCP тоже без привязки к тарифу, а
+         vibe_plus_headline_limits даёт rest_api и bitrix24_market как unlimited без
+         разбивки. Различий между тарифами в источнике НЕТ, поэтому эти три пункта
+         печатаются для любой цели. Если различия появятся — их место здесь, рядом
+         с AI-строкой, которая уже выбирается по тарифу. -->
+    <li class="is-yes">Vibecode — build your own AI-powered business apps</li>
+    <li class="is-yes">MCP server — connect outside AI agents to Bitrix24</li>
+    <li class="is-yes">Unlimited REST API and Bitrix24 Market</li>
+  </ul>
+
+  <div class="b24-dashed" style="margin-top:var(--b24-s6)">
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      AI is set by plan, not by a request count. No per-request quotas are published, so no numeric AI limits are quoted here. Prices apply from ${esc(P.effectiveFrom)}. Existing clients keep their current pricing until the end of their period or ${esc(P.grandfatheredUntil)}, whichever is later.
+    </p>
+  </div>
+
+  ${footer()}
+</section>`;
+};
 
 
 /* ---------- closing CTA + partner contacts ---------- */
@@ -606,6 +702,11 @@ ${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags
                font-size:10.5px; color:var(--b24-text-mute); text-transform:none;
                margin-top:3px}
   .b24-table tbody td.b24x-est{color:var(--b24-text-mute)}
+  /* Знак † у названия сценария, которому нужен AI-агент. Цвет — тот же
+     предупреждающий #A15C00, что у блока про порог достоверности и у раскрытия
+     на странице тарифа: один смысл, один цвет. Не жирный и не крупнее строки —
+     знак должен уводить к сноске, а не спорить с названием сценария. */
+  .b24x-gate-mark{color:#A15C00; font-weight:700; font-size:.8em; padding-left:1px}
 </style>
 </head>
 <body>
@@ -618,7 +719,14 @@ ${pages}
   /* Аудит без исключений: сборка одна, и «партнёрской» сборки, где внутреннее
      было бы допустимо, больше нет. */
   const hits = auditClient(html, P, money);
-  return {html, pageCount, hits};
+  /* ОБЯЗАТЕЛЬНОЕ РАСКРЫТИЕ — это не «внутреннее в отчёте», а наоборот: то, что
+     обязано в нём быть. Поэтому список отдельный: у него другая причина и другая
+     формулировка отказа. Реакция та же — сборка не состоится. */
+  const missing = requiredDisclosures(html, gate, gated, GATE_MARK, money, {
+    required: disclosureRequired, planCarriesAgents,
+    ids: AGENT_SCENARIO_IDS, items: S.items || [],
+  });
+  return {html, pageCount, hits, missing};
 }
 
 /* =============================================================================
@@ -643,6 +751,77 @@ function visibleText(doc) {
     .replace(/\s+/g, " ");
 }
 
+
+/* =============================================================================
+   ОБЯЗАТЕЛЬНЫЕ РАСКРЫТИЯ. Зеркало auditClient: тот следит, чтобы в документ не
+   попало лишнее, этот — чтобы из него не выпало нужное.
+   Правило одно: если экономия в отчёте построена на сценариях, недоступных на
+   рекомендованном тарифе, документ обязан это сказать. Молчащий отчёт хуже
+   отсутствующего — по нему клиент купит тариф, на котором обещанного не будет.
+   Проверяются ОБА носителя раскрытия, потому что они делают разную работу:
+   знак у строки говорит «этот сценарий», абзац на странице тарифа — «вот
+   сколько и вот что делать». Потеря любого из них ломает раскрытие.
+   ========================================================================== */
+function requiredDisclosures(doc, gate, gated, mark, money, own) {
+  const out = [];
+  /* СВЕРКА ОПРЕДЕЛЕНИЙ. Признак сценария (agent:true) и признак тарифа заданы в
+     двух местах — в калькуляторе и здесь. Пока состояние несёт их с собой, они
+     обязаны совпадать; расхождение означает, что один из списков забыли
+     обновить, и любой вывод про доступность после этого недостоверен. Это не
+     предупреждение: сборка не состоится. */
+  if (gate && gate.planHasAgents !== own.planCarriesAgents)
+    out.push(`the plan lists disagree: the calculator says agents ${gate.planHasAgents ? "ARE" : "are NOT"} ` +
+             `available on this plan, the report says they ${own.planCarriesAgents ? "ARE" : "are NOT"}`);
+  const marked = (own.items || []).filter(it => it.needsAgent === true).map(it => it.id);
+  if (marked.length || (own.items || []).some(it => "needsAgent" in it)) {
+    const mine = (own.items || []).filter(it => own.ids.has(it.id)).map(it => it.id);
+    if (marked.slice().sort().join(",") !== mine.slice().sort().join(","))
+      out.push(`the scenario lists disagree: the calculator marks [${marked}] as agent-based, ` +
+               `the report knows [${mine}]`);
+  }
+
+  if (!own.required && !gated.length) return out;
+
+  /* СОСТОЯНИЕ СТАРОГО ФОРМАТА. Раскрывать надо — это видно по id сценариев и по
+     имени тарифа, они есть в любом сохранении, — а данных для раскрытия в файле
+     нет: ни состава, ни суммы. Посчитать их здесь нельзя: отчёт в этом проекте
+     не выводит величины сам, он печатает то, что посчитала модель. Значит
+     собирать нечего — отказываемся и просим переснять расчёт.
+     В браузере этот путь недостижим: печать всегда идёт от свежего
+     reportState(). Он существует только для сборки из лежащего на диске JSON. */
+  if (own.required && !gated.length)
+    return out.concat("the calculation was saved before the AI-agent check and cannot say which " +
+                      "scenarios need an agent, or how much of the saving depends on them — " +
+                      "re-export it from the calculator");
+
+  const flat = x => String(x).replace(/\s+/g, " ");
+  const hay = flat(visibleText(doc));
+  /* ДВЕ ПОВЕРХНОСТИ, ДВЕ ПРОВЕРКИ. Раскрытие держится на знаке у строки и на
+     сноске под таблицей, и одного «† встречается в тексте» на них не хватает:
+     убери знак у строк — сноска оставит † на месте, убери сноску — знаки
+     останутся у строк. Обе подмены сборку проходили. Поэтому знаки считаются
+     (по одному на каждую недоступную строку плюс минимум один в сноске), а
+     сноска ищется целиком, вместе со знаком перед ней. */
+  const marks = hay.split(mark).length - 1;
+  if (marks < gated.length + 1)
+    out.push(`the ${mark} marker next to every scenario that needs an AI agent ` +
+             `(found ${marks}, expected at least ${gated.length + 1}: one per row plus the footnote)`);
+  if (!hay.includes(flat(`${mark} ${gate.rowNote}`)))
+    out.push(`the footnote under the scenario table explaining the ${mark} marker`);
+  if (!hay.includes(gate.minPlan))
+    out.push(`the name of the plan that includes agents (${gate.minPlan})`);
+  /* Именно СУММА, а не «упоминание где-нибудь»: без неё раскрытие не даёт
+     читателю масштаба, а фраза «N scenarios need an agent» прошла бы проверку
+     сама по себе. Ту же ошибку мы уже ловили на колонке выручки. */
+  const figure = flat(money(gate.fotYear));
+  if (!hay.includes(figure))
+    out.push(`the amount of saving that depends on agents (${figure})`);
+  /* Названия недоступных сценариев: перечень — половина смысла раскрытия, без
+     него читателю негде посмотреть, о каких именно строках речь. */
+  const lost = (gate.titles || []).filter(x => !hay.includes(flat(x)));
+  if (lost.length) out.push(`the names of the affected scenarios (${lost.join("; ")})`);
+  return out;
+}
 
 function auditClient(doc, P, money) {
   const hay = visibleText(doc).toLowerCase();

@@ -262,6 +262,26 @@ if ((D.perScenario || []).some(p => p.hasFot === false)) {
                     b: "(no line under the table explains it)" });
 }
 
+/* РАСХОЖДЕНИЕ ПО AI-АГЕНТАМ. Экран называет сумму, которая на выбранной цели
+   недоступна; отчёт обязан назвать ТУ ЖЕ сумму. Проверяется только когда
+   расхождение есть — у состояния без него строки нет вовсе.
+   Отсутствие самого раскрытия ловит не здесь, а аудит в build-report.mjs: он
+   отказывается писать файл, и тогда этот скрипт падает раньше, на шаге 2. Тут
+   сверяется величина, чтобы отчёт не назвал своё число. */
+if (D.agentGatedFotYear) {
+  if (!reportText.includes(D.agentGatedFotYear))
+    problems.push({ what: `agent-gated saving in the report`,
+                    a: D.agentGatedFotYear,
+                    b: "(not found; the disclosure is missing or carries a different figure)" });
+  /* И состав: экран перечисляет недоступные сценарии, отчёт обязан перечислить
+     их же. «Сумма совпала» без имён — половина раскрытия. */
+  for (const title of (S.agentGate?.titles || [])) {
+    if (!reportText.includes(title))
+      problems.push({ what: `agent-gated scenario missing from the report disclosure`,
+                      a: title, b: "(not named in the report)" });
+  }
+}
+
 /* the credibility warning, when it is on, must carry the same percentage */
 if (S.overlap && !S.overlap.ok) {
   if (!reportText.includes(`${D.overlapPct}%`))
