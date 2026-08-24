@@ -355,24 +355,22 @@ const headline = () => `
     </table>
   </div>
   ${T.serviceUnquoted ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
-    ${int(T.serviceUnquoted)} scenario(s) are not yet priced, so the figure above is not the
-    full implementation cost.</p>` : ""}
+    ${int(T.serviceUnquoted)} scenario(s) are not priced yet, so the figure above is not the full implementation cost.</p>` : ""}
 
   ${overlapBlock()}
 
   <div class="b24-dashed" style="margin-top:var(--b24-s5)">
     <p class="b24-p" style="margin:0; font-size:13.5px;">
-      <span class="b24-strong">What this figure is:</span> the cost of the working time
-      currently spent on these tasks. It is not profit, and not cash freed up.
+      <span class="b24-strong">What this figure means.</span> It is the cost of the working time now spent on these tasks. It is not profit, and not cash freed up.
     </p>
   </div>
 
   <div class="b24-quote">
-    Payroll saving is the sum of the selected scenarios over twelve months. Day-driven
-    scenarios are scaled to ${int(S.economics.daysMonth)} working days; the hourly cost of an
+    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
+    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
     employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
     ${int(S.economics.burdenPct)}% employer payroll burden.
-    ${S.showRevenue ? "Revenue figures are projections and are shown separately; they never enter the net saving." : "Revenue projections are excluded from this report."}
+    ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
   </div>
 
   ${footer()}
@@ -388,10 +386,7 @@ const overlapBlock = () => {
   <div class="b24-dashed" style="margin-top:var(--b24-s5); border-color:#A15C00;">
     <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
       <span class="b24-strong" style="color:#A15C00;">Estimate above the credibility limit.</span>
-      The selected scenarios total ${pct1(o.pct)}% of the company's monthly payroll cost
-      (${money(o.payrollMonth)}), above the ${int(o.threshold)}% limit this model treats as
-      defensible. The scenarios most likely overlap — the same working hours counted more
-      than once — so the coverage shares need review before these figures are relied on.
+      The selected scenarios come to ${pct1(o.pct)}% of the company's monthly payroll cost (${money(o.payrollMonth)}). That is above the ${int(o.threshold)}% limit this model treats as credible. The scenarios most likely overlap, so the same working hours are counted more than once. Please check the coverage shares before you rely on these figures.
     </p>
   </div>`;
 };
@@ -423,9 +418,8 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
     ${DASH} in the saving columns: the scenario works on revenue, not on the payroll fund,
     so it has no payroll saving to show.</p>` : ""}
   ${showRev ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
-    Revenue / month is a projection, not a saving the client can verify, and it never enters
-    the net first-year figure${rows.some(noRev) ? `; ${DASH} means the scenario has no revenue effect` : ""}.
-    The headline page shows the same amount split into revenue uplift and existing-base potential.</p>` : ""}
+    Revenue / month is a projection, not a saving the client can verify. It never enters the net first-year figure${rows.some(noRev) ? `; ${DASH} means the scenario has no revenue effect` : ""}.
+    The first page shows the same amount split into revenue uplift and existing-base potential.</p>` : ""}
   ${footer()}
 </section>`).join("");
 
@@ -500,9 +494,7 @@ const planPage = () => `
       </tbody>
     </table>
   </div>
-  <p class="b24-p">Plan prices are for the whole account, not per user. The number in an
-     Enterprise tier (250, 500, 1000 …) is the seat limit included in the plan and is already
-     priced in, so nothing above is multiplied by headcount.</p>
+  <p class="b24-p">Plan prices are for the whole account, not per user. The number in an Enterprise tier (250, 500, 1000 …) is the seat limit the plan includes, and the price already covers it. Nothing above is multiplied by headcount.</p>
 
   <h1 class="b24-h1" style="margin-top:var(--b24-s8); font-size:22px;">What ${esc(P.to)} adds</h1>
   <ul class="b24-checklist">
@@ -515,17 +507,14 @@ const planPage = () => `
          разбивки. Различий между тарифами в источнике НЕТ, поэтому эти три пункта
          печатаются для любой цели. Если различия появятся — их место здесь, рядом
          с AI-строкой, которая уже выбирается по тарифу. -->
-    <li class="is-yes">Vibecode — build custom AI-powered business apps</li>
-    <li class="is-yes">MCP server — connect external AI agents to Bitrix24</li>
+    <li class="is-yes">Vibecode — build your own AI-powered business apps</li>
+    <li class="is-yes">MCP server — connect outside AI agents to Bitrix24</li>
     <li class="is-yes">Unlimited REST API and Bitrix24 Market</li>
   </ul>
 
   <div class="b24-dashed" style="margin-top:var(--b24-s6)">
     <p class="b24-p" style="margin:0; font-size:13.5px;">
-      AI is positioned by plan, not by a request count — no per-request quotas are published,
-      so no numeric AI limits are quoted here. Prices effective from ${esc(P.effectiveFrom)};
-      existing clients keep current pricing until the end of their period or
-      ${esc(P.grandfatheredUntil)}, whichever is later.
+      AI is set by plan, not by a request count. No per-request quotas are published, so no numeric AI limits are quoted here. Prices apply from ${esc(P.effectiveFrom)}. Existing clients keep their current pricing until the end of their period or ${esc(P.grandfatheredUntil)}, whichever is later.
     </p>
   </div>
   ${footer()}
@@ -541,8 +530,7 @@ const closing = () => `
   <div class="b24-content-z" style="max-width:82%;">
     <h1 class="b24-display" style="font-size:38px;">Let's put this<br>into <span class="b24-hl">practice</span>.</h1>
     <p class="b24-lead" style="margin:22px auto 34px; font-size:17px; opacity:.92;">
-      ${money(T.fotYear)} of payroll saving a year, on your own numbers.
-      Next step is a working session on the scenarios you picked.
+      ${money(T.fotYear)} of payroll saving a year, on your own numbers. The next step is a working session on the scenarios you picked.
     </p>
 
     <div class="b24-card b24-card--navy" style="text-align:left; max-width:420px; margin:0 auto var(--b24-s8);">
@@ -584,6 +572,18 @@ ${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags
      Quick Look. Replace them with a hairline. render.py injects the same reset,
      this keeps a standalone browser preview honest too. */
   .b24-card--white,.b24-table-wrap{box-shadow:none;border:1px solid var(--b24-line)}
+
+  /* ОБРЕЗАННАЯ ПОСЛЕДНЯЯ СТРОКА ТАБЛИЦЫ. .page — колоночный флексбокс, а
+     .b24-table-wrap в ките несёт overflow:hidden. Для флекс-элемента с таблицей
+     внутри Chromium берёт flex-basis меньше собственной высоты таблицы, элемент
+     ужимается (flex-shrink:1 по умолчанию) — и нижняя строка уезжает под
+     скруглённый край. Видно на «The numbers» при трёх строках и на странице
+     тарифа: таблица 216px в контейнере 188px. Место на полосе есть, страница
+     занята на 764px из 1123 — это не переполнение A4, а именно ужатие.
+     Запрещаем сжатие по главной оси. Ширины это не касается: в колоночном
+     флексбоксе flex-shrink работает по высоте, поэтому замер ширины таблиц
+     (656px против 658px полосы) остаётся прежним. */
+  .page > .b24-table-wrap{flex-shrink:0}
 
   /* ТАБЛИЦА СЦЕНАРИЕВ С КОЛОНКОЙ ВЫРУЧКИ.
      С включённым переключателем колонок становится шесть (клиентский отчёт) или

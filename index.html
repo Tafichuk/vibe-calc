@@ -775,31 +775,31 @@ const PRICING = {
 const I18N = {
 en: {
   "ui.lang":"Language", "ui.cur":"Currency",
-  "ui.heroTitle":"What AI in Bitrix24 is actually worth to your client",
-  "ui.heroSub":"Pick the scenarios that match the client's business, enter their numbers, and see the payroll saving Vibe+ produces in the first year — alongside the cost of getting there.",
-  "ui.deStub":"German is not translated yet — English copy is shown. The language structure is in place; strings are pending.",
+  "ui.heroTitle":"What AI in Bitrix24 is worth to your client",
+  "ui.heroSub":"Pick the scenarios that fit the client's business and enter their numbers. You will see the payroll saving Vibe+ gives in the first year, and what it costs to get there.",
+  "ui.deStub":"German is not translated yet, so the English text is shown. The language structure is ready and the German text will follow.",
   "ui.step1":"Step 1", "ui.step2":"Step 2", "ui.step3":"Step 3", "ui.step4":"Step 4",
   "ui.companyH":"About the company",
-  "ui.companyNote":"These values pre-fill the matching fields in every scenario below. Edit a field inside a scenario and it stops following this block, so your manual correction is never overwritten.",
+  "ui.companyNote":"These values fill the matching fields in every scenario below. Edit a field inside a scenario and it stops following this block. Your own figure is never overwritten.",
   "ui.scenariosH":"Choose the scenarios",
-  "ui.scenariosNote":"Each scenario is costed independently. Select only what the client will genuinely use — an honest short list is more persuasive than a long one.",
+  "ui.scenariosNote":"Each scenario is costed on its own. Pick only what the client will really use. A short honest list convinces more than a long one.",
   "ui.summaryH":"Combined effect",
   "ui.trH":"Recommended plan",
-  "ui.trNote":"Two independent choices: what the client pays today — an Essentials plan, or nothing at all if they are not on Bitrix24 yet — and the plan you recommend. The recommendation starts out matched to the current plan and can point anywhere in the Vibe+ line-up, including a tier with headroom. Where the price list has no \u201cbefore\u201d price, the calculator says so instead of guessing.",
+  "ui.trNote":"Two choices. On the left, what the client pays today: an Essentials plan, or nothing if they have no Bitrix24 yet. On the right, the plan you recommend. It starts matched to the current plan, and you can point it at any plan in the Vibe+ line — including a bigger one.",
   "ui.targetPlan":"Target Vibe+ plan",
   "ui.planNone":"No Bitrix24 yet",
   "ui.seatsUpTo":"up to {n} users",
-  "ui.tgtAuto":"Preselected for you. Pick another to quote a tier with headroom.",
+  "ui.tgtAuto":"Chosen for you. Pick another one to quote a bigger plan.",
   "ui.tgtManual":"Chosen by you.",
-  "ui.tgtReset":"back to the preselected plan",
+  "ui.tgtReset":"back to the plan we chose",
   "ui.grpMatched":"Up to 2,000 users",
   "ui.grpEnterprise":"Enterprise, 3,000 users and above",
   "ui.fromNone":"Nothing today",
   /* ui.fromNoPriceTier / ui.fromNoPriceNote / ui.fromNoPriceCur / ui.targetOnly
      удалены вместе с состоянием «цены до нет»: официальная выгрузка закрыла все
      пятнадцать тиров Essentials, и показывать эти строки стало нечему. */
-  "ui.diffNotMatched":"These percentages describe the one-to-one pairs from the price list, not the pair you picked.",
-  "ui.pairNoteNone":"The client pays nothing today, so the whole target price is new spend — that is what the figures above add up to.",
+  "ui.diffNotMatched":"These percentages come from the matching plan pairs in the price list, not from the pair you picked.",
+  "ui.pairNoteNone":"The client pays nothing today, so the whole plan price is new spend. That is what the figures above add up to.",
   "ui.currentPlan":"Client's current plan",
   "ui.eurMissing":"Essentials prices are published in USD only. Switch to USD for the full comparison.",
   "ui.diffH":"What this costs",
@@ -819,30 +819,30 @@ en: {
   "ui.diffLessPerYear":"less per year",
   "ui.diffSame":"the same price",
   "ui.aiH":"AI allowance by plan",
-  "ui.aiNote":"AI is positioned by plan, not by numbers. No per-request quotas are published, so this calculator recommends a plan qualitatively and never states a request or token count.",
+  "ui.aiNote":"AI is set by plan, not by numbers. No per-request quotas are published, so this calculator recommends a plan in words. It never states a request or token count.",
   "ui.burden":"Employer payroll burden",
-  "ui.burdenHint":"Added on top of gross salary to get the real cost of an employee. The correct figure depends on the country and the type of contract — set it to your market before quoting.",
+  "ui.burdenHint":"Added on top of gross salary to get the real cost of an employee. The right figure depends on the country and the type of contract. Set it to your market before you quote.",
   "ui.estimate":"estimate",
   "ui.step5":"Step 5", "ui.step6":"Step 6", "ui.step7":"Step 7", "ui.step8":"Step 8",
 
   // ---- coverage ----
-  "ui.coverage":"Coverage — share of staff this touches",
-  "ui.coverageHint":"Applied to {src} ({n}) — this scenario is costed for {got} people. Lower it until it matches who will genuinely use the feature: every scenario claiming the whole company means the same working day is counted several times.",
-  "ui.coverageNone":"No coverage share here — this scenario is driven by an absolute monthly volume you enter directly, not by a share of staff.",
+  "ui.coverage":"Coverage — share of staff this affects",
+  "ui.coverageHint":"Applied to {src} ({n}) — this scenario is costed for {got} people. Lower it until it matches who will really use the feature. If every scenario claims the whole company, the same working day gets counted several times.",
+  "ui.coverageNone":"No coverage share here. You enter the monthly volume for this scenario directly, not as a share of staff.",
 
   // ---- credibility guard ----
   "ui.overlapH":"Check the coverage — this adds up to {pct} of total payroll",
-  "ui.overlapBody":"The selected scenarios together claim {pct} of the company's payroll cost ({payroll} a month), above the {limit}% we treat as the limit of credibility. That normally means the scenarios overlap: the same working day is being saved more than once. Lower the coverage share on the broad scenarios until the total is defensible — a smaller number a client believes is worth more than a large one they do not.",
-  "ui.overlapReport":"Coverage warning: the selected scenarios total {pct} of payroll cost, above the {limit}% credibility limit. The scenarios likely overlap and the coverage shares need review before this is quoted.",
+  "ui.overlapBody":"The selected scenarios claim {pct} of the company's payroll cost ({payroll} a month). That is above the {limit}% we treat as credible. Usually it means the scenarios overlap and the same working day is saved twice. Lower the coverage share on the broad scenarios. A smaller number the client believes is worth more than a big one they do not.",
+  "ui.overlapReport":"Coverage warning: the selected scenarios total {pct} of payroll cost, above the {limit}% credibility limit. The scenarios probably overlap. Check the coverage shares before you quote this.",
 
   // ---- revenue switch ----
   "ui.revToggleLabel":"Revenue projection",
   "ui.showRevenue":"Show revenue uplift",
-  "ui.showRevenueHint":"Off by default. Revenue uplift and existing-base potential are ESTIMATES, not a saving the client can verify — they assume freed time and generated opportunities actually convert into sales. Payroll saving does not depend on that assumption. Turn this on knowingly, and say so out loud when you do.",
+  "ui.showRevenueHint":"Off by default. Revenue uplift and existing-base potential are ESTIMATES, not a saving the client can verify. They assume that freed time and new opportunities really turn into sales. Payroll saving does not depend on that assumption. Turn this on knowingly, and say so out loud when you do.",
 
   // ---- working days ----
   "ui.days":"Working days per month",
-  "ui.daysHint":"Public holidays are deliberately not modelled: in Germany they are set per Bundesland — Bavaria has 13, Berlin 10 — so there is no single national calendar to apply. Set this to the client's actual location.",
+  "ui.daysHint":"Public holidays are left out on purpose. In Germany each Bundesland sets its own: Bavaria has 13, Berlin 10. There is no single national calendar to use. Set this to the client's location.",
 
   // ---- partner services ----
   "ui.svcLabel":"Cost of my services (one-off)",
@@ -850,8 +850,8 @@ en: {
      а не «вот значение»: старая подпись стояла среди посчитанных строк и читалась
      как результат. */
   "ui.svcH":"Price your services",
-  "ui.svcNote":"Your one-off fee per scenario: connection, configuration for the client's processes, staff training. Nothing is filled in for you — you price each scenario yourself. A field left blank counts as NOT QUOTED: it stays out of the total and out of the average instead of being read as zero. A deliberate 0 is a real quote and does count.",
-  "ui.svcEmpty":"No scenarios picked yet. Choose them in Step 3 and each one shows up here as a row to price.",
+  "ui.svcNote":"Your one-off fee per scenario: connection, setup for the client's processes, staff training. Nothing is filled in for you. You price each scenario yourself. A blank field means NOT QUOTED: it stays out of the total and out of the average instead of counting as zero. A deliberate 0 is a real quote and does count.",
+  "ui.svcEmpty":"No scenarios picked yet. Choose them in Step 3 and each one appears here as a row to price.",
   "ui.svcColScenario":"Scenario",
   "ui.svcColSaving":"Client's saving, year",
   "ui.svcColFee":"Your fee, one-off",
@@ -865,12 +865,12 @@ en: {
   "ui.sumSvc":"My services (one-off)",
   "ui.aboutSvc":"About my services",
   "ui.notQuoted":"not quoted",
-  "ui.svcUnquoted":"{n} selected scenario(s) not priced yet — excluded from the total and the average, not counted as zero.",
-  "ui.svcSummaryInfo":"Your one-off fee per scenario: connection, configuration for the client's processes and staff training. There are no default figures — you price each scenario yourself in front of the client. A field left blank means NOT QUOTED: it is skipped by the total and by the average rather than silently treated as zero. A deliberate 0 is a real quote and does count.",
+  "ui.svcUnquoted":"{n} selected scenario(s) not priced yet. They are left out of the total and the average, not counted as zero.",
+  "ui.svcSummaryInfo":"Your one-off fee per scenario: connection, setup for the client's processes, staff training. There are no default figures. You price each scenario yourself, in front of the client. A blank field means NOT QUOTED: the total and the average skip it instead of counting it as zero. A deliberate 0 is a real quote and does count.",
 
   // ---- partner contacts ----
   "ui.partnerH":"Your details",
-  "ui.partnerNote":"These go into the header and footer of the report. They are yours, not the client's — the report is signed by you.",
+  "ui.partnerNote":"These go into the header and footer of the report. They are yours, not the client's: you sign the report.",
   "pt.company":"Company name", "pt.person":"Contact person",
   "pt.email":"Email", "pt.phone":"Phone", "pt.site":"Website",
   "pt.logo":"Your logo",
@@ -878,19 +878,19 @@ en: {
   "pt.logoUpload":"Upload a file",
   "pt.logoOr":"or",
   "pt.logoClear":"remove",
-  "pt.logoHint":"Shown next to the Bitrix24 Partners lockup in the calculator and in both reports — as a separate mark, never merged with it. PNG, SVG, JPEG or WebP, any proportions. Large images are resized and compressed automatically. Kept in this browser only.",
+  "pt.logoHint":"Shown next to the Bitrix24 Partners lockup in the calculator and in the report, as a separate mark. It is never merged with the lockup. PNG, SVG, JPEG or WebP, any proportions. Large images are resized and compressed for you. Kept in this browser only.",
   "pt.logoReady":"Ready: {px} px wide, {kb} KB. Kept in this browser only.",
   "pt.logoReadySvg":"Ready: vector, {kb} KB. Kept in this browser only.",
-  "pt.logoScaled":"Scaled to {px} px wide ({kb} KB) — that is all the calculator and the reports need. The file on your disk is untouched.",
-  "pt.logoShrunk":"Scaled to {px} px and compressed to {kb} KB so it fits this browser's storage. The file on your disk is untouched.",
+  "pt.logoScaled":"Scaled to {px} px wide ({kb} KB). That is all the calculator and the report need. The file on your disk is not changed.",
+  "pt.logoShrunk":"Scaled to {px} px and compressed to {kb} KB so it fits this browser's storage. The file on your disk is not changed.",
   /* Ошибки называют настоящую причину: что именно с файлом не так и что сделать.
      Общего «слишком большой» больше нет — большое мы сжимаем, а не отвергаем. */
   "pt.logoNotImage":"That file is not an image ({type}). Pick a PNG, SVG, JPEG or WebP file, or paste a link instead.",
-  "pt.logoHuge":"That file is {mb} MB — too large to even open in the browser (limit {maxmb} MB). Export the logo at a smaller size, or paste a link to it.",
-  "pt.logoBroken":"The browser could not read that image — the file looks damaged or is not really a {ext} file.",
-  "pt.logoSvgTooBig":"That SVG is {kb} KB, over the {max} KB we can keep in this browser. SVGs this large usually have a bitmap embedded — export it without, or paste a link.",
-  "pt.logoStillTooBig":"Even resized to {px} px and compressed, that image is {kb} KB — over the {max} KB limit. Paste a link to it instead.",
-  "pt.logoStoreFull":"The logo is in place for this session, but this browser's storage is full, so it will not survive a reload. Paste a link to it to keep it for good.",
+  "pt.logoHuge":"That file is {mb} MB. The browser cannot even open it (limit {maxmb} MB). Export the logo at a smaller size, or paste a link to it.",
+  "pt.logoBroken":"The browser could not read that image. The file looks damaged, or it is not really a {ext} file.",
+  "pt.logoSvgTooBig":"That SVG is {kb} KB, over the {max} KB we can keep in this browser. An SVG this large usually has a bitmap inside. Export it without one, or paste a link.",
+  "pt.logoStillTooBig":"Even after resizing to {px} px and compressing, that image is {kb} KB, over the {max} KB limit. Paste a link to it instead.",
+  "pt.logoStoreFull":"The logo works for this session, but this browser's storage is full, so it will not survive a reload. Paste a link to it to keep it for good.",
 
   // ---- partner summary ----
   "ui.pnH":"Partner summary",
@@ -902,26 +902,26 @@ en: {
 
   // ---- report ----
   "ui.reportH":"Report",
-  "ui.reportNote":"One document, straight from this page: the report you hand to the client. It carries no per-scenario fees — the cost of your services is in it as a single total line, because the net saving would be overstated without it. Nothing to install.",
+  "ui.reportNote":"One document, straight from this page: the report you give to the client. It carries no per-scenario fees. The cost of your services is in it as one total line, because the net saving would look too high without it. Nothing to install.",
   "ui.pdfClient":"Report for the client — PDF",
-  "ui.pdfHint":"The button lays the report out as A4 pages and hands them to your browser's print dialog — pick \u201cSave as PDF\u201d as the destination. That dialog is the only way a page can write a PDF to your disk, and it is also what makes the text real text: selectable, searchable and printed with the Bitrix24 font rather than a screenshot.",
+  "ui.pdfHint":"The button lays the report out as A4 pages and opens your browser's print dialog. Pick \u201cSave as PDF\u201d as the destination. That dialog is the only way a web page can write a PDF to your disk. It also keeps the text real text: you can select it and search it, and it prints in the Bitrix24 font instead of as a picture.",
   "ui.pdfBuilding":"Laying out the report…",
-  "ui.pdfRefused":"The report was not built: it would have carried internal, partner-only content ({what}). This is a bug — report it. Do not work around it: there is one report and it goes to the client.",
-  "ui.pdfNoScenarios":"Pick at least one scenario in Step 3 — there is nothing to put in a report yet.",
+  "ui.pdfRefused":"The report was not built: it would have carried internal, partner-only content ({what}). This is a bug, so please report it. Do not work around it. There is one report and it goes to the client.",
+  "ui.pdfNoScenarios":"Pick at least one scenario in Step 3. There is nothing to put in a report yet.",
   "ui.saveH":"Save the calculation",
-  "ui.saveHint":"A JSON file with everything you entered, so you can reopen this calculation later or hand it to a colleague. It is not the report — the button above is.",
+  "ui.saveHint":"A JSON file with everything you entered, so you can reopen this calculation later or send it to a colleague. It is not the report: the button above makes that.",
   "ui.dlState":"Save calculation (JSON)",
   "ui.loadState":"Open a saved calculation",
   "ui.loadOk":"Loaded: {n} scenario(s), {plan}. Everything you entered is back.",
-  "ui.loadOkPartial":"Loaded: {n} scenario(s), {plan}. This file was saved by an older version, so the numbers inside each scenario were refilled from the company data — check them before sending a report.",
-  "ui.loadBad":"That file is not a saved calculation from this calculator ({why}).",
+  "ui.loadOkPartial":"Loaded: {n} scenario(s), {plan}. An older version saved this file, so the numbers inside each scenario were filled again from the company data. Check them before you send a report.",
+  "ui.loadBad":"That file is not a calculation saved by this calculator ({why}).",
   "ui.from":"Currently", "ui.to":"Recommended",
   "ui.perPlanMonth":"per month for the whole account, billed annually",
-  "ui.planPriceNote":"Plan prices are for the whole account, not per user: the number in an Enterprise tier (250, 500, 1000 …) is the seat limit the plan includes, and it is already priced in. Nothing here is multiplied by the client's headcount.",
+  "ui.planPriceNote":"Plan prices are for the whole account, not per user. The number in an Enterprise tier (250, 500, 1000 …) is the seat limit the plan includes, and the price already covers it. Nothing here is multiplied by the client's headcount.",
   "ui.monthly":"Monthly", "ui.annualPerMonth":"Annual, per month", "ui.annualTotal":"Annual total",
   "ui.diffMonth":"Difference, per month",
-  "ui.effectiveFrom":"Prices effective from {date}. Existing clients stay on current pricing until the end of their period or {grand}, whichever is later.",
-  "ui.footer":"Prepared with the Bitrix24 Partners AI value calculator. All figures are estimates based on the inputs above and do not constitute an offer.",
+  "ui.effectiveFrom":"Prices apply from {date}. Existing clients keep their current pricing until the end of their period or {grand}, whichever is later.",
+  "ui.footer":"Prepared with the Bitrix24 Partners AI value calculator. All figures are estimates based on the inputs above and are not an offer.",
   "ui.nothing":"Nothing selected",
   "ui.selected":"{n} of {total} scenarios selected",
   "ui.navSaving":"Payroll saving",
@@ -933,7 +933,7 @@ en: {
   "ui.pickOne":"Select at least one scenario to see the combined effect.",
   "ui.month":"Month", "ui.year":"Year",
   "ui.sumFot":"Total payroll saving",
-  "ui.fotMeaning":"What this figure is: the cost of the working time currently spent on these tasks. It is not profit, and not cash freed up.",
+  "ui.fotMeaning":"This figure is the cost of the working time now spent on these tasks. It is not profit, and not cash freed up.",
   "ui.sumRev":"Additional: revenue uplift",
   "ui.sumPot":"Additional: existing-base potential",
   "ui.sumInt":"Integrator setup (one-off)",
@@ -941,7 +941,7 @@ en: {
   "ui.sumCosts":"First-year cost",
   "ui.sumNet":"Net first-year payroll saving",
   "ui.verdictPos":"After first-year costs, <b>{v}</b> of payroll saving remains.",
-  "ui.verdictNeg":"Payroll saving does not yet cover the first-year cost — a shortfall of <b>{v}</b>. Add scenarios or revisit the inputs.",
+  "ui.verdictNeg":"Payroll saving does not yet cover the first-year cost. It is short by <b>{v}</b>. Add scenarios or check the inputs.",
   "ui.howCalc":"How this is calculated",
   "ui.aboutInt":"About integrator setup",
   "ui.intLabel":"Integrator setup (one-off)",
@@ -955,8 +955,8 @@ en: {
   "ui.grpCrm":"CRM scenarios", "ui.grpAgents":"AI agents", "ui.grpOther":"General scenarios",
   "ui.grpVibe":"Vibecode and CoPilot",
   "ui.more":"Learn more",
-  "ui.summaryInfo":"Payroll saving is summed across the selected scenarios and multiplied by 12. From that annual saving we subtract the known first-year cost: the Alaio Vibe+ subscription and your services. Base potential and revenue uplift are shown separately and never enter the net figure or the payback. Cost of one working hour = gross salary x (1 + payroll burden) / {contract} contracted hours; day-driven scenarios are then scaled to {days} working days.",
-  "ui.intSummaryInfo":"The one-off integrator fee across all selected scenarios: connection, configuration for the client's processes and staff training. Defaults are estimates — the integrator overwrites them per scenario. This amount is subtracted from the first-year benefit.",
+  "ui.summaryInfo":"We add up the payroll saving of the selected scenarios and multiply it by 12. From that annual saving we subtract the known first-year cost: the Alaio Vibe+ subscription and your services. Existing-base potential and revenue uplift are shown separately. They never enter the net figure or the payback. Cost of one working hour = gross salary x (1 + payroll burden) / {contract} contracted hours. Scenarios counted in days are then scaled to {days} working days.",
+  "ui.intSummaryInfo":"The one-off integrator fee for all selected scenarios: connection, setup for the client's processes, staff training. The default figures are estimates and the integrator replaces them per scenario. This amount is subtracted from the first-year benefit.",
 
   // ---- units ----
   /* ЕДИНИЦЫ. «pcs» была калькой с «шт.»: к клиентам и людям она приклеивала
@@ -1002,31 +1002,31 @@ en: {
   "ai.forStandard":"Unlimited AI, plus priority in the processing queue under load",
 
   // ---- pillars ----
-  "pil.1":"Vibecode — build custom AI-powered business apps",
+  "pil.1":"Vibecode — build your own AI-powered business apps",
   "pil.2":"AI scaled by plan, unlimited from Standard up",
-  "pil.3":"MCP server — connect external AI agents to Bitrix24",
+  "pil.3":"MCP server — connect outside AI agents to Bitrix24",
 
   /* ---- scenarios ---- */
   "sc.1.title":"Call transcription and automatic deal-card fill",
-  "sc.1.sub":"CoPilot transcribes calls and fills the deal card by itself — the manager no longer replays recordings or types fields in by hand.",
+  "sc.1.sub":"CoPilot transcribes the call and fills the deal card by itself. The manager no longer replays recordings or types fields by hand.",
   "sc.1.role":"Sales manager",
   "sc.1.f.mgr":"Number of managers", "sc.1.f.sal":"Manager salary (gross)",
   "sc.1.f.calls":"Calls per manager per day", "sc.1.f.time":"Handling time per call",
   "sc.1.f.plan":"Manager's monthly target",
-  "sc.1.f.coef":"Share of freed time actually converted",
-  "info.1":"Minutes a day previously spent replaying calls and filling cards (calls x minutes), converted to hours per month (x {days} working days) and multiplied by the manager's hourly cost.",
+  "sc.1.f.coef":"Share of freed time that turns into sales",
+  "info.1":"Minutes a day that used to go on replaying calls and filling cards (calls x minutes). We turn that into hours per month (x {days} working days) and multiply it by the manager's hourly cost.",
   "int.1":"The integrator connects call recognition and binds transcripts to deal cards for the client's telephony and pipelines, defines which card fields fill automatically, and trains the managers. Cost scales with the number of managers to onboard.",
 
-  "sc.4.title":"Script adherence scoring (head of sales + speech analytics)",
-  "sc.4.sub":"The head of sales listens to calls by hand and scores them against the script. CoPilot covers every call and does the scoring instead.",
+  "sc.4.title":"Call scoring against the sales script (head of sales + speech analytics)",
+  "sc.4.sub":"Today the head of sales listens to calls one by one and scores them against the script. CoPilot covers every call and scores it instead.",
   "sc.4.role":"Head of sales",
   "sc.4.f.rop":"Number of heads of sales", "sc.4.f.sal":"Head of sales salary (gross)",
-  "sc.4.f.share":"Share of their time spent reviewing calls",
-  "info.4":"We take the full monthly cost of the head of sales (gross salary x (1 + payroll burden)) and multiply it by the share of their time that used to go into manual call review. AI takes that work over.",
+  "sc.4.f.share":"Share of their time spent listening to calls",
+  "info.4":"We take the full monthly cost of the head of sales (gross salary x (1 + payroll burden)) and multiply it by the share of their time that used to go on listening to calls. AI takes that work over.",
   "int.4":"The integrator helps describe the sales script and the scoring criteria the AI will apply, sets up the reporting for the head of sales and teaches the team to act on the scores. Scope depends on the number of heads and script complexity.",
 
   "sc.5.title":"Repeat sales into the existing base",
-  "sc.5.sub":"CoPilot works the existing customer base, generates repeat-sale opportunities and hands managers deals to close.",
+  "sc.5.sub":"CoPilot works through the existing customer base, finds chances for a repeat sale and hands managers deals to close.",
   "sc.5.role":"Revenue-level effect",
   "sc.5.f.base":"Size of the customer base", "sc.5.f.check":"Average deal value",
   "sc.5.f.conv":"Conversion into a repeat sale",
@@ -1034,82 +1034,82 @@ en: {
   "int.5":"The integrator sets up base segmentation and repeat-touch sequences for the client's product and sales cycle, defines triggers and offer copy, and connects conversion analytics. A one-off adaptation to the client's base.",
 
   "sc.9.title":"Running Bitrix24 from chat",
-  "sc.9.sub":"Staff drive Bitrix24 in plain text through a CoPilot Agent: deals and leads, tasks, business processes, files and documents, stage changes, analytics — instead of clicking through menus.",
+  "sc.9.sub":"Staff tell a CoPilot Agent in plain words what to do in Bitrix24: deals and leads, tasks, business processes, files and documents, stage changes, analytics. No clicking through menus.",
   "sc.9.role":"All staff",
-  "sc.9.note":"Covers routine operations inside Bitrix24. It excludes filling the card after a call — that is the call-transcription scenario, so the same time is never counted twice.",
+  "sc.9.note":"Covers routine operations inside Bitrix24. It leaves out filling the card after a call, because that is the call-transcription scenario. The same time is never counted twice.",
   "sc.9.f.mgr":"Number of employees", "sc.9.f.sal":"Average employee salary",
   "sc.9.f.ops":"Bitrix24 operations per day", "sc.9.f.time":"Time saved per operation",
-  "info.9":"How many routine Bitrix24 operations an employee performs per day and how many minutes each one saves. Converted to hours per month (x {days} working days) and multiplied by the hourly cost, across all employees.",
+  "info.9":"How many routine Bitrix24 operations an employee does per day, and how many minutes each one saves. We turn that into hours per month (x {days} working days) and multiply it by the hourly cost, for all employees.",
   "int.9":"The integrator configures the agent for the client's processes in CRM, tasks, smart processes and Drive, respecting access rights, drafts the common commands and trains the staff. Cost scales with the number of employees to onboard.",
 
   "sc.2.title":"First-line support agent",
-  "sc.2.sub":"A CoPilot Agent handles inbound customer enquiries. It closes part of them itself and passes the rest to an operator.",
+  "sc.2.sub":"A CoPilot Agent handles incoming customer requests. It answers some of them itself and passes the rest to an operator.",
   "sc.2.role":"Support specialist",
   "sc.2.f.spec":"Number of support specialists", "sc.2.f.sal":"Specialist salary (gross)",
-  "sc.2.f.total":"Enquiries per day (total)", "sc.2.f.ai":"Of those, closed by AI (per day)",
-  "sc.2.f.time":"Handling time per enquiry",
-  "sc.2.err.ai":"Cannot exceed total enquiries",
-  "info.2":"How many enquiries a day the AI closes instead of a specialist, and how many minutes one enquiry used to take. Converted to hours per month (x {days} working days) and multiplied by the specialist's hourly cost.",
+  "sc.2.f.total":"Requests per day (total)", "sc.2.f.ai":"Of those, closed by AI (per day)",
+  "sc.2.f.time":"Handling time per request",
+  "sc.2.err.ai":"Cannot be more than the total requests",
+  "info.2":"How many requests a day the AI closes instead of a specialist, and how many minutes one request used to take. We turn that into hours per month (x {days} working days) and multiply it by the specialist's hourly cost.",
   "int.2":"The integrator connects the open channels, fills the knowledge base with answers, sets the hand-off rules for complex cases, defines what to capture from the dialogue into the card and trains the support team. Scope depends on specialists and channels.",
 
   "sc.10.title":"Knowledge-base agent",
-  "sc.10.sub":"Staff ask a CoPilot Agent in chat and get instant answers from the uploaded policies and manuals — instead of searching documents or interrupting colleagues.",
+  "sc.10.sub":"Staff ask a CoPilot Agent in chat and get an instant answer from the policies and manuals you upload. No searching through documents, no interrupting colleagues.",
   "sc.10.role":"All staff",
-  "sc.10.note":"Only the asking employee's time is counted. The time of the colleagues who would have been interrupted is a deliberate bonus we do not bill for. Do not double-count this with the Vibecode scenario.",
+  "sc.10.note":"We count only the time of the employee who asks. The time of the colleagues who would have been interrupted is a bonus we leave out on purpose. Do not count this twice with the Vibecode scenario.",
   "sc.10.f.emp":"Employees using the knowledge base", "sc.10.f.sal":"Average employee salary",
   "sc.10.f.q":"Knowledge-base lookups per day", "sc.10.f.t":"Time to find an answer manually",
   "sc.10.f.share":"Share of questions the AI answers",
-  "info.10":"How often a day staff look for answers and how long that used to take, adjusted by the share of questions the AI answers. Converted to hours per month (x {days} working days) and multiplied by the hourly cost, across all employees.",
+  "info.10":"How often a day staff look for answers and how long that used to take, times the share of questions the AI answers. We turn that into hours per month (x {days} working days) and multiply it by the hourly cost, for all employees.",
   "int.10":"The integrator helps collect and structure the knowledge base from the client's policies and manuals, configures the agent, checks answer quality and teaches staff to ask and to extend the base. Scope depends on users and documents.",
 
   "sc.11.title":"Personal assistant",
-  "sc.11.sub":"A CoPilot Agent builds the day plan each morning from tasks and calendar and closes the day with a summary. For managers it condenses dozens of daily team reports into one page.",
+  "sc.11.sub":"Each morning a CoPilot Agent builds the day plan from tasks and calendar, and at the end of the day it writes a summary. For managers it turns dozens of daily team reports into one page.",
   "sc.11.role":"All staff and managers",
-  "sc.11.note":"Counts the day plan and wrap-up for staff and the consolidated report for managers — separate blocks of time that do not overlap. Do not double-count with the Vibecode scenario.",
+  "sc.11.note":"Counts two things: the day plan and daily summary for staff, and the combined report for managers. These are separate blocks of time and they do not overlap. Do not count this twice with the Vibecode scenario.",
   "sc.11.f.emp":"Total employees", "sc.11.f.empSal":"Average employee salary",
   "sc.11.f.empMin":"Time saved per employee per day",
   "sc.11.f.mgr":"Number of managers", "sc.11.f.mgrSal":"Manager salary",
   "sc.11.f.mgrMin":"Time saved per manager per day",
-  "info.11":"Staff save time on planning and wrapping up the day, managers on reading reports. Minutes per day become hours per month (x {days} working days) and are multiplied by the hourly cost. The two effects are added.",
+  "info.11":"Staff save time on planning and closing the day, managers on reading reports. Minutes per day become hours per month (x {days} working days) and we multiply them by the hourly cost. Then we add the two effects together.",
   "int.11":"The integrator configures the morning plan and evening wrap-up around the client's tasks and calendar, and the consolidated team report for managers, then agrees the format and notification schedule. Cost scales with the number of employees.",
   "bd.11.a":"Staff · day plan and wrap-up", "bd.11.b":"Managers · consolidated report",
 
   "sc.12.title":"Online-booking agent",
-  "sc.12.sub":"A voice CoPilot Agent calls booked customers itself: confirms the visit, reminds them, reacts to lateness and writes the outcome to the card — instead of the receptionist dialling by hand.",
+  "sc.12.sub":"A voice CoPilot Agent calls booked customers itself. It confirms the visit, sends a reminder, reacts if the customer is late and writes the result into the card. The receptionist no longer dials by hand.",
   "sc.12.role":"Receptionist / front desk",
   "sc.12.f.visits":"Bookings (visits) per month", "sc.12.f.perRec":"Calls per booking",
   "sc.12.f.time":"Time per manual call", "sc.12.f.admSal":"Receptionist salary",
-  "info.12":"Calls per month (bookings x calls per booking) x minutes per call, converted to hours and multiplied by the receptionist's hourly cost. This scenario counts the payroll saving only — no revenue from recovered no-shows is included.",
+  "info.12":"Calls per month (bookings x calls per booking) x minutes per call. We turn that into hours and multiply it by the receptionist's hourly cost. This scenario counts the payroll saving only. Revenue from customers who would not have shown up is not included.",
   "int.12":"The integrator connects the voice agent to the client's online booking and telephony, configures confirmation, reminder and no-show flows, defines how the call outcome is stored on the card and tests it against real bookings.",
 
   "sc.3.title":"Document generation",
-  "sc.3.sub":"CoPilot produces documents from templates and writes the copy instead of drafting by hand: quotes, contracts, letters, manuals, reports.",
+  "sc.3.sub":"CoPilot makes documents from templates and writes the text for you: quotes, contracts, letters, manuals, reports.",
   "sc.3.role":"Any employee",
   "sc.3.f.emp":"Employees preparing documents", "sc.3.f.sal":"Average employee salary",
   "sc.3.f.docs":"Documents or letters per day", "sc.3.f.time":"Time per document",
-  "info.3":"Minutes a day spent preparing documents (documents x minutes), converted to hours per month (x {days} working days) and multiplied by the hourly cost, across everyone who prepares documents.",
+  "info.3":"Minutes a day spent preparing documents (documents x minutes). We turn that into hours per month (x {days} working days) and multiply it by the hourly cost, for everyone who prepares documents.",
   "int.3":"The integrator prepares the document templates (quotes, contracts, letters, invoices) with CRM data merged in, sets the house style and mandatory blocks and trains the staff. Cost scales with the number of employees preparing documents.",
 
   "sc.6.title":"Follow-up (internal meeting transcription)",
-  "sc.6.sub":"Every internal meeting is transcribed: meetings get shorter, fewer people need to attend, and nobody has to take minutes.",
+  "sc.6.sub":"Every internal meeting is transcribed. Meetings get shorter, fewer people need to attend, and nobody has to write the minutes.",
   "sc.6.role":"Staff and assistant",
   "sc.6.f.meet":"Internal meetings per month", "sc.6.f.dur":"Average meeting length",
   "sc.6.f.part":"Average number of participants", "sc.6.f.psal":"Average participant salary",
   "sc.6.f.asal":"Assistant salary",
-  "info.6":"Transcription produces three effects: meetings shorten by {gain}, attendance drops by {gain}, and the assistant no longer writes minutes. Each effect is minutes x meetings x cost of a minute; the three are added.",
+  "info.6":"Transcription gives three effects: meetings get {gain} shorter, {gain} fewer people attend, and the assistant no longer writes the minutes. Each effect is minutes x meetings x cost of a minute. We add the three together.",
   "int.6":"The integrator configures meeting transcription and automatic summaries for the client's meeting formats, and defines who receives the outcome and which tasks are created from it. Scope depends on the number of participants.",
   "bd.6.a":"A · meetings shorter by {gain}", "bd.6.b":"B · attendance down by {gain}",
   "bd.6.c":"C · minutes and follow-up (assistant)",
 
   "sc.7.title":"Vibecode, CoWork and CoPilot chat",
-  "sc.7.sub":"Staff simplify and automate their own work. Some work in chat with the model, others build apps that lift personal output and speed up company processes.",
+  "sc.7.sub":"Staff simplify and automate their own work. Some just chat with the model, others build small apps. Both raise personal output and speed up company processes.",
   "sc.7.role":"All staff",
   "sc.7.f.emp":"Total employees", "sc.7.f.share":"Share of self-starters",
-  "sc.7.f.simp":"Work simplification achieved", "sc.7.f.sal":"Average salary",
-  "info.7":"Two terms. Every employee on the baseline gains {base} in efficiency (full cost = gross salary x (1 + payroll burden)). Self-starters instead gain the 'work simplification' share. The saving is the sum of both.",
+  "sc.7.f.simp":"Share of work simplified", "sc.7.f.sal":"Average salary",
+  "info.7":"The saving has two parts. Every employee gains the baseline {base} in efficiency (full cost = gross salary x (1 + payroll burden)). Self-starters gain the higher 'work simplified' share instead. We add the two parts together.",
   "int.7":"The integrator runs staff onboarding for CoPilot and Vibecode: standard chat scenarios, copy generation, routine and process automation. Sets up access and walks the first scenarios through to a result. Cost scales with headcount.",
   "bd.7.init":"Self-starters",
-  "qual.7":"Once the active employees are up and running, company processes typically speed up and gain roughly 20% in efficiency.",
+  "qual.7":"Once the active employees are up and running, company processes usually speed up and gain about 20% in efficiency.",
 },
 /* German: structure ready, strings pending. Missing keys fall back to English
    through t(), so adding a key here is all a translator needs to do. */
@@ -2787,24 +2787,22 @@ const headline = () => `
     </table>
   </div>
   ${T.serviceUnquoted ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
-    ${int(T.serviceUnquoted)} scenario(s) are not yet priced, so the figure above is not the
-    full implementation cost.</p>` : ""}
+    ${int(T.serviceUnquoted)} scenario(s) are not priced yet, so the figure above is not the full implementation cost.</p>` : ""}
 
   ${overlapBlock()}
 
   <div class="b24-dashed" style="margin-top:var(--b24-s5)">
     <p class="b24-p" style="margin:0; font-size:13.5px;">
-      <span class="b24-strong">What this figure is:</span> the cost of the working time
-      currently spent on these tasks. It is not profit, and not cash freed up.
+      <span class="b24-strong">What this figure means.</span> It is the cost of the working time now spent on these tasks. It is not profit, and not cash freed up.
     </p>
   </div>
 
   <div class="b24-quote">
-    Payroll saving is the sum of the selected scenarios over twelve months. Day-driven
-    scenarios are scaled to ${int(S.economics.daysMonth)} working days; the hourly cost of an
+    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
+    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
     employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
     ${int(S.economics.burdenPct)}% employer payroll burden.
-    ${S.showRevenue ? "Revenue figures are projections and are shown separately; they never enter the net saving." : "Revenue projections are excluded from this report."}
+    ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
   </div>
 
   ${footer()}
@@ -2820,10 +2818,7 @@ const overlapBlock = () => {
   <div class="b24-dashed" style="margin-top:var(--b24-s5); border-color:#A15C00;">
     <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
       <span class="b24-strong" style="color:#A15C00;">Estimate above the credibility limit.</span>
-      The selected scenarios total ${pct1(o.pct)}% of the company's monthly payroll cost
-      (${money(o.payrollMonth)}), above the ${int(o.threshold)}% limit this model treats as
-      defensible. The scenarios most likely overlap — the same working hours counted more
-      than once — so the coverage shares need review before these figures are relied on.
+      The selected scenarios come to ${pct1(o.pct)}% of the company's monthly payroll cost (${money(o.payrollMonth)}). That is above the ${int(o.threshold)}% limit this model treats as credible. The scenarios most likely overlap, so the same working hours are counted more than once. Please check the coverage shares before you rely on these figures.
     </p>
   </div>`;
 };
@@ -2855,9 +2850,8 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
     ${DASH} in the saving columns: the scenario works on revenue, not on the payroll fund,
     so it has no payroll saving to show.</p>` : ""}
   ${showRev ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
-    Revenue / month is a projection, not a saving the client can verify, and it never enters
-    the net first-year figure${rows.some(noRev) ? `; ${DASH} means the scenario has no revenue effect` : ""}.
-    The headline page shows the same amount split into revenue uplift and existing-base potential.</p>` : ""}
+    Revenue / month is a projection, not a saving the client can verify. It never enters the net first-year figure${rows.some(noRev) ? `; ${DASH} means the scenario has no revenue effect` : ""}.
+    The first page shows the same amount split into revenue uplift and existing-base potential.</p>` : ""}
   ${footer()}
 </section>`).join("");
 
@@ -2932,9 +2926,7 @@ const planPage = () => `
       </tbody>
     </table>
   </div>
-  <p class="b24-p">Plan prices are for the whole account, not per user. The number in an
-     Enterprise tier (250, 500, 1000 …) is the seat limit included in the plan and is already
-     priced in, so nothing above is multiplied by headcount.</p>
+  <p class="b24-p">Plan prices are for the whole account, not per user. The number in an Enterprise tier (250, 500, 1000 …) is the seat limit the plan includes, and the price already covers it. Nothing above is multiplied by headcount.</p>
 
   <h1 class="b24-h1" style="margin-top:var(--b24-s8); font-size:22px;">What ${esc(P.to)} adds</h1>
   <ul class="b24-checklist">
@@ -2947,17 +2939,14 @@ const planPage = () => `
          разбивки. Различий между тарифами в источнике НЕТ, поэтому эти три пункта
          печатаются для любой цели. Если различия появятся — их место здесь, рядом
          с AI-строкой, которая уже выбирается по тарифу. -->
-    <li class="is-yes">Vibecode — build custom AI-powered business apps</li>
-    <li class="is-yes">MCP server — connect external AI agents to Bitrix24</li>
+    <li class="is-yes">Vibecode — build your own AI-powered business apps</li>
+    <li class="is-yes">MCP server — connect outside AI agents to Bitrix24</li>
     <li class="is-yes">Unlimited REST API and Bitrix24 Market</li>
   </ul>
 
   <div class="b24-dashed" style="margin-top:var(--b24-s6)">
     <p class="b24-p" style="margin:0; font-size:13.5px;">
-      AI is positioned by plan, not by a request count — no per-request quotas are published,
-      so no numeric AI limits are quoted here. Prices effective from ${esc(P.effectiveFrom)};
-      existing clients keep current pricing until the end of their period or
-      ${esc(P.grandfatheredUntil)}, whichever is later.
+      AI is set by plan, not by a request count. No per-request quotas are published, so no numeric AI limits are quoted here. Prices apply from ${esc(P.effectiveFrom)}. Existing clients keep their current pricing until the end of their period or ${esc(P.grandfatheredUntil)}, whichever is later.
     </p>
   </div>
   ${footer()}
@@ -2973,8 +2962,7 @@ const closing = () => `
   <div class="b24-content-z" style="max-width:82%;">
     <h1 class="b24-display" style="font-size:38px;">Let's put this<br>into <span class="b24-hl">practice</span>.</h1>
     <p class="b24-lead" style="margin:22px auto 34px; font-size:17px; opacity:.92;">
-      ${money(T.fotYear)} of payroll saving a year, on your own numbers.
-      Next step is a working session on the scenarios you picked.
+      ${money(T.fotYear)} of payroll saving a year, on your own numbers. The next step is a working session on the scenarios you picked.
     </p>
 
     <div class="b24-card b24-card--navy" style="text-align:left; max-width:420px; margin:0 auto var(--b24-s8);">
@@ -3016,6 +3004,18 @@ ${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags
      Quick Look. Replace them with a hairline. render.py injects the same reset,
      this keeps a standalone browser preview honest too. */
   .b24-card--white,.b24-table-wrap{box-shadow:none;border:1px solid var(--b24-line)}
+
+  /* ОБРЕЗАННАЯ ПОСЛЕДНЯЯ СТРОКА ТАБЛИЦЫ. .page — колоночный флексбокс, а
+     .b24-table-wrap в ките несёт overflow:hidden. Для флекс-элемента с таблицей
+     внутри Chromium берёт flex-basis меньше собственной высоты таблицы, элемент
+     ужимается (flex-shrink:1 по умолчанию) — и нижняя строка уезжает под
+     скруглённый край. Видно на «The numbers» при трёх строках и на странице
+     тарифа: таблица 216px в контейнере 188px. Место на полосе есть, страница
+     занята на 764px из 1123 — это не переполнение A4, а именно ужатие.
+     Запрещаем сжатие по главной оси. Ширины это не касается: в колоночном
+     флексбоксе flex-shrink работает по высоте, поэтому замер ширины таблиц
+     (656px против 658px полосы) остаётся прежним. */
+  .page > .b24-table-wrap{flex-shrink:0}
 
   /* ТАБЛИЦА СЦЕНАРИЕВ С КОЛОНКОЙ ВЫРУЧКИ.
      С включённым переключателем колонок становится шесть (клиентский отчёт) или
