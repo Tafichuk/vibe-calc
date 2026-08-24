@@ -128,14 +128,15 @@ const checks = [
      Difference, и она строже: см. diffInReport() ниже. */
 ];
 
-/* With no published "before" price, both reports must SAY so rather than quietly
-   dropping the row — that is the whole point of the honest-gap rule. */
-if (S.plan && S.plan.fromPriceKnown === false) {
-  if (!/no published price|not published in/i.test(reportText))
-    problems.push({ what: `missing "no published price" note`,
-                    a: "expected an explicit note next to the plan table",
-                    b: "(the report shows neither)" });
-}
+/* Проверка «отчёт обязан сказать, что цены нет» удалена вместе с самим состоянием:
+   официальная выгрузка Антона закрыла все пятнадцать тиров Essentials, разница
+   считается для любой пары, и печатать «no published price» стало нечему.
+   Обратный предохранитель на её месте: этой строки в отчёте быть НЕ должно —
+   если она всплывёт, значит где-то вернулась ветка, которую мы убрали. */
+if (/no published price|not published in/i.test(reportText))
+  problems.push({ what: `the removed "no published price" state is back in the report`,
+                  a: "every tier pair has a price, so the note must never print",
+                  b: "(the report carries it)" });
 
 for (const c of checks) {
   if (c.screen == null) continue;                 // not applicable (e.g. no price published)

@@ -58,15 +58,20 @@ if (!Array.isArray(essUSD)) fail(2, "check-prices: config.essentials_prices.USD 
 
 const expected = {
   effectiveFrom: cfg.key_dates?.prices_live,
-  /* seats и monthly сверяются наравне с ценой. monthly есть только у трёх младших
-     тиров: у Enterprise 250/500/1000/2000 источник его НЕ публикует, и появление
-     месячной цены в index.html означало бы, что её придумали. seats задаёт ёмкость
-     тира, а от неё зависит, с какой целью Vibe+ пара сравнима вообще. */
+  /* seats и monthly сверяются наравне с ценой. В официальной выгрузке Антона
+     monthly есть у ВСЕХ пятнадцати тиров — раньше у четырёх Enterprise его не было,
+     потому что их брали с публичного сайта. Проверка «опубликовано / не опубликовано»
+     остаётся: она ловит и обратный случай, если источник когда-нибудь снова
+     перестанет публиковать месячную цену, а в index.html она задержится. */
   essentialsUSD: essUSD.map(r => ({ plan: r.plan, monthly: r.monthly, annual: r.annual_per_month,
                                     seats: r.seats })),
-  // EUR Essentials is intentionally absent in the source; the page must model that as null.
-  essentialsEURisNull: typeof cfg.essentials_prices?.EUR === "string"
-    && /MISSING/i.test(cfg.essentials_prices.EUR),
+  /* EUR Essentials нет в источнике; страница обязана моделировать это как null.
+     Раньше проверка срабатывала только на строку «MISSING». В официальной выгрузке
+     ключа EUR нет ВООБЩЕ — при старом условии проверка тихо выключилась бы, и
+     выдуманная цена в index.html прошла бы незамеченной. Теперь «нет данных» — это
+     и отсутствие ключа, и MISSING. */
+  essentialsEURisNull: cfg.essentials_prices?.EUR == null
+    || (typeof cfg.essentials_prices.EUR === "string" && /MISSING/i.test(cfg.essentials_prices.EUR)),
   migration: (cfg.migration_map || []).map(p => ({ to: p.to })),
   vibe: Object.fromEntries(["USD", "EUR"].map(cur => [
     cur,
@@ -165,6 +170,6 @@ console.log(`  effective from   ${embedded.effectiveFrom}`);
 console.log(`  Essentials USD   ${(embedded.essentials?.USD || []).length} tiers`
           + ` (monthly published for ${expected.essentialsUSD.filter(r=>r.monthly!=null).length},`
           + ` seat tiers ${expected.essentialsUSD.filter(r=>r.seats).map(r=>r.seats).join("/")})`);
-console.log(`  Essentials EUR   null (source: MISSING — not invented)`);
+console.log(`  Essentials EUR   null (source has no EUR Essentials — not invented)`);
 console.log(`  Vibe+ tiers      ${tiers} carried (config has ${expected.vibe.USD.length})`);
 console.log(`  migration pairs  ${(embedded.migration || []).length}`);

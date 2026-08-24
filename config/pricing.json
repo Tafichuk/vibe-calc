@@ -13,150 +13,278 @@
     "USD": [
       {
         "plan": "Basic",
+        "seats": null,
         "monthly": 69,
-        "annual_per_month": 49
+        "quarterly_total": 183,
+        "quarterly_per_month": 61,
+        "annual_per_month": 49,
+        "annual_total": 588
       },
       {
         "plan": "Standard",
+        "seats": null,
         "monthly": 144,
-        "annual_per_month": 99
+        "quarterly_total": 372,
+        "quarterly_per_month": 124,
+        "annual_per_month": 99,
+        "annual_total": 1188
       },
       {
         "plan": "Professional",
+        "seats": null,
         "monthly": 289,
-        "annual_per_month": 199
+        "quarterly_total": 747,
+        "quarterly_per_month": 249,
+        "annual_per_month": 199,
+        "annual_total": 2388
       },
       {
-        "plan": "Enterprise",
+        "plan": "Enterprise 250",
+        "seats": 250,
+        "monthly": 579,
+        "quarterly_total": 1497,
+        "quarterly_per_month": 499,
         "annual_per_month": 399,
-        "seats": 250
+        "annual_total": 4788
       },
       {
-        "plan": "Enterprise-500",
+        "plan": "Enterprise 500",
+        "seats": 500,
+        "monthly": 919,
+        "quarterly_total": 2397,
+        "quarterly_per_month": 799,
         "annual_per_month": 639,
-        "seats": 500
+        "annual_total": 7668
       },
       {
-        "plan": "Enterprise-1000",
+        "plan": "Enterprise 1000",
+        "seats": 1000,
+        "monthly": 1149,
+        "quarterly_total": 2997,
+        "quarterly_per_month": 999,
         "annual_per_month": 799,
-        "seats": 1000
+        "annual_total": 9588
       },
       {
-        "plan": "Enterprise-2000",
+        "plan": "Enterprise 2000",
+        "seats": 2000,
+        "monthly": 2299,
+        "quarterly_total": 5997,
+        "quarterly_per_month": 1999,
         "annual_per_month": 1599,
-        "seats": 2000
+        "annual_total": 19188
+      },
+      {
+        "plan": "Enterprise 3000",
+        "seats": 3000,
+        "monthly": 3449,
+        "quarterly_total": 8997,
+        "quarterly_per_month": 2999,
+        "annual_per_month": 2399,
+        "annual_total": 28788
+      },
+      {
+        "plan": "Enterprise 4000",
+        "seats": 4000,
+        "monthly": 4599,
+        "quarterly_total": 11997,
+        "quarterly_per_month": 3999,
+        "annual_per_month": 3199,
+        "annual_total": 38388
+      },
+      {
+        "plan": "Enterprise 5000",
+        "seats": 5000,
+        "monthly": 5749,
+        "quarterly_total": 14997,
+        "quarterly_per_month": 4999,
+        "annual_per_month": 3999,
+        "annual_total": 47988
+      },
+      {
+        "plan": "Enterprise 6000",
+        "seats": 6000,
+        "monthly": 6899,
+        "quarterly_total": 17997,
+        "quarterly_per_month": 5999,
+        "annual_per_month": 4799,
+        "annual_total": 57588
+      },
+      {
+        "plan": "Enterprise 7000",
+        "seats": 7000,
+        "monthly": 8049,
+        "quarterly_total": 20997,
+        "quarterly_per_month": 6999,
+        "annual_per_month": 5599,
+        "annual_total": 67188
+      },
+      {
+        "plan": "Enterprise 8000",
+        "seats": 8000,
+        "monthly": 9199,
+        "quarterly_total": 23997,
+        "quarterly_per_month": 7999,
+        "annual_per_month": 6399,
+        "annual_total": 76788
+      },
+      {
+        "plan": "Enterprise 9000",
+        "seats": 9000,
+        "monthly": 10349,
+        "quarterly_total": 26997,
+        "quarterly_per_month": 8999,
+        "annual_per_month": 7199,
+        "annual_total": 86388
+      },
+      {
+        "plan": "Enterprise 10000",
+        "seats": 10000,
+        "monthly": 11499,
+        "quarterly_total": 29997,
+        "quarterly_per_month": 9999,
+        "annual_per_month": 7999,
+        "annual_total": 95988
       }
     ],
-    "EUR": "MISSING - not in source xlsx, guide is USD only. REQUEST FROM ANTON.",
-    "GBP": "MISSING - not in source xlsx, guide is USD only. REQUEST FROM ANTON.",
     "_note": "Enterprise tiers 250/500/1000/2000 are taken from the public Bitrix24 site and are pending final confirmation. Same basis as the rest: annual billing, price per plan, not per user. Tiers above 2,000 users have no published Essentials price."
   },
   "vibe_plus_prices": {
     "USD": [
       {
         "plan": "Alaio Basic Vibe+",
+        "seats": null,
         "monthly": 89,
+        "quarterly_total": 240,
+        "quarterly_per_month": 80,
         "annual_per_month": 69,
-        "annual_total": 828,
-        "quarterly_per_month": 80
+        "annual_total": 828
       },
       {
         "plan": "Alaio Standard Vibe+",
+        "seats": null,
         "monthly": 199,
+        "quarterly_total": 525,
+        "quarterly_per_month": 175,
         "annual_per_month": 144,
-        "annual_total": 1728,
-        "quarterly_per_month": 175
+        "annual_total": 1728
       },
       {
         "plan": "Alaio Professional Vibe+",
+        "seats": null,
         "monthly": 399,
+        "quarterly_total": 1050,
+        "quarterly_per_month": 350,
         "annual_per_month": 289,
-        "annual_total": 3468,
-        "quarterly_per_month": 350
+        "annual_total": 3468
       },
       {
         "plan": "Alaio Enterprise-250 Vibe+",
+        "seats": 250,
         "monthly": 799,
+        "quarterly_total": 2100,
+        "quarterly_per_month": 700,
         "annual_per_month": 579,
-        "annual_total": 6948,
-        "quarterly_per_month": 700
+        "annual_total": 6948
       },
       {
         "plan": "Alaio Enterprise-500 Vibe+",
+        "seats": 500,
         "monthly": 1269,
+        "quarterly_total": 3345,
+        "quarterly_per_month": 1115,
         "annual_per_month": 919,
-        "annual_total": 11028,
-        "quarterly_per_month": 1115
+        "annual_total": 11028
       },
       {
         "plan": "Alaio Enterprise-1000 Vibe+",
+        "seats": 1000,
         "monthly": 1599,
+        "quarterly_total": 4200,
+        "quarterly_per_month": 1400,
         "annual_per_month": 1149,
-        "annual_total": 13788,
-        "quarterly_per_month": 1400
+        "annual_total": 13788
       },
       {
         "plan": "Alaio Enterprise-2000 Vibe+",
+        "seats": 2000,
         "monthly": 3199,
+        "quarterly_total": 8400,
+        "quarterly_per_month": 2800,
         "annual_per_month": 2299,
-        "annual_total": 27588,
-        "quarterly_per_month": 2800
+        "annual_total": 27588
       },
       {
         "plan": "Alaio Enterprise-3000 Vibe+",
+        "seats": 3000,
         "monthly": 4799,
+        "quarterly_total": 12600,
+        "quarterly_per_month": 4200,
         "annual_per_month": 3449,
-        "annual_total": 41388,
-        "quarterly_per_month": 4200
+        "annual_total": 41388
       },
       {
         "plan": "Alaio Enterprise-4000 Vibe+",
+        "seats": 4000,
         "monthly": 6399,
+        "quarterly_total": 16800,
+        "quarterly_per_month": 5600,
         "annual_per_month": 4599,
-        "annual_total": 55188,
-        "quarterly_per_month": 5600
+        "annual_total": 55188
       },
       {
         "plan": "Alaio Enterprise-5000 Vibe+",
+        "seats": 5000,
         "monthly": 7999,
+        "quarterly_total": 21000,
+        "quarterly_per_month": 7000,
         "annual_per_month": 5749,
-        "annual_total": 68988,
-        "quarterly_per_month": 7000
+        "annual_total": 68988
       },
       {
         "plan": "Alaio Enterprise-6000 Vibe+",
+        "seats": 6000,
         "monthly": 9599,
+        "quarterly_total": 25200,
+        "quarterly_per_month": 8400,
         "annual_per_month": 6899,
-        "annual_total": 82788,
-        "quarterly_per_month": 8400
+        "annual_total": 82788
       },
       {
         "plan": "Alaio Enterprise-7000 Vibe+",
+        "seats": 7000,
         "monthly": 11199,
+        "quarterly_total": 29400,
+        "quarterly_per_month": 9800,
         "annual_per_month": 8049,
-        "annual_total": 96588,
-        "quarterly_per_month": 9800
+        "annual_total": 96588
       },
       {
         "plan": "Alaio Enterprise-8000 Vibe+",
+        "seats": 8000,
         "monthly": 12799,
+        "quarterly_total": 33600,
+        "quarterly_per_month": 11200,
         "annual_per_month": 9199,
-        "annual_total": 110388,
-        "quarterly_per_month": 11200
+        "annual_total": 110388
       },
       {
         "plan": "Alaio Enterprise-9000 Vibe+",
+        "seats": 9000,
         "monthly": 14399,
+        "quarterly_total": 37800,
+        "quarterly_per_month": 12600,
         "annual_per_month": 10349,
-        "annual_total": 124188,
-        "quarterly_per_month": 12600
+        "annual_total": 124188
       },
       {
         "plan": "Alaio Enterprise-10000 Vibe+",
+        "seats": 10000,
         "monthly": 15999,
+        "quarterly_total": 42000,
+        "quarterly_per_month": 14000,
         "annual_per_month": 11499,
-        "annual_total": 137988,
-        "quarterly_per_month": 14000
+        "annual_total": 137988
       }
     ],
     "EUR": [
@@ -800,7 +928,8 @@
         "annual_total": 8279880,
         "quarterly_per_month": 840000
       }
-    ]
+    ],
+    "_note": "USD replaced with the official export from Anton; verified against the previous data with zero discrepancies. Other currencies still come from the earlier VIBE_prices sheet and have no Essentials counterpart."
   },
   "vibe_plus_headline_limits": {
     "_note": "Top-of-range ceiling figures used in client-facing materials. Guide warns per-tier increments do not yet reconcile - confirm via Partner Portal before quoting.",

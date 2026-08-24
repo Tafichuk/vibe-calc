@@ -104,22 +104,12 @@ export function buildReport(S, {assets}) {
 const T = S.totals, P = S.plan, PT = S.partner || {};
 
 /* THE PLAN PAIR arrives exactly as the partner picked it: current and target are
-   chosen independently on screen. The "before" price has THREE states and each
-   prints differently — a real price, nothing (the client pays nothing today), and
-   no published price at all. Nothing is reconstructed here: with no "before"
-   price we print the target price and say why the difference is missing. */
-const fromPriceCell = () => {
-  if (P.fromPriceKnown) return money(P.fromAnnualPerMonth);
-  return P.fromNoPriceReason === "currency"
-    ? `not published in ${esc(S.currency)}`
-    : "no published price";
-};
-const noPriceNote = () => P.fromNoPriceReason === "currency"
-  ? `Essentials prices are not published in ${esc(S.currency)}, so the difference against `
-    + `${esc(P.to)} cannot be shown. The figure above is the full price of ${esc(P.to)}, not a surcharge.`
-  : `Essentials is published up to the 2,000-user tier. At the capacity of ${esc(P.to)} it has no `
-    + `published price, so the difference is not shown: the figure above is the full price of `
-    + `${esc(P.to)}, not a surcharge.`;
+   chosen independently on screen. The "before" price now has TWO states, not three:
+   a real price, or nothing because the client has no Bitrix24 yet — and that zero is
+   a known price, not missing data. The third state, "no published price", is gone:
+   Essentials used to stop at the 2,000-user tier, and the official export from Anton
+   covers all fifteen. So a difference is printed for every pair, and fromPriceCell()
+   has nothing left to branch on. */
 const partnerName = PT.company || "Bitrix24 Partner";
 const clientName = S.company?.name || "";
 
@@ -495,7 +485,7 @@ const planPage = () => `
     <table class="b24-table">
       <thead><tr><th></th><th>Plan</th><th>Per month for the whole account, billed annually</th></tr></thead>
       <tbody>
-        <tr><td>Currently</td><td>${esc(P.from)}</td><td>${fromPriceCell()}</td></tr>
+        <tr><td>Currently</td><td>${esc(P.from)}</td><td>${money(P.fromAnnualPerMonth)}</td></tr>
         <tr><td>Recommended</td><td><strong>${esc(P.to)}</strong></td><td><strong>${money(P.toAnnualPerMonth)}</strong></td></tr>
         ${P.diffPerMonth == null ? "" : (() => {
           /* Пара может быть понижением: с тирами Essentials до 2000 мест цель может
@@ -510,7 +500,6 @@ const planPage = () => `
       </tbody>
     </table>
   </div>
-  ${P.fromPriceKnown ? "" : `<p class="b24-p">${noPriceNote()}</p>`}
   <p class="b24-p">Plan prices are for the whole account, not per user. The number in an
      Enterprise tier (250, 500, 1000 …) is the seat limit included in the plan and is already
      priced in, so nothing above is multiplied by headcount.</p>
