@@ -366,10 +366,51 @@ const cover = () => `
 </section>`;
 
 /* ---------- page 2: headline ---------- */
-const headline = () => `
+/* СТРАНИЦА «THE NUMBERS»: ОДИН ЛИСТ ИЛИ ДВА — ПО ТОМУ, ЧТО НА НЕЙ ЛЕЖИТ.
+   На листе всегда две таблицы (итоги и затраты первого года) и два поясняющих
+   блока — «что означает эта цифра» и оговорка про основания расчёта. В базовом
+   виде это помещается. Но лист несёт ещё два блока, которые появляются не всегда:
+
+     • включённый переключатель выручки добавляет в первую таблицу две строки
+       (прирост выручки и потенциал базы) — это ~96px;
+     • превышение порога достоверности добавляет предупреждение — это ~173px.
+
+   Замер: с одной только выручкой низ подвала уезжал на 1116px при полосе 1054 —
+   срезало колонтитул целиком; с выручкой и предупреждением сразу и длинным
+   названием партнёра — на 1343px, то есть терялись и оговорка, и подвал.
+   Ужимать нельзя ни то, ни другое: предупреждение о недостоверности оценки —
+   единственное место, где документ говорит клиенту, что цифры могут двоиться,
+   а оговорка про основания расчёта объясняет, из чего они вообще взялись.
+
+   Поэтому когда лист несёт хоть один из этих двух блоков, оба поясняющих блока
+   уходят на второй лист — тем же приёмом, что на странице тарифа. Цифры и
+   предупреждение остаются вместе на первом: предупреждение относится к ним, и
+   разлучать его с ними было бы хуже, чем перенести пояснения. */
+const headlineTwoUp = () =>
+  (!!S.showRevenue && ((T.revMonth || 0) > 0 || (T.potMonth || 0) > 0)) ||
+  !!(S.overlap && !S.overlap.ok);
+
+const headline = () => {
+  const twoUp = headlineTwoUp();
+  const num = i => twoUp ? ` <span style="font-size:.6em;font-weight:600">(${i}/2)</span>` : "";
+  const explain = `
+  <div class="b24-dashed"${twoUp ? "" : ' style="margin-top:var(--b24-s5)"'}>
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      <span class="b24-strong">What this figure means.</span> It is the cost of the working time now spent on these tasks. It is not profit, and not cash freed up.
+    </p>
+  </div>
+
+  <div class="b24-quote">
+    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
+    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
+    employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
+    ${int(S.economics.burdenPct)}% employer payroll burden.
+    ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
+  </div>`;
+  const first = `
 <section class="page page--sky">
   ${runhead("Headline")}
-  <h1 class="b24-h1">The numbers</h1>
+  <h1 class="b24-h1">The numbers${num(1)}</h1>
 
   <div class="b24-table-wrap">
     <table class="b24-table">
@@ -399,23 +440,20 @@ const headline = () => `
     ${int(T.serviceUnquoted)} scenario(s) are not priced yet, so the figure above is not the full implementation cost.</p>` : ""}
 
   ${overlapBlock()}
-
-  <div class="b24-dashed" style="margin-top:var(--b24-s5)">
-    <p class="b24-p" style="margin:0; font-size:13.5px;">
-      <span class="b24-strong">What this figure means.</span> It is the cost of the working time now spent on these tasks. It is not profit, and not cash freed up.
-    </p>
-  </div>
-
-  <div class="b24-quote">
-    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
-    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
-    employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
-    ${int(S.economics.burdenPct)}% employer payroll burden.
-    ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
-  </div>
-
+${twoUp ? "" : explain}
   ${footer()}
 </section>`;
+  if (!twoUp) return first;
+  /* Второй лист называется тем, что на нём лежит, а не «The numbers (2/2)»:
+     цифр на нём нет, там только чтение цифр. */
+  return first + `
+<section class="page page--sky">
+  ${runhead("Headline")}
+  <h1 class="b24-h1">How to read these numbers${num(2)}</h1>
+${explain}
+  ${footer()}
+</section>`;
+};
 
 /* Credibility warning — travels in BOTH builds. The client is entitled to know the
    estimate is above the level we consider defensible; hiding it would be the dishonest
@@ -513,17 +551,20 @@ const aiLine = () => {
 };
 
 /* ---------- plan recommendation (client-safe: names + prices only) ---------- */
-/* ДВЕ СТРАНИЦЫ ИЛИ ОДНА — ПО НАЛИЧИЮ РАСКРЫТИЯ. .page — фиксированный A4 с
-   overflow:hidden, и раскрытие про AI-агентов занимает ~173px: с ним пара
-   «таблица + что даёт тариф + сноска про квоты» перестаёт влезать. Замер:
-   низ последнего блока уезжал на 1206px при высоте страницы 1123, вместе с ним
-   уезжал колонтитул. Ужимать текст раскрытия нельзя — это его смысл, — поэтому
-   когда оно есть, «What <тариф> adds» и сноска про квоты уходят на вторую
-   страницу. Без расхождения страница остаётся ровно такой, как была: одна.
+/* СТРАНИЦА ТАРИФА ВСЕГДА ДВЕ. Раньше разбиение включалось только при раскрытии
+   про AI-агентов: считалось, что без него «таблица + что даёт тариф + сноска про
+   квоты» на лист помещаются. Замер показал, что нет — вариант БЕЗ раскрытия
+   вылезал на 6px, а с длинным названием партнёра (подвал в две строки) на 20px,
+   и срезало нижний край колонтитула с номером страницы. Шесть пикселей ничего не
+   стоит подобрать кеглем, но подгонка под текущие длины строк развалится от
+   первого же более длинного названия тарифа или партнёра.
+   Поэтому ветка убрана целиком, а не подкручена: у страницы тарифа одна форма,
+   и переполняться в ней нечему. Цена — один лишний лист в отчётах без
+   расхождения; лист с содержимым, а не с воздухом: на нём «What <тариф> adds»,
+   перечень линейки и сноска про квоты.
    Нумерация (1/2) — та же, что у разбитых страниц сценариев. */
 const planPage = () => {
-  const twoUp = gated.length > 0;
-  const num = i => twoUp ? ` <span style="font-size:.6em;font-weight:600">(${i}/2)</span>` : "";
+  const num = i => ` <span style="font-size:.6em;font-weight:600">(${i}/2)</span>`;
   const first = `
 <section class="page page--sky">
   ${runhead("Recommended plan")}
@@ -568,36 +609,10 @@ const planPage = () => {
 
   <p class="b24-p">Plan prices are for the whole account, not per user. The number in an Enterprise tier (250, 500, 1000 …) is the seat limit the plan includes, and the price already covers it. Nothing above is multiplied by headcount.</p>
 
-${twoUp ? "" : `
-  <h1 class="b24-h1" style="margin-top:var(--b24-s8); font-size:22px;">What ${esc(P.to)} adds</h1>
-  <ul class="b24-checklist">
-    ${aiLine()}
-    <!-- ОСТАЛЬНЫЕ ТРИ ПУНКТА — СВОЙСТВА ВСЕЙ ЛИНЕЙКИ VIBE+, НЕ ОТДЕЛЬНЫХ ТАРИФОВ.
-         config/pricing.json, lineup.vibe_plus: «Adds Vibecode, MCP server, higher
-         AI allowance, unlimited REST API + Market» — сказано про линейку целиком.
-         vibe_plus_pillars перечисляет Vibecode и MCP тоже без привязки к тарифу, а
-         vibe_plus_headline_limits даёт rest_api и bitrix24_market как unlimited без
-         разбивки. Различий между тарифами в источнике НЕТ, поэтому эти три пункта
-         печатаются для любой цели. Если различия появятся — их место здесь, рядом
-         с AI-строкой, которая уже выбирается по тарифу. -->
-    <li class="is-yes">Vibecode — build your own AI-powered business apps</li>
-    <li class="is-yes">MCP server — connect outside AI agents to Bitrix24</li>
-    <li class="is-yes">Unlimited REST API and Bitrix24 Market</li>
-  </ul>
-
-  <div class="b24-dashed" style="margin-top:var(--b24-s6)">
-    <p class="b24-p" style="margin:0; font-size:13.5px;">
-      AI is set by plan, not by a request count. No per-request quotas are published, so no numeric AI limits are quoted here. Prices apply from ${esc(P.effectiveFrom)}. Existing clients keep their current pricing until the end of their period or ${esc(P.grandfatheredUntil)}, whichever is later.
-    </p>
-  </div>
-`}
   ${footer()}
 </section>`;
-  if (!twoUp) return first;
   /* На второй странице заголовок страницы и есть «What <тариф> adds» — двух
-     заголовков подряд быть не должно. Поэтому здесь он полноразмерный и с
-     нумерацией, а внутри одностраничного варианта остаётся уменьшенным
-     подзаголовком, как был. */
+     заголовков подряд быть не должно, поэтому он полноразмерный и с нумерацией. */
   return first + `
 <section class="page page--sky">
   ${runhead("Recommended plan")}
