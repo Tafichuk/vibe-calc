@@ -514,17 +514,37 @@ const revenueBlock = () => {
   </div>`;
 };
 
-/* Credibility warning — travels in BOTH builds. The client is entitled to know the
-   estimate is above the level we consider defensible; hiding it would be the dishonest
-   choice. Amber callout, never red. */
+/* Credibility warnings — BOTH travel into the report. The client is entitled to know
+   where the estimate sits against the range we treat as normal; hiding it would be the
+   dishonest choice.
+
+   ДВА ПОРОГА — ДВА РАЗНЫХ БЛОКА, И ОНИ ОТЛИЧАЮТСЯ ПО СИЛЕ ВИДА, А НЕ ТОЛЬКО ПО
+   СЛОВАМ. Жёсткое (>25%) — янтарная рамка, как была, и формулировка не менялась:
+   она утверждает двойной счёт. Мягкое (>15%) — та же рамка в штатном синем,
+   потому что оно НИЧЕГО не утверждает о двойном счёте: расчёт на 15-25% ФОТ может
+   быть защитимым, он просто выше обычного. Одинаково окрашенные блоки через
+   неделю сливаются в один шум, и тогда жёсткое перестаёт работать.
+
+   Строка о происхождении диапазона стоит в обоих: без неё это число без
+   родословной — ровно та претензия, из которой находка выросла.
+   Печатается ровно один блок: какой, говорит level. Состояния, снятые до этой
+   правки, level не несут — для них работает прежняя ветка по ok. */
 const overlapBlock = () => {
   const o = S.overlap;
   if (!o || o.ok) return "";
+  const src = o.source ? ` ${esc(o.source)}` : "";
+  if (o.level === "soft") return `
+  <div class="b24-dashed" style="margin-top:var(--b24-s5)">
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      <span class="b24-strong">Above the usual range.</span>
+      ${o.noteText ? esc(o.noteText) : ""}${src}
+    </p>
+  </div>`;
   return `
   <div class="b24-dashed" style="margin-top:var(--b24-s5); border-color:#A15C00;">
     <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
       <span class="b24-strong" style="color:#A15C00;">Estimate above the credibility limit.</span>
-      The selected scenarios come to ${pct1(o.pct)}% of the company's monthly payroll cost (${money(o.payrollMonth)}). That is above the ${int(o.threshold)}% limit this model treats as credible. The scenarios most likely overlap, so the same working hours are counted more than once. Please check the coverage shares before you rely on these figures.
+      The selected scenarios come to ${pct1(o.pct)}% of the company's monthly payroll cost (${money(o.payrollMonth)}). That is above the ${int(o.threshold)}% limit this model treats as credible. The scenarios most likely overlap, so the same working hours are counted more than once. Please check the coverage shares before you rely on these figures.${src}
     </p>
   </div>`;
 };

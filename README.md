@@ -86,12 +86,24 @@ conservative (12–30% for broad scenarios, 100% for role-scoped ones) and marke
 | `monthly` | a fixed volume of events per month | no |
 | `share` | a share of the employee's monthly cost | no |
 
-**The credibility guard.** The calculator continuously compares the total saving with the
-company's whole payroll cost. Above 25% it shows a warning — and puts it in both reports.
-25% of payroll is roughly ten hours a week removed from every employee; real
-cross-functional AI rollouts land in the single digits to low teens. Past that threshold
-the scenarios are almost certainly overlapping. The warning never blocks the calculation:
-you may have a defensible case, and it stays your call.
+**The credibility guard — two thresholds.** The calculator continuously compares the total
+saving with the company's whole payroll cost, and says something at two levels. Both go
+into the report.
+
+- **Above 15% — a note.** Cross-functional AI rollouts usually land in the single digits to
+  low teens of payroll. Above that the figure is above the usual range rather than
+  implausible, so this is a hint to re-check the coverage shares and the realisation mode,
+  not an alarm.
+- **Above 25% — a warning.** 25% of payroll is roughly ten hours a week removed from every
+  employee. Past that the scenarios are almost certainly overlapping and the same working
+  day is counted twice.
+
+**Where that range comes from: it is our own estimate from rollout experience. It is not
+vendor data and not a published study.** The same line appears next to the warning in the
+tool and in the report, because a range quoted to a client should say what it rests on.
+
+Neither level ever blocks the calculation: you may have a defensible case, and it stays
+your call.
 
 **Nothing is selected when the page loads.** That is on purpose. You choose each scenario
 consciously, so the client never sees a total nobody picked. An honest short list is more

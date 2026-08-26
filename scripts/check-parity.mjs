@@ -317,7 +317,16 @@ if (S.realisation) {
                     b: "(not found; the report names the mode but not the share it applied)" });
 }
 
-/* the credibility warning, when it is on, must carry the same percentage */
+/* ДВА ПОРОГА ДОСТОВЕРНОСТИ. Проверяется не только процент, но и КАКОЙ из двух
+   блоков напечатан: перепутать мягкое замечание с жёстким предупреждением —
+   единственная ошибка в этой правке, которую совпавший процент не покажет.
+   Жёсткое утверждает двойной счёт, мягкое — только «выше обычного»; напечатать
+   первое там, где верно второе, значит обвинить защитимый расчёт.
+   Опознаётся по фразе, которую несёт ровно один из блоков.
+   Состояния, снятые до появления второго порога, level не несут — для них
+   работает прежняя ветка, только по проценту. */
+const HARD_MARK = "limit this model treats as credible";
+const SOFT_MARK = "Above the usual range";
 if (S.overlap && !S.overlap.ok) {
   /* Знак процента теперь ВНУТРИ строки display.overlapPct: экранный fmtPct1
      печатает «208.3%», отчёт — pct1()+«%», то есть то же самое. Раньше здесь
@@ -327,6 +336,47 @@ if (S.overlap && !S.overlap.ok) {
   if (!reportText.includes(D.overlapPct))
     problems.push({ what: `overlap warning percentage`,
                     a: D.overlapPct, b: "(not found; warning missing or differently rounded)" });
+
+  /* Строка о происхождении диапазона. Число без родословной — ровно та претензия,
+     из которой находка выросла, и в документе она обязана быть при любом из двух
+     порогов. */
+  if (S.overlap.source && !reportText.includes(S.overlap.source))
+    problems.push({ what: `credibility range provenance line`,
+                    a: S.overlap.source,
+                    b: "(not found; the report states a range without saying where it comes from)" });
+
+  if (S.overlap.level === "soft") {
+    if (!reportText.includes(SOFT_MARK))
+      problems.push({ what: `soft credibility note missing`,
+                      a: `overlap.level is "soft" (${D.overlapPct} of payroll)`,
+                      b: `(the report carries no "${SOFT_MARK}" block)` });
+    if (reportText.includes(HARD_MARK))
+      problems.push({ what: `hard warning printed for a soft-level calculation`,
+                      a: `overlap.level is "soft" — the figure is above the usual range, not implausible`,
+                      b: `(the report claims the estimate is above the credibility limit)` });
+    if (S.overlap.noteText && !reportText.includes(S.overlap.noteText))
+      problems.push({ what: `soft note wording differs from the screen`,
+                      a: S.overlap.noteText,
+                      b: "(not found; the report is wording the same warning differently)" });
+  }
+  if (S.overlap.level === "hard") {
+    if (!reportText.includes(HARD_MARK))
+      problems.push({ what: `hard credibility warning missing`,
+                      a: `overlap.level is "hard" (${D.overlapPct} of payroll)`,
+                      b: `(the report carries no credibility-limit block)` });
+    if (reportText.includes(SOFT_MARK))
+      problems.push({ what: `soft note printed alongside the hard warning`,
+                      a: `overlap.level is "hard" — exactly one block may print`,
+                      b: "(the report carries both)" });
+  }
+} else if (S.overlap && S.overlap.level === "ok") {
+  /* МОЛЧАНИЕ ТОЖЕ ПРОВЕРЯЕТСЯ. Блок без повода — это не косметика: партнёр,
+     увидевший замечание на защитимом расчёте, перестаёт читать оба. */
+  for (const [mark, what] of [[SOFT_MARK, "soft note"], [HARD_MARK, "hard warning"]])
+    if (reportText.includes(mark))
+      problems.push({ what: `${what} printed while both thresholds are silent`,
+                      a: `overlap.level is "ok" (${D.overlapPct} of payroll)`,
+                      b: `(the report carries the "${mark}" block anyway)` });
 }
 
 /* ПРЕДУПРЕЖДЕНИЕ ПО ВЫРУЧКЕ — тем же порядком, что и предупреждение о перекрытии.

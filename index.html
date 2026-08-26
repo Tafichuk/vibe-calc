@@ -188,6 +188,16 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
   border:1px solid currentColor; border-radius:var(--b24-r-inner);
   padding:var(--b24-s4); margin-top:var(--b24-s4); font-size:13.5px}
 .overlap-warn img{width:20px; height:20px; flex:0 0 auto; margin-top:1px}
+/* МЯГКОЕ ЗАМЕЧАНИЕ. Ни заливки, ни иконки, ни янтарного: внутри тёмной сводки
+   достаточно тонкой рамки и приглушённого текста, чтобы блок читался как
+   примечание. Если дать ему тот же вид, что жёсткому, оба станут одним шумом. */
+.overlap-note{grid-column:1/-1; background:transparent; color:var(--b24-on-navy-soft);
+  border:1px solid rgba(255,255,255,.28); border-radius:var(--b24-r-inner);
+  padding:var(--b24-s4); margin-top:var(--b24-s4); font-size:13px}
+.overlap-note b{color:var(--b24-on-navy); font-weight:600}
+/* Родословная диапазона — своей строкой и мельче тела: это сноска к утверждению,
+   а не часть совета. Одинаково в обоих блоках. */
+.warn-src{display:block; margin-top:var(--b24-s2); font-size:12px; opacity:.82}
 /* Блок про исключённые по ошибке ввода сценарии. Тело — то же, что у
    .overlap-warn: один смысл (предостережение внутри тёмной сводки), один вид.
    Но живёт ВНЕ .sum-grid: он печатается и когда сетки нет вообще — если
@@ -764,12 +774,53 @@ const C = {
                         // country-dependent, user-editable. Replaces the RU 1.4 multiplier.
   MEETING_GAIN:  0.15,  // meetings shorter / fewer participants (scenario 6)
   BASE_UPLIFT:   0.10,  // baseline efficiency uplift for all staff (scenario 7)
-  // Credibility ceiling: total payroll saving as a share of the whole payroll.
-  // 25% of payroll is ~10 hours per employee per week removed across the entire
-  // company. Genuine cross-functional AI rollouts land in the single digits to low
-  // teens; past a quarter of payroll the arithmetic is almost always double-counting
-  // the same working day in several scenarios at once, not a real gain. Warn, never
-  // block — the partner may have a defensible case and must stay in control.
+  /* ДВА ПОРОГА ДОСТОВЕРНОСТИ, И ОНИ ОТВЕЧАЮТ НА РАЗНЫЕ ВОПРОСЫ.
+     Раньше был один — 25%, — и он молча пропускал вдвое больше того, что мы сами
+     называем реальным потолком внедрений. Отсутствие предупреждения партнёр
+     читает как «расчёт в норме», то есть молчание инструмента работало как
+     подтверждение. Это P3 разбора (docs/REVIEW_2026-08.md).
+
+     Числа разные потому, что утверждения разные:
+
+       OVERLAP_NOTE_PCT (15%) — БЕНЧМАРК. «Внутри диапазона, в который обычно
+         попадают кросс-функциональные внедрения, или уже выше него?» Мягкое
+         замечание, подсказка, не тревога.
+
+       OVERLAP_WARN_PCT (25%) — АРИФМЕТИКА. «Правдоподобно ли это вообще?»
+         25% ФОТ — это примерно 10 часов в неделю, снятых с КАЖДОГО сотрудника
+         компании. За такой цифрой почти всегда стоит двойной счёт одного и того
+         же рабочего дня в нескольких сценариях, а не выигрыш. Формулировка и
+         число не менялись.
+
+     ОТКУДА 15. Диапазон, который мы называем типичным, — «единицы — низкие
+     десятки процентов ФОТ». «Низкие десятки» — это 13-15, значит верхний край
+     диапазона около 13%. Порог обязан стоять ВЫШЕ края, а не внутри: замечание,
+     срабатывающее на расчёте, который мы сами называем типичным, — это ложная
+     тревога по определению. 15% — первое круглое число выше края.
+
+     ПОЧЕМУ НЕ 12%, КАК ПРЕДЛАГАЛ РАЗБОР. Двенадцать процентов лежат ВНУТРИ
+     диапазона (это ещё «низкие десятки»), и главное — режим «ожидаемо» на
+     нетронутых дефолтах со всеми одиннадцатью сценариями даёт 12.66%. Порог на
+     12 горел бы при первом же открытии калькулятора в среднем режиме, а
+     предупреждение, которое горит всегда, читать перестают — это уже проходили
+     с предохранителем по выручке (см. дефолты сценария 5).
+
+     ЗАПАС ПО РЕЖИМАМ, на дефолтах со всеми одиннадцатью сценариями:
+       консервативно 7.79%  — молчит с запасом
+       ожидаемо     12.66%  — молчит, запас 2.3 п.п.
+       оптимистично 16.55%  — мягкое замечание срабатывает, и это правильно:
+                              верхний режим по построению стоит выше диапазона.
+     На реальном наборе из пяти сценариев (calc-state.json) молчит во всех трёх:
+     6.21% / 10.09% / 13.20%.
+
+     У ДИАПАЗОНА НЕТ ВНЕШНЕГО ИСТОЧНИКА, и в интерфейсе это сказано прямо
+     (ui.overlapSource). Это наша оценка, не данные вендора и не публикация. Если
+     у Битрикс24 появится своя позиция по защищаемому уровню — оба порога
+     приводятся к ней. См. docs/CALC_MODEL.md §9.
+
+     Оба предупреждения НЕ БЛОКИРУЮТ расчёт и ничего не обрезают: у партнёра
+     может быть защищаемый случай, и решение остаётся за ним. */
+  OVERLAP_NOTE_PCT: 15,
   OVERLAP_WARN_PCT: 25,
   /* ПОРОГ ПРАВДОПОДОБНОСТИ ДЛЯ ВЫРУЧКИ. Тот же 25%, что у экономии ФОТ, и число
      повторено намеренно, а не сведено в одну константу: рассуждение одинаковое
@@ -1064,6 +1115,20 @@ en: {
   "ui.coverageNone":"No coverage share here. You enter the monthly volume for this scenario directly, not as a share of staff.",
 
   // ---- credibility guard ----
+  /* МЯГКОЕ ЗАМЕЧАНИЕ. Отличается от жёсткого не только словами, но и тем, что
+     оно НИЧЕГО НЕ УТВЕРЖДАЕТ о двойном счёте: на 15-25% ФОТ расчёт может быть
+     совершенно защитимым, просто он выше обычного. Поэтому «worth a second
+     look», а не «check», и «above the usual range», а не «above what we treat as
+     credible». Заголовок без глагола в повелительном наклонении — это подсказка,
+     а не задание. */
+  "ui.overlapNoteH":"{pct} of payroll — above the usual range",
+  "ui.overlapNoteBody":"Cross-functional AI rollouts usually land in the single digits to low teens of payroll cost. This calculation is above that, which does not make it wrong — it makes it worth a second look. The two places to check are the coverage shares on the broad scenarios and the realisation mode.",
+  "ui.overlapNoteReport":"The selected scenarios come to {pct} of the company's monthly payroll cost ({payroll} a month). That is above the {note}% where cross-functional AI rollouts usually land, so it is above the usual range rather than implausible. The coverage shares and the realisation mode are the two places to check.",
+  /* РОДОСЛОВНАЯ ДИАПАЗОНА, ОДНА СТРОКА, ОБЩАЯ НА ОБА ПРЕДУПРЕЖДЕНИЯ. Без неё это
+     ещё одно число без происхождения — ровно та претензия, из которой выросла
+     находка. Источника нет, и написано именно это: врать про исследование
+     дороже, чем признать оценку. */
+  "ui.overlapSource":"Where the range comes from: our own estimate from rollout experience. It is not vendor data and not a published study.",
   "ui.overlapH":"Check the coverage — this adds up to {pct} of total payroll",
   "ui.overlapBody":"The selected scenarios claim {pct} of the company's payroll cost ({payroll} a month). That is above the {limit}% we treat as credible. Usually it means the scenarios overlap and the same working day is saved twice. Lower the coverage share on the broad scenarios. A smaller number the client believes is worth more than a big one they do not.",
   "ui.overlapReport":"Coverage warning: the selected scenarios total {pct} of payroll cost, above the {limit}% credibility limit. The scenarios probably overlap. Check the coverage shares before you quote this.",
@@ -1469,7 +1534,7 @@ function revPoolParts(rg){
   if(rg.poolBaseYear   > 0) out.push(t("ui.revPoolBase",   {v: fmtMoney(rg.poolBaseYear)}));
   return out.join(" + ");
 }
-let lastOverlap = {ok:true, pct:0, payroll:0};
+let lastOverlap = {level:"ok", ok:true, pct:0, payroll:0};
 /* the most recent computeModel() result — the one source every surface reads */
 let lastModel = null;
 
@@ -2293,11 +2358,20 @@ function computeModel(){
       potMonth: pot, potYear: pot * 12,
       serviceSum: svc.sum, subscriptionYear, firstYearCost, netFirstYear,
     },
-    overlap: {
-      ok: any ? pct <= C.OVERLAP_WARN_PCT : true,
-      pct: any ? pct : 0,
-      payroll, threshold: C.OVERLAP_WARN_PCT,
-    },
+    /* ТРИ СОСТОЯНИЯ, А НЕ ДВА. level — единственный признак, по которому
+       поверхности решают, что печатать; ok оставлен и означает «не сработало
+       НИЧЕГО», потому что по нему уже разбивается лист отчёта и сверяется
+       check-parity, и обоим нужно именно это.
+       Границы включительные в пользу молчания: ровно 15% и ровно 25% ещё не
+       срабатывают. Это закреплено состоянием H в check-golden — порог,
+       съехавший на единицу, обязан ронять проверку. */
+    overlap: (() => {
+      const p = any ? pct : 0;
+      const level = !any || p <= C.OVERLAP_NOTE_PCT ? "ok"
+                  : (p <= C.OVERLAP_WARN_PCT ? "soft" : "hard");
+      return {level, ok: level === "ok", pct: p, payroll,
+              note: C.OVERLAP_NOTE_PCT, threshold: C.OVERLAP_WARN_PCT};
+    })(),
     revGuard,
   };
 }
@@ -2742,11 +2816,23 @@ function renderSummary(model){
       <div class="sum-line"></div>
       <div class="fullrow"><span>${t("ui.sumCosts")}</span><span class="v">− ${fmtMoney(costs)}</span></div>
       <div class="fullrow net"><span>${t("ui.sumNet")}</span><span class="v">${fmtMoney(net)}</span></div>
-      ${lastOverlap.ok ? "" : `<div class="overlap-warn">
+      ${/* ДВА ПОРОГА — ДВА РАЗНЫХ БЛОКА, И РАЗНИЦА ВИДНА ДО ЧТЕНИЯ.
+           Жёсткий — янтарная плашка с иконкой, как была. Мягкий — без иконки, без
+           заливки, приглушённым цветом сводки: подсказка не имеет права выглядеть
+           как тревога, иначе через неделю их перестанут различать оба.
+           Печатается ровно один из двух: level говорит какой. */
+        lastOverlap.level === "hard" ? `<div class="overlap-warn">
         <img src="assets/icons/alert.svg" alt="">
         <div><b>${t("ui.overlapH",{pct:fmtPct1(lastOverlap.pct)})}</b><br>
         ${t("ui.overlapBody",{pct:fmtPct1(lastOverlap.pct), limit:lastOverlap.threshold,
-                              payroll:fmtMoney(lastOverlap.payroll)})}</div></div>`}
+                              payroll:fmtMoney(lastOverlap.payroll)})}
+        <span class="warn-src">${t("ui.overlapSource")}</span></div></div>`
+        : lastOverlap.level === "soft" ? `<div class="overlap-note">
+        <b>${t("ui.overlapNoteH",{pct:fmtPct1(lastOverlap.pct)})}</b><br>
+        ${t("ui.overlapNoteBody",{pct:fmtPct1(lastOverlap.pct), note:lastOverlap.note,
+                                  payroll:fmtMoney(lastOverlap.payroll)})}
+        <span class="warn-src">${t("ui.overlapSource")}</span></div>`
+        : ""}
       ${/* ВТОРОЙ ПРЕДОХРАНИТЕЛЬ, ОТДЕЛЬНОЙ ПОЛОСОЙ. Свести оба в одну полосу
            нельзя: они про разные деньги (проверяемая экономия против прогноза) и
            лечатся разными полями. Полоса та же по виду — один смысл, один вид. */
@@ -3000,12 +3086,32 @@ function reportState(){
     /* The credibility guard travels WITH the data, so the warning cannot be lost
        between the screen and the PDF. */
     overlap: {
+      /* level несёт КАКОЙ из двух порогов сработал; ok оставлен, по нему
+         разбивается лист отчёта и работает check-parity. Оба порога едут числами:
+         отчёт их не знает и знать не должен, но без них состояние нельзя
+         проверить глазами. */
+      level: m.overlap.level,
       ok: m.overlap.ok,
       pct: m.overlap.pct,                  // raw; formatted on display
+      note: C.OVERLAP_NOTE_PCT,
       threshold: C.OVERLAP_WARN_PCT,
       payrollMonth: m.overlap.payroll,     // raw
-      text: m.overlap.ok ? null
-        : t("ui.overlapReport", {pct: fmtPct1(m.overlap.pct), limit: C.OVERLAP_WARN_PCT}),
+      /* Строка о происхождении диапазона едет ВСЕГДА, когда сработал любой из
+         порогов: она относится к самому утверждению о диапазоне, а не к силе
+         предупреждения. */
+      source: m.overlap.ok ? null : t("ui.overlapSource"),
+      /* ТЕКСТ МЯГКОГО ЗАМЕЧАНИЯ ЕДЕТ ГОТОВЫМ — как у предохранителя по выручке:
+         формулировка одна на экран и на документ. Жёсткое предупреждение отчёт
+         по-прежнему собирает у себя (так было и так остаётся: его формулировку
+         эта правка не трогает), поэтому здесь у него только исходные величины. */
+      noteText: m.overlap.level === "soft"
+        ? t("ui.overlapNoteReport", {pct: fmtPct1(m.overlap.pct),
+                                     note: C.OVERLAP_NOTE_PCT,
+                                     payroll: fmtMoney(m.overlap.payroll)})
+        : null,
+      text: m.overlap.level === "hard"
+        ? t("ui.overlapReport", {pct: fmtPct1(m.overlap.pct), limit: C.OVERLAP_WARN_PCT})
+        : null,
     },
     /* ПРЕДОХРАНИТЕЛЬ НА ВЫРУЧКУ едет тем же порядком, что и overlap: сырые
        числа плюс готовый текст, чтобы формулировка была одна на два носителя и
@@ -3649,17 +3755,37 @@ const revenueBlock = () => {
   </div>`;
 };
 
-/* Credibility warning — travels in BOTH builds. The client is entitled to know the
-   estimate is above the level we consider defensible; hiding it would be the dishonest
-   choice. Amber callout, never red. */
+/* Credibility warnings — BOTH travel into the report. The client is entitled to know
+   where the estimate sits against the range we treat as normal; hiding it would be the
+   dishonest choice.
+
+   ДВА ПОРОГА — ДВА РАЗНЫХ БЛОКА, И ОНИ ОТЛИЧАЮТСЯ ПО СИЛЕ ВИДА, А НЕ ТОЛЬКО ПО
+   СЛОВАМ. Жёсткое (>25%) — янтарная рамка, как была, и формулировка не менялась:
+   она утверждает двойной счёт. Мягкое (>15%) — та же рамка в штатном синем,
+   потому что оно НИЧЕГО не утверждает о двойном счёте: расчёт на 15-25% ФОТ может
+   быть защитимым, он просто выше обычного. Одинаково окрашенные блоки через
+   неделю сливаются в один шум, и тогда жёсткое перестаёт работать.
+
+   Строка о происхождении диапазона стоит в обоих: без неё это число без
+   родословной — ровно та претензия, из которой находка выросла.
+   Печатается ровно один блок: какой, говорит level. Состояния, снятые до этой
+   правки, level не несут — для них работает прежняя ветка по ok. */
 const overlapBlock = () => {
   const o = S.overlap;
   if (!o || o.ok) return "";
+  const src = o.source ? ` ${esc(o.source)}` : "";
+  if (o.level === "soft") return `
+  <div class="b24-dashed" style="margin-top:var(--b24-s5)">
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      <span class="b24-strong">Above the usual range.</span>
+      ${o.noteText ? esc(o.noteText) : ""}${src}
+    </p>
+  </div>`;
   return `
   <div class="b24-dashed" style="margin-top:var(--b24-s5); border-color:#A15C00;">
     <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
       <span class="b24-strong" style="color:#A15C00;">Estimate above the credibility limit.</span>
-      The selected scenarios come to ${pct1(o.pct)}% of the company's monthly payroll cost (${money(o.payrollMonth)}). That is above the ${int(o.threshold)}% limit this model treats as credible. The scenarios most likely overlap, so the same working hours are counted more than once. Please check the coverage shares before you rely on these figures.
+      The selected scenarios come to ${pct1(o.pct)}% of the company's monthly payroll cost (${money(o.payrollMonth)}). That is above the ${int(o.threshold)}% limit this model treats as credible. The scenarios most likely overlap, so the same working hours are counted more than once. Please check the coverage shares before you rely on these figures.${src}
     </p>
   </div>`;
 };
