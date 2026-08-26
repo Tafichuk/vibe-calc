@@ -15,7 +15,6 @@
   "economics": {
     "daysMonth": 21,
     "dayHours": 8,
-    "contractDays": 21,
     "contractHours": 168,
     "burdenPct": 30
   },

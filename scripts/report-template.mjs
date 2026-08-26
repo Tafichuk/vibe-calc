@@ -514,10 +514,17 @@ const headline = () => {
   ${revenueBlock()}
 
   <div class="b24-quote">
-    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
-    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
-    employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
-    ${int(S.economics.burdenPct)}% employer payroll burden.
+    ${/* ОСНОВАНИЕ РАСЧЁТА, БЕЗ МЕХАНИКИ. Здесь стояла ещё фраза о том, что число
+         рабочих дней задаёт обе части дроби и потому не двигает деньги дневных
+         сценариев (правка P5). Убрана из отчёта по двум причинам: замер — лист
+         3/3 уходил на 26px за полосу набора; и по адресату — рабочие дни ставит
+         ПАРТНЁР, а не клиент, и объяснение, почему поле не завышает итог, нужно
+         тому, у кого это поле есть. Оно стоит в подсказке поля на экране.
+         Клиенту нужно основание: сколько часов в месяце и сколько стоит час. */
+      ""}Payroll saving is the sum of the selected scenarios over twelve months. A month here is
+    ${int(S.economics.daysMonth)} working days, which is ${int(S.economics.contractHours)} paid
+    hours, and one hour costs the gross salary plus a
+    ${int(S.economics.burdenPct)}% employer payroll burden, divided by those hours.
     ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
     ${/* ТЕКСТ ПРИХОДИТ ГОТОВЫМ ИЗ СОСТОЯНИЯ — тем же порядком, что оба
          предупреждения: формулировка обязана быть одна на экране и в документе,

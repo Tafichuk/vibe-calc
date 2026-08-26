@@ -762,14 +762,31 @@ const C = {
   // is not. The partner sets the number for the client's actual location instead.
   DAYS_MONTH:    21,
   DAY_HOURS:     8,     // length of a working day
-  // CONTRACTED hours per month — what the employee is PAID for. Fixed reference,
-  // deliberately NOT the editable DAYS_MONTH. These are two different quantities:
-  //   CONTRACT_DAYS  = days the salary covers      -> drives the hourly cost
-  //   daysMonth      = days the tool is actually used -> drives daily scenarios
-  // Tying the hourly cost to the editable field made the two cancel each other out
-  // (saved hours rose with days, the hourly rate fell by the same factor), so editing
-  // "working days" moved almost nothing. See docs/CALC_MODEL.md.
-  CONTRACT_DAYS: 21,
+  /* ЗДЕСЬ БЫЛА КОНСТАНТА CONTRACT_DAYS: 21, И ЕЁ УБРАЛИ. Разбор P5.
+
+     Что было. Стоимость часа считалась от ФИКСИРОВАННЫХ 168 часов
+     (CONTRACT_DAYS x DAY_HOURS), а дневные сценарии масштабировались живым полем
+     daysMonth. Оклад при этом месячный. Партнёр, поставивший 24 дня вместо 21,
+     получал экономию по дневным сценариям на 14.3% больше — замерено: 433.33
+     превращалось в 495.24, ровно 24/21. Поле выглядело справочной настройкой, а
+     работало множителем, причём в инструменте, который продаёт консервативность.
+
+     ЧТО В ПРЕЖНЕМ РЕШЕНИИ БЫЛО ВЕРНО, А ЧТО НЕТ. Комментарий, стоявший здесь,
+     объяснял разведение так: «привязка стоимости часа к редактируемому полю
+     заставляла величины сокращать друг друга (часов больше, но каждый час дешевле),
+     и правка поля почти ни на что не влияла».
+
+     Наблюдение было верным — сокращение действительно происходило. Неверным был
+     вывод. Сокращение — это и есть правильная арифметика: при том же окладе более
+     длинный месяц делает час дешевле ровно во столько же раз, во сколько прибавилось
+     часов. Поле, которое честно ни на что не влияет, надо ТАК И ПОДПИСАТЬ, а не
+     заставлять влиять, сломав тождество. Различие «дни, которые покрывает оклад»
+     против «дни, когда инструментом пользуются» осмысленно как понятие, но в модели
+     второй величины нет: оклад месячный, и другого знаменателя у него не бывает.
+
+     Стало: оплачиваемые часы = daysMonth x DAY_HOURS, то есть ставка считается от
+     ТОГО ЖЕ числа дней, что и масштаб. Дневные сценарии перестали зависеть от поля.
+     Инвариант закреплён отдельной проверкой — scripts/check-invariants.mjs. */
   BURDEN_PCT:    30,    // employer payroll burden, % on top of gross — NEUTRAL DEFAULT,
                         // country-dependent, user-editable. Replaces the RU 1.4 multiplier.
   MEETING_GAIN:  0.15,  // meetings shorter / fewer participants (scenario 6)
@@ -854,15 +871,26 @@ const C = {
 let daysMonth = C.DAYS_MONTH;
 let burdenPct = C.BURDEN_PCT;
 const burdenMult = () => 1 + (burdenPct / 100);
-/* Hours the salary buys — fixed contractual reference, independent of daysMonth. */
-const contractHours = () => C.CONTRACT_DAYS * C.DAY_HOURS;
+/* ОПЛАЧИВАЕМЫЕ ЧАСЫ В МЕСЯЦЕ — ОТ ТОГО ЖЕ ЧИСЛА ДНЕЙ, ЧТО И МАСШТАБ СЦЕНАРИЕВ.
+   Одна величина, а не две: оклад месячный, и знаменателя у него ровно один —
+   сколько часов этот месяц содержит. Смотри вывод у убранной CONTRACT_DAYS выше.
+
+   ЧТО ИЗ ЭТОГО СЛЕДУЕТ ПО ТИПАМ СЦЕНАРИЕВ — все три следствия правильные:
+     дневные (driver:"daily")   — часы растут с днями, час дешевеет ровно во
+       столько же раз, ДЕНЬГИ НЕ МЕНЯЮТСЯ. Меняется только распределение внутри
+       месяца, а не итог, и это честный ответ: то же дело, разложенное на большее
+       число дней, не становится дороже.
+     месячные (driver:"monthly") — объём задан в месяц и от дней не зависит, а час
+       дешевеет, поэтому деньги ПАДАЮТ с ростом дней. Тоже верно: фиксированный
+       блок работы — меньшая доля более длинного оплаченного месяца.
+     доля стоимости (driver:"share") — берут долю месячной стоимости напрямую,
+       деньги не меняются вовсе; часы растут, потому что доля более длинного
+       месяца — это больше часов.
+   Ни в одну сторону поле больше не работает рычагом завышения: поднять дни
+   значит либо не изменить ничего, либо уменьшить итог. */
+const contractHours = () => daysMonth * C.DAY_HOURS;
 const costHour   = sal => sal * burdenMult() / contractHours();
 const costMinute = sal => costHour(sal) / 60;
-/* Scale factor for DAY-DRIVEN scenarios only (driver:"daily"). At the default it is 1,
-   so the baseline is unchanged; raising the days raises those scenarios linearly. */
-const dayScale = () => daysMonth / C.CONTRACT_DAYS;
-/* Kept for the explanatory copy: hours in the month at the entered number of days. */
-const hoursMonth = () => daysMonth * C.DAY_HOURS;
 
 /* Revenue uplift is OFF by default: it is a projection, not a saving the client can
    verify. The partner turns it on knowingly. Existing-base potential is a separate
@@ -1208,7 +1236,13 @@ en: {
 
   // ---- working days ----
   "ui.days":"Working days per month",
-  "ui.daysHint":"Public holidays are left out on purpose. In Germany each Bundesland sets its own: Bavaria has 13, Berlin 10. There is no single national calendar to use. Set this to the client's location.",
+  /* ПОДПИСЬ ГОВОРИТ, ЧТО ПОЛЕ ТЕПЕРЬ ДЕЛАЕТ, И ЧЕГО НЕ ДЕЛАЕТ. До правки P5 оно
+     работало множителем на дневные сценарии, и партнёр мог поднять итог на 14%,
+     поставив 24 дня вместо 21. Теперь это же число задаёт и оплачиваемые часы, из
+     которых считается стоимость часа, поэтому на деньги дневных сценариев оно не
+     влияет вовсе. Сказать это прямо важнее, чем выглядеть влиятельным: поле,
+     которое молча двигает итог, — это то, за что инструменту не верят. */
+  "ui.daysHint":"This sets both the length of the month and the cost of one hour, so a scenario counted per day gives the same money on 21 days as on 24 — more days means more hours saved, each one cheaper. What it does change: a scenario counted per month gets cheaper as the days go up, and the hours and full-time equivalents follow the days. Public holidays are left out on purpose. In Germany each Bundesland sets its own: Bavaria has 13, Berlin 10. There is no single national calendar to use. Set this to the client's location.",
 
   // ---- partner services ----
   "ui.svcLabel":"Cost of my services (one-off)",
@@ -1330,7 +1364,7 @@ en: {
   "ui.grpCrm":"CRM scenarios", "ui.grpAgents":"AI agents", "ui.grpOther":"General scenarios",
   "ui.grpVibe":"Vibecode and CoPilot",
   "ui.more":"Learn more",
-  "ui.summaryInfo":"We add up the payroll saving of the selected scenarios and multiply it by 12. From that annual saving we subtract the known first-year cost: the Alaio Vibe+ subscription and your services. Existing-base potential and revenue uplift are shown separately. They never enter the net figure or the payback. Cost of one working hour = gross salary x (1 + payroll burden) / {contract} contracted hours. Scenarios counted in days are then scaled to {days} working days.",
+  "ui.summaryInfo":"We add up the payroll saving of the selected scenarios and multiply it by 12. From that annual saving we subtract the known first-year cost: the Alaio Vibe+ subscription and your services. Existing-base potential and revenue uplift are shown separately. They never enter the net figure or the payback. Cost of one working hour = gross salary x (1 + payroll burden) / {contract} paid hours, which is {days} working days x {dayh} hours. Changing the working days changes both sides at once, so it moves the hours in a scenario counted per day, not the money.",
   "ui.intSummaryInfo":"The one-off integrator fee for all selected scenarios: connection, setup for the client's processes, staff training. The default figures are estimates and the integrator replaces them per scenario. This amount is subtracted from the first-year benefit.",
 
   // ---- units ----
@@ -1519,8 +1553,9 @@ const t = (k, p) => {
 /* constants that appear inside copy — one place, injected as placeholders */
 const copyVars = () => ({
   days:     daysMonth,
+  /* contract и hours были двумя разными числами, пока ставка стояла на константе.
+     Теперь это одна величина, и второго имени у неё быть не должно. */
   contract: contractHours(),
-  hours: hoursMonth(),
   dayh:  C.DAY_HOURS,
   gain:  Math.round(C.MEETING_GAIN * 100) + "%",
   base:  Math.round(C.BASE_UPLIFT * 100) + "%",
@@ -3323,7 +3358,9 @@ function reportState(){
     /* includes partner.logo — a data URI or an absolute URL. The report shows it
        beside the Bitrix24 lockup as a separate mark. */
     partner: {...partner},
-    economics: {daysMonth, dayHours: C.DAY_HOURS, contractDays: C.CONTRACT_DAYS,
+    /* contractDays убран вместе с константой: договорных дней, отличных от рабочих,
+       в модели больше нет. contractHours теперь производная от daysMonth. */
+    economics: {daysMonth, dayHours: C.DAY_HOURS,
                 contractHours: contractHours(), burdenPct},
     /* МОЩНОСТЬ ЕДЕТ ВМЕСТЕ С ДАННЫМИ. Сырые величины плюс ГОТОВЫЕ строки: отчёт
        ничего не считает и единицу окупаемости не выбирает — иначе экран показал бы
@@ -4039,10 +4076,17 @@ const headline = () => {
   ${revenueBlock()}
 
   <div class="b24-quote">
-    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
-    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
-    employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
-    ${int(S.economics.burdenPct)}% employer payroll burden.
+    ${/* ОСНОВАНИЕ РАСЧЁТА, БЕЗ МЕХАНИКИ. Здесь стояла ещё фраза о том, что число
+         рабочих дней задаёт обе части дроби и потому не двигает деньги дневных
+         сценариев (правка P5). Убрана из отчёта по двум причинам: замер — лист
+         3/3 уходил на 26px за полосу набора; и по адресату — рабочие дни ставит
+         ПАРТНЁР, а не клиент, и объяснение, почему поле не завышает итог, нужно
+         тому, у кого это поле есть. Оно стоит в подсказке поля на экране.
+         Клиенту нужно основание: сколько часов в месяце и сколько стоит час. */
+      ""}Payroll saving is the sum of the selected scenarios over twelve months. A month here is
+    ${int(S.economics.daysMonth)} working days, which is ${int(S.economics.contractHours)} paid
+    hours, and one hour costs the gross salary plus a
+    ${int(S.economics.burdenPct)}% employer payroll burden, divided by those hours.
     ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
     ${/* ТЕКСТ ПРИХОДИТ ГОТОВЫМ ИЗ СОСТОЯНИЯ — тем же порядком, что оба
          предупреждения: формулировка обязана быть одна на экране и в документе,
