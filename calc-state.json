@@ -29,10 +29,14 @@
     "text": "Counted on the conservative case: 40% of the time named in each scenario is treated as really going, and the other 60% stays with the team for checking, exceptions and learning the new way. It applies to every scenario in this report. Conservative is the default, and the setting is named here so you can see the assumption these figures are built on."
   },
   "overlap": {
+    "level": "ok",
     "ok": true,
     "pct": 6.211666666666666,
+    "note": 15,
     "threshold": 25,
     "payrollMonth": 260000,
+    "source": null,
+    "noteText": null,
     "text": null
   },
   "revGuard": {
@@ -99,7 +103,7 @@
           "value": "20 calls"
         },
         {
-          "label": "Handling time per call",
+          "label": "Time spent after one call, replaying it and filling the card",
           "value": "10 min"
         }
       ],
@@ -121,7 +125,7 @@
       "needsAgent": true,
       "fields": [
         {
-          "label": "Number of employees",
+          "label": "Employees who will work this way",
           "value": "10"
         },
         {
@@ -133,7 +137,7 @@
           "value": "30 operations"
         },
         {
-          "label": "Time saved per operation",
+          "label": "Time saved per operation, versus doing it by hand",
           "value": "3 min"
         }
       ],
@@ -167,7 +171,7 @@
           "value": "3 lookups"
         },
         {
-          "label": "Time to find an answer manually",
+          "label": "Time spent looking for one answer today",
           "value": "10 min"
         },
         {
@@ -205,7 +209,7 @@
           "value": "5 documents"
         },
         {
-          "label": "Time per document",
+          "label": "Time spent writing one document by hand",
           "value": "20 min"
         }
       ],
@@ -227,7 +231,7 @@
       "needsAgent": false,
       "fields": [
         {
-          "label": "Total employees",
+          "label": "Employees this covers",
           "value": "15"
         },
         {
@@ -235,7 +239,7 @@
           "value": "10%"
         },
         {
-          "label": "Share of work simplified",
+          "label": "Share of their own work self-starters simplify",
           "value": "30%"
         },
         {
