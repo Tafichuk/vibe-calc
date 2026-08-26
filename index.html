@@ -1156,6 +1156,32 @@ en: {
   "ui.revPoolTarget":"the sales team's annual target ({v})",
   "ui.revPoolBase":"one purchase from every client in the base ({v})",
 
+  // ---- capacity: hours, full-time equivalents, payback ----
+  /* ЧАСЫ ПЕРВЫМИ В ПОДПИСИ, ПОТОМУ ЧТО ИХ КЛИЕНТ МОЖЕТ СВЕРИТЬ. Деньги остаются
+     главной цифрой сводки — это решение заказчика, — но у часов есть свойство,
+     которого у денег нет: клиент проверяет их по своим данным, не веря нам на
+     слово. Поэтому строка про часы несёт это прямым текстом. */
+  "ui.capHours":"Working hours freed",
+  "ui.capHoursNote":"This is the same time as the figure above, counted in hours instead of money. It is the part the client can check against their own numbers. {fte} full-time equivalents — one employee is {peryear} paid hours a year ({permonth} a month).",
+  /* КЭШ-ЭФФЕКТ. Прочерк, а не «$0»: ноль в колонке денег читается как «ничего не
+     даёт», а здесь всё наоборот — эффект есть, он просто не в кассе. Тот же
+     приём, что у сценариев без экономии ФОТ в шаге 4. */
+  "ui.capCash":"Cash effect",
+  "ui.capCashNote":"None, while the team stays the same size. The company keeps paying the same payroll; what changes is what the time is spent on. Cash appears only if you hire fewer people than planned, or move the freed time onto work that bills.",
+  "ui.capPayback":"Payback",
+  "ui.payWeeks":"{n} weeks",
+  "ui.payMonths":"{n} months",
+  "ui.payNote":"First-year cost divided by the saving per month.",
+  /* ПОЧЕМУ ОКУПАЕМОСТЬ СКРЫТА. Текст говорит и причину, и адрес — сообщение о
+     проблеме без адреса тупиковое, это уже проходили с ценами услуг. */
+  "ui.payBlockedH":"Payback needs all your fees",
+  "ui.payBlockedBody":"{n} of the selected scenarios have no fee yet. The first-year cost is short by whatever they come to, so the payback would look faster than it is — and that is the one figure a finance director reads first.",
+  "ui.payNoSaving":"No payroll saving in this set, so there is nothing to pay back.",
+  /* ЧУВСТВИТЕЛЬНОСТЬ ЧЕРЕЗ РЕЖИМЫ, А НЕ ОТДЕЛЬНЫМ ПОНЯТИЕМ. Подробно — в
+     комментарии у sensitivityText(). */
+  "ui.sensAbove":"If less of the time really goes: on the conservative setting the same scenarios come to {money} a year ({hours}). That setting is one click away, and it is the lowest this calculator offers.",
+  "ui.sensFloor":"This is already the conservative setting — the lowest of the three. It assumes only {pct} of the named time really goes, so it has already taken more than half off the table.",
+
   // ---- realisation mode ----
   /* Формулировки короткие намеренно: переключатель стоит в шаге 1 рядом с
      нагрузкой и рабочими днями, и подпись обязана читаться с одного взгляда.
@@ -1533,6 +1559,26 @@ const fmtInt = n => new Intl.NumberFormat(localeOf()).format(toWhole(n));
    шапках колонок и в подписях охвата, и его же ждёт check-parity. */
 const fmtPct = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
   .format(Math.round(v * 1000) / 10) + "%";
+/* ЧАСЫ — ЦЕЛЫМИ, СО РАЗДЕЛИТЕЛЕМ РАЗРЯДОВ И ЕДИНИЦЕЙ. Единица стоит в самой
+   строке, а не в подписи: «4,033 h» читается как величина, а «4,033» в колонке
+   рядом с деньгами читается как деньги без знака валюты.
+   ШТАТНЫЕ ЕДИНИЦЫ — с одним знаком после запятой и всегда. «2 человека» звучит
+   как факт о штатном расписании, «2.0» — как расчётная величина, и это правда:
+   ноль целых чего-то там сотрудника не существует, существует эквивалент. */
+const fmtHours = n => new Intl.NumberFormat(localeOf()).format(toWhole(n)) + " h";
+const fmtFte = n => new Intl.NumberFormat(localeOf(), {minimumFractionDigits:1,
+  maximumFractionDigits:1}).format(Math.round((n || 0) * 10) / 10);
+/* СРОК ОКУПАЕМОСТИ: недели или месяцы, и единицу выбирает величина, а не автор.
+   До двух месяцев недели — «3.4 weeks» человек представляет, «0.8 months» нет.
+   От двух месяцев месяцы: «11.3 weeks» уже требует деления в голове. */
+const PAYBACK_WEEK_LIMIT = 2;         /* месяцев */
+const fmtPayback = m => {
+  if(m === null || m === undefined) return null;
+  const one = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1}).format(Math.round(v * 10) / 10);
+  return m < PAYBACK_WEEK_LIMIT
+    ? t("ui.payWeeks", {n: one(m * (52 / 12))})
+    : t("ui.payMonths", {n: one(m)});
+};
 /* already-a-percentage formatter (fmtPct takes a 0..1 share) */
 const fmtPct1 = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
   .format(Math.round(v * 10) / 10) + "%";
@@ -1635,6 +1681,17 @@ const scenarios = [
        этом остаётся полным (план продаж от ИИ не зависит), поэтому прогноз
        занимает в нём меньшую долю — предохранитель по выручке это увидит. */
     revFromTime:true,
+    /* ЧАСЫ — ВТОРОЙ ВЗГЛЯД НА ТЕ ЖЕ СОБЫТИЯ, А НЕ ПЕРЕСЧЁТ ДЕНЕГ.
+       Объявлено рядом с compute по той же причине, что revPool и revFromTime:
+       сценарий обязан сам сказать, сколько часов стоит за его деньгами, — вывести
+       это со стороны нельзя. У половины сценариев деньги считаются через стоимость
+       часа, у двух (4 и 7) — как доля месячной стоимости, где часов в формуле нет
+       вовсе, а у двух (6 и 11) ставок сразу ДВЕ, и деление денег на «стоимость
+       часа» дало бы неправду.
+       Тождество «часы x стоимость часа = деньги» держится ПО КАЖДОЙ ставке, а не
+       глобально. Защита от расхождения — литералы в check-golden: часы каждого
+       сценария посчитаны на бумаге рядом с деньгами. */
+    hours:v=> v.calls * v.time * daysMonth / 60 * v.mgr,
     compute:v=>{
       const savedMinDay = v.calls * v.time;
       const savedHoursMonth = savedMinDay * daysMonth / 60;
@@ -1651,6 +1708,10 @@ const scenarios = [
       {k:"sal",  def:6500, suf:"money", est:true},
       {k:"share",def:0.10, suf:"share"},
     ],
+    /* ЧАСОВ В ФОРМУЛЕ НЕТ — она берёт долю месячной стоимости. Но полная месячная
+       стоимость это и есть contractHours() оплаченных часов, поэтому доля стоимости
+       это ровно та же доля часов. */
+    hours:v=> contractHours() * v.share * v.rop,
     compute:v=>({fot: v.sal * burdenMult() * v.share * v.rop, rev:0})},
 
   /* ДЕФОЛТЫ ЗДЕСЬ СНИЖЕНЫ, И ВОТ ПОЧЕМУ.
@@ -1697,6 +1758,9 @@ const scenarios = [
        повторных продаж, превышающий его, означает, что каждый клиент базы
        покупает больше раза в год ТОЛЬКО из-за ИИ. См. C.REV_WARN_PCT. */
     revPool:v=>({key:"base", year: v.base * v.check}),
+    /* Сценарий работает на выручку. Рабочего времени он не высвобождает — ноль
+       здесь смысловой, а не пропуск. */
+    hours:()=> 0,
     compute:v=>({fot:0, rev: v.base * v.conv * v.check})},
 
   { id:9, group:"agents", agent:true, driver:"daily", cov:{src:"empCount", target:"mgr", def:20}, link:"https://helpdesk.bitrix24.com/open/25866707/", note:true,
@@ -1720,6 +1784,7 @@ const scenarios = [
       {k:"ops", def:15,   suf:"ops", est:true},
       {k:"time",def:3,    suf:"min"},
     ],
+    hours:v=> v.ops * v.time * daysMonth / 60 * v.mgr,
     compute:v=>{
       const h = v.ops * v.time * daysMonth / 60;
       return {fot: h * costHour(v.sal) * v.mgr, rev:0};
@@ -1745,6 +1810,9 @@ const scenarios = [
       {k:"time", def:7,    suf:"min"},
     ],
     validate:v=> v.ai > v.total ? {ai:"sc.2.err.ai"} : null,
+    /* min(ai, total) — та же страховка, что в деньгах: часы не имеют права
+       считаться по введённому значению, если оно больше всего потока. */
+    hours:v=> Math.min(v.ai, v.total) * v.time * daysMonth / 60,
     compute:v=>{
       /* Math.min остаётся страховкой формулы, но невалидный ввод до расчёта
          больше не доходит: computeModel() исключает такой сценарий целиком. */
@@ -1762,6 +1830,7 @@ const scenarios = [
       {k:"t",    def:10,   suf:"min"},
       {k:"share",def:0.7,  suf:"share"},
     ],
+    hours:v=> v.q * v.t * v.share * daysMonth / 60 * v.emp,
     compute:v=>{
       const h = v.q * v.t * v.share * daysMonth / 60;
       return {fot: h * costHour(v.sal) * v.emp, rev:0};
@@ -1777,6 +1846,10 @@ const scenarios = [
       {k:"mgrSal",def:6500, suf:"money", est:true},
       {k:"mgrMin",def:30,   suf:"min"},
     ],
+    /* ДВЕ СТАВКИ. В часах слагаемые просто складываются — час сотрудника и час
+       руководителя это одинаковые часы; в деньгах они стоят разного. Поэтому
+       делением денег на одну ставку эти часы получить нельзя. */
+    hours:v=> v.empMin * daysMonth / 60 * v.emp + v.mgrMin * daysMonth / 60 * v.mgr,
     compute:v=>{
       const A = v.empMin * daysMonth / 60 * costHour(v.empSal) * v.emp;
       const B = v.mgrMin * daysMonth / 60 * costHour(v.mgrSal) * v.mgr;
@@ -1791,6 +1864,7 @@ const scenarios = [
       {k:"time",  def:3,    suf:"min"},
       {k:"admSal",def:2600, suf:"money", est:true},
     ],
+    hours:v=> v.visits * v.perRec * v.time / 60,
     compute:v=>{
       const h = v.visits * v.perRec * v.time / 60;
       return {fot: h * costHour(v.admSal), rev:0};
@@ -1804,6 +1878,7 @@ const scenarios = [
       {k:"docs",def:5,    suf:"docs"},
       {k:"time",def:20,   suf:"min"},
     ],
+    hours:v=> v.docs * v.time * daysMonth / 60 * v.emp,
     compute:v=>{
       const h = v.docs * v.time * daysMonth / 60;
       return {fot: h * costHour(v.sal) * v.emp, rev:0};
@@ -1818,6 +1893,11 @@ const scenarios = [
       {k:"psal",def:4000, suf:"money", est:true},
       {k:"asal",def:3000, suf:"money", est:true},
     ],
+    /* ТРИ СЛАГАЕМЫХ В МИНУТАХ, ДВЕ СТАВКИ. Встречи короче и участников меньше —
+       минуты участников, и это одна и та же величина (meet x dur x GAIN x part),
+       поэтому в часах она берётся дважды. Плюс протокол — минуты ассистента
+       (meet x dur). Часы складываются, деньги — нет: ставки разные. */
+    hours:v=> (2 * v.meet * v.dur * C.MEETING_GAIN * v.part + v.meet * v.dur) / 60,
     compute:v=>{
       const cmP = costMinute(v.psal), cmA = costMinute(v.asal);
       const A = v.meet * v.dur * C.MEETING_GAIN * v.part * cmP;
@@ -1835,6 +1915,14 @@ const scenarios = [
       {k:"simp", def:0.30, suf:"share"},
       {k:"sal",  def:4000, suf:"money", src:"empSal", est:true},
     ],
+    /* Как у сценария 4: формула берёт доли месячной стоимости, а полная месячная
+       стоимость это contractHours() оплаченных часов. Округление числа инициативных
+       повторено ровно так же, как в деньгах, иначе часы разъедутся с ними. */
+    hours:v=>{
+      const init = Math.round(v.emp * v.share);
+      const non  = Math.max(0, v.emp - init);
+      return contractHours() * (non * C.BASE_UPLIFT + init * v.simp);
+    },
     compute:v=>{
       const init = Math.round(v.emp * v.share);
       const non  = Math.max(0, v.emp - init);
@@ -2245,10 +2333,14 @@ function scenarioErrors(sc, st){
 
 function computeScenario(sc, st){
   const sets = [st.values].concat(st.segments || []);
-  let fot = 0, rev = 0, breakdown = null;
+  let fot = 0, rev = 0, hours = 0, breakdown = null;
   sets.forEach(vals=>{
     const r = sc.compute(vals);
     fot += r.fot; rev += (r.rev || 0);
+    /* Часы суммируются по тем же наборам значений, что и деньги: базовый плюс
+       все сегменты. Иначе сценарий с сегментами показал бы деньги по всем
+       наборам, а часы — по одному. */
+    hours += sc.hours(vals);
     if(r.breakdown){
       if(!breakdown) breakdown = r.breakdown.map(b=>[b[0], b[1], b[2]]);
       else r.breakdown.forEach((b,j)=>{ if(breakdown[j]) breakdown[j][1] += b[1]; });
@@ -2280,12 +2372,18 @@ function computeScenario(sc, st){
      сказать, из чего она выведена. */
   const k = realisation();
   fot *= k;
+  /* ЧАСЫ ПОЛУЧАЮТ МНОЖИТЕЛЬ ТОЧНО ТАК ЖЕ. Иначе экран показывал бы уменьшенные
+     деньги при нетронутых часах, то есть два ответа на один вопрос: если реально
+     исчезает 40% названного времени, то и часов высвобождается 40%. Тождество
+     «часы x стоимость часа = деньги» держится и до множителя, и после — он один
+     и тот же на обе величины. */
+  hours *= k;
   if(sc.revFromTime) rev *= k;
   /* Слагаемые в раскрытии — те же деньги, что и в итоге сценария, и обязаны
      сходиться с ним на экране. Целочисленные строки («инициаторов 2») — это
      люди, а не деньги, и множителю не подлежат. */
   if(breakdown) breakdown.forEach(b=>{ if(b[2] !== "int") b[1] *= k; });
-  return {fot, rev, breakdown};
+  return {fot, rev, hours, breakdown};
 }
 
 /* =============================================================================
@@ -2307,7 +2405,7 @@ function computeScenario(sc, st){
    ========================================================================== */
 function computeModel(){
   const items = [];
-  let fot = 0, rev = 0, pot = 0, any = false, qual = false;
+  let fot = 0, rev = 0, pot = 0, hours = 0, any = false, qual = false;
   /* Годовые пулы, из которых черпают строки выручки. Ключи заданы здесь, а не
      наращиваются на лету: неизвестный ключ у нового сценария должен броситься в
      глаза при первом же прогоне, а не молча пропасть из знаменателя. */
@@ -2333,8 +2431,9 @@ function computeModel(){
     any = true;
     if(sc.qualitative) qual = true;
     fot += r.fot;                                          // raw, never rounded
+    hours += r.hours;                                      // raw, never rounded
     if(sc.revLabel === "ui.revBase") pot += r.rev; else rev += r.rev;
-    items.push({sc, fot:r.fot, rev:r.rev, breakdown:r.breakdown, service:svcCost(sc)});
+    items.push({sc, fot:r.fot, rev:r.rev, hours:r.hours, breakdown:r.breakdown, service:svcCost(sc)});
   });
 
   const svc = svcTotals();
@@ -2413,6 +2512,74 @@ function computeModel(){
               note: C.OVERLAP_NOTE_PCT, threshold: C.OVERLAP_WARN_PCT};
     })(),
     revGuard,
+    /* ====================== МОЩНОСТЬ: ЧАСЫ, ШТАТНЫЕ ЕДИНИЦЫ, ОКУПАЕМОСТЬ ======
+       Деньги остаются главной цифрой — это решение заказчика (OPEN_QUESTIONS §11,
+       вариант В: мощность рядом, а не вместо). Здесь три производные величины,
+       которые встают рядом с деньгами и НИЧЕГО не пересчитывают заново.
+
+       ЧАСЫ приходят из сценариев (поле hours), уже с множителем режима.
+
+       ШТАТНЫЕ ЕДИНИЦЫ = часы за год / оплаченные часы одного сотрудника за год.
+       Знаменатель — contractHours() x 12, те же 168 часов в месяц, из которых
+       считается стоимость часа. Поэтому величина внутренне согласована с моделью
+       и НЕ зависит от среднего оклада.
+       §11 предлагал другой делитель — «экономия ФОТ / полная стоимость
+       сотрудника». Он хуже: экономия, собранная на дорогом руководителе, дала бы
+       меньше штатных единиц, чем те же часы, собранные на рядовых. Часы — это
+       часы, и мерить их надо часами.
+
+       ОКУПАЕМОСТЬ = затраты первого года / экономия за месяц. Считается ТОЛЬКО
+       когда оценены все выбранные сценарии; почему — см. paybackBlocked ниже. */
+    capacity: (() => {
+      const k = realisation();
+      const hoursMonth = any ? hours : 0;
+      const hoursYear  = hoursMonth * 12;
+      const yearHoursPerEmployee = contractHours() * 12;
+      const fte = yearHoursPerEmployee ? hoursYear / yearHoursPerEmployee : 0;
+      /* ОКУПАЕМОСТЬ НЕ ПОКАЗЫВАЕТСЯ, ПОКА ОЦЕНЕНЫ НЕ ВСЕ СЦЕНАРИИ, и это не
+         перестраховка. Неоценённый сценарий в модели НЕ равен нулю — он «не
+         оценён», так устроен весь шаг 4 (пустое поле не становится нулём, сумма
+         его не берёт, сводка называет их число). Затраты первого года при этом
+         неполны, а окупаемость — дробь, у которой неполон именно знаменатель
+         затрат: она выходит короче настоящей ровно на то, что партнёр ещё не
+         вписал. На дефолтах это видно в чистом виде: 1728 подписки против 16 133
+         экономии дают 3 дня.
+         Из всех цифр документа окупаемость — та, которой финансовый директор
+         доверяет больше всего. Показать её заведомо льстивой хуже, чем не
+         показать: поэтому вместо числа печатается причина и адрес, где её
+         исправить, — тем же приёмом, что прочерк с объяснением у сценариев на
+         выручке при выключенном переключателе.
+         Ноль как оценка («делаю бесплатно») блокировкой НЕ считается: он
+         осознанно введён и в сумму входит. Блокирует только НЕ ОЦЕНЕНО. */
+      const blocked = !any ? "none" : (svc.unquoted > 0 ? "unquoted"
+                    : (fot > 0 ? null : "nosaving"));
+      const months = blocked ? null : firstYearCost / fot;
+      /* ЧУВСТВИТЕЛЬНОСТЬ ВЫРАЖЕНА ЧЕРЕЗ РЕЖИМЫ, А НЕ ОТДЕЛЬНЫМ «ЕСЛИ ПОЛОВИНА».
+         Разбор просил строку «если реально освободится половина предположенного».
+         Вводить для этого второе понятие нельзя: переключатель режимов ОТВЕЧАЕТ НА
+         ТОТ ЖЕ ВОПРОС, и рядом получились бы два разных числа про одно и то же —
+         «половина» и «консервативно», — а читатель спросил бы, какое из них
+         применено. Плюс «половина» ни к чему не привязана: половина чего? У
+         режимов за каждым множителем стоит выведенное произведение трёх остатков.
+         И практическое: названную величину партнёр может ПОКАЗАТЬ, нажав кнопку,
+         а гипотетическую половину — нет.
+         Ориентир всегда один — консервативный режим, нижняя граница инструмента.
+         Считается умножением, а не вторым прогоном модели: и деньги, и часы
+         линейны по множителю, поэтому floor = текущее x (0.40 / k) точно. */
+      const kFloor = REALISATION[0].k;
+      const scale  = k > 0 ? kFloor / k : 0;
+      return {
+        hoursMonth, hoursYear, fte,
+        hoursPerEmployeeYear: yearHoursPerEmployee,
+        paybackMonths: months,
+        paybackWeeks: months === null ? null : months * (52 / 12),
+        paybackBlocked: blocked,
+        unquoted: svc.unquoted,
+        atFloor: realisationId === REALISATION[0].id,
+        floorFotYear: fotYear * scale,
+        floorHoursYear: hoursYear * scale,
+      };
+    })(),
   };
 }
 
@@ -2799,6 +2966,15 @@ function targetPlan(){
 /* subscriptionYear() removed: it derived a total outside computeModel().
    The figure now lives in model.totals.subscriptionYear only. */
 
+/* ГОТОВЫЙ ТЕКСТ ЧУВСТВИТЕЛЬНОСТИ — один на экран и на отчёт, тем же порядком, что
+   оба предупреждения и пометка о режиме: формулировка обязана быть одна, иначе
+   партнёр говорит клиенту одно, а бумага другое. */
+function sensitivityText(cap){
+  return cap.atFloor
+    ? t("ui.sensFloor", {pct: realisationPct() + "%"})
+    : t("ui.sensAbove", {money: fmtMoney(cap.floorFotYear), hours: fmtHours(cap.floorHoursYear)});
+}
+
 function renderSummary(model){
   const el = document.getElementById("sum-body");
   /* ИСКЛЮЧЁННЫЕ ПО ОШИБКЕ ВВОДА — показываем ДО проверки model.any.
@@ -2815,6 +2991,7 @@ function renderSummary(model){
   if(!model.any){ el.innerHTML = badBlock + `<div class="empty">${t("ui.pickOne")}</div>`; return; }
   /* display only — every figure comes from the model, nothing is derived here */
   const rg = model.revGuard;
+  const cap = model.capacity;
   const {fotMonth:fot, fotYear, revMonth:rev, potMonth:pot,
          subscriptionYear:subYear, firstYearCost:costs, netFirstYear:net} = model.totals;
   const svc = model.svc, qual = model.qual;
@@ -2832,6 +3009,27 @@ function renderSummary(model){
            означает», плюс полужирное имя режима: это соседние по смыслу
            пояснения, но допущение — то, которое партнёр переключает. */
         t("ui.realSummary", copyVars())}</div>
+      ${/* ТРИ ВЕЛИЧИНЫ РЯДОМ: ЧАСЫ -> СТОИМОСТЬ ЭТИХ ЧАСОВ -> КЭШ.
+           Средняя из трёх — это строка выше («Total payroll saving»), и второй раз
+           она не печатается: одна и та же сумма двумя строками читалась бы как две
+           разные. Деньги остаются главной цифрой и стоят первыми — решение
+           заказчика; часы встают под ними, потому что это та же величина в
+           единицах, которые клиент может сверить.
+           ТРЕТЬЯ СТРОКА ПОЧТИ ВСЕГДА ПУСТА, И ОНА ЗДЕСЬ ИМЕННО ПОЭТОМУ. Вопрос
+           «мы кого-то уволим?» финансовый директор задаёт первым (OPEN_QUESTIONS
+           §11), и ответ на него лучше дать раньше вопроса. Прочерк, а не «$0»:
+           ноль в колонке денег читается как «ничего не даёт», а тут наоборот —
+           эффект есть, он просто не в кассе. */
+        ""}
+      <div class="lbl">${t("ui.capHours")}</div>
+      <div class="num">${fmtHours(cap.hoursMonth)}</div>
+      <div class="num year">${fmtHours(cap.hoursYear)}</div>
+      <div class="fot-meaning">${t("ui.capHoursNote", {fte: fmtFte(cap.fte),
+          peryear: fmtInt(cap.hoursPerEmployeeYear), permonth: fmtInt(contractHours())})}</div>
+      <div class="lbl">${t("ui.capCash")}</div>
+      <div class="num">${SCREEN_DASH}</div>
+      <div class="num year">${SCREEN_DASH}</div>
+      <div class="fot-meaning">${t("ui.capCashNote")}</div>
       ${(SHOW_REVENUE && rev>0)?`<div class="lbl">${t("ui.sumRev")}</div><div class="num">${fmtMoney(rev)}</div>
         <div class="num year">${fmtMoney(rev*12)}</div>`:""}
       ${(SHOW_REVENUE && pot>0)?`<div class="lbl">${t("ui.sumPot")}</div><div class="num">${fmtMoney(pot)}</div>
@@ -2887,6 +3085,20 @@ function renderSummary(model){
         <span>${neg ? t("ui.verdictNeg",{v:fmtMoney(Math.abs(net))})
                     : t("ui.verdictPos",{v:fmtMoney(net)})}</span>
       </div>
+      ${/* ОКУПАЕМОСТЬ СТОИТ ПОСЛЕ ВЕРДИКТА, А НЕ РЯДОМ С ЧАСАМИ: это величина про
+           затраты первого года, и её место — там, где затраты уже названы.
+           Заблокированная печатает причину и кнопку, ведущую в шаг 4, а не число. */
+        cap.paybackBlocked === "unquoted" ? `<div class="overlap-note">
+        <b>${t("ui.payBlockedH")}</b><br>
+        ${t("ui.payBlockedBody", {n: cap.unquoted})}
+        <button type="button" class="svc-jump svc-jump--navy" data-svc-jump
+          aria-label="${t("ui.svcJumpAria")}">${t("ui.svcJump")}</button></div>`
+        : cap.paybackBlocked === "nosaving" ? `<div class="fullrow"><span
+            style="font-size:12.5px;color:var(--b24-on-navy-soft)">${t("ui.payNoSaving")}</span><span></span></div>`
+        : `<div class="fullrow"><span>${t("ui.capPayback")}</span>
+             <span class="v">${fmtPayback(cap.paybackMonths)}</span></div>
+           <div class="fot-meaning">${t("ui.payNote")}</div>`}
+      <div class="fot-meaning">${sensitivityText(cap)}</div>
       ${qual?`<div class="qual">${t("qual.7")}</div>`:""}
       <div class="fullrow" style="margin-top:var(--b24-s3)">
         <span style="font-size:12.5px;color:var(--b24-on-navy-soft)">${t("ui.summaryInfo",copyVars())}</span>
@@ -3070,6 +3282,11 @@ function reportState(){
       coverage: sc.cov ? covOf(sc) : null,
       fotMonth: it.fot,          // raw
       fotYear: it.fot * 12,      // raw
+      /* ЧАСЫ ПО СЦЕНАРИЮ. Отчёт их не печатает — сумма едет в capacity, — но без
+         них check-golden не может закрепить часы КАЖДОГО сценария, а именно это
+         единственная защита от расхождения часов с деньгами: два объявления
+         рядом с формулой, и разъехаться они могут только молча. */
+      hours: it.hours,           // raw
       rev: sc.effect.includes("rev") ? it.rev : 0,
       revLabel: sc.effect.includes("rev") ? t(sc.revLabel || "ui.revDefault") : null,
       service: it.service,                  // null = not quoted
@@ -3108,6 +3325,26 @@ function reportState(){
     partner: {...partner},
     economics: {daysMonth, dayHours: C.DAY_HOURS, contractDays: C.CONTRACT_DAYS,
                 contractHours: contractHours(), burdenPct},
+    /* МОЩНОСТЬ ЕДЕТ ВМЕСТЕ С ДАННЫМИ. Сырые величины плюс ГОТОВЫЕ строки: отчёт
+       ничего не считает и единицу окупаемости не выбирает — иначе экран показал бы
+       недели, а бумага месяцы. Причина блокировки едет признаком, а не текстом:
+       формулировку собирает отчёт из своих слов, а решение «показывать или нет»
+       принято здесь, один раз, для обеих поверхностей. */
+    capacity: {
+      hoursMonth: m.capacity.hoursMonth,          // raw
+      hoursYear: m.capacity.hoursYear,            // raw
+      fte: m.capacity.fte,                        // raw
+      hoursPerEmployeeYear: m.capacity.hoursPerEmployeeYear,
+      hoursPerEmployeeMonth: contractHours(),
+      paybackMonths: m.capacity.paybackMonths,    // raw; null = не показывается
+      paybackBlocked: m.capacity.paybackBlocked,  // null | "unquoted" | "nosaving" | "none"
+      unquoted: m.capacity.unquoted,
+      atFloor: m.capacity.atFloor,
+      floorFotYear: m.capacity.floorFotYear,
+      floorHoursYear: m.capacity.floorHoursYear,
+      sensitivityText: sensitivityText(m.capacity),
+      cashNote: t("ui.capCashNote"),
+    },
     /* РЕЖИМ РЕАЛИЗАЦИИ ЕДЕТ ВМЕСТЕ С ДАННЫМИ, и текст едет ГОТОВЫМ — тем же
        порядком, что оба предупреждения. Клиент обязан видеть, на каком допущении
        построен расчёт, а формулировка обязана быть одна на экране и в документе.
@@ -3214,6 +3451,13 @@ function reportState(){
          документе: расчёт, не назвавший своё допущение, — это тот же отчёт без
          пометки об оценке. */
       realisationCase: t("ui.realCase." + realisationId),
+      /* Строки мощности так, как их печатает экран. check-parity сверяет с ними
+         отчёт: часы, штатные единицы и окупаемость — новые величины, и без сверки
+         они могли бы разъехаться между экраном и бумагой на округлении. */
+      capHoursMonth:   fmtHours(m.capacity.hoursMonth),
+      capHoursYear:    fmtHours(m.capacity.hoursYear),
+      capFte:          fmtFte(m.capacity.fte),
+      capPayback:      fmtPayback(m.capacity.paybackMonths),
       /* Доля прогноза выручки в пуле. Пустая строка, когда мерить нечего:
          check-parity сверяет её с отчётом только когда предохранитель сработал. */
       revGuardPct:     m.revGuard.ok ? null : fmtPct1(m.revGuard.pct),
@@ -3365,6 +3609,12 @@ function buildReport(S, {assets}) {
      имя режима, доля и готовый текст приходят из состояния. */
   const R = S.realisation || null;
   const realCase = R ? R.case : null;
+  /* МОЩНОСТЬ. Состояния, снятые до этой правки, блока не несут — тогда документ
+     собирается ровно как раньше, без строк про часы и окупаемость. */
+  const CAP = S.capacity || null;
+  const hours = n => `${int(n)} h`;
+  const fte1 = n => new Intl.NumberFormat(LOC, {minimumFractionDigits:1, maximumFractionDigits:1})
+    .format(Math.round((n || 0) * 10) / 10);
   /* ШИРИНА НА A4. Отбивка кита (18px по горизонтали, кегль 15-16px) рассчитана на
      пять колонок: при пяти таблица встаёт в 656px против 658px полосы набора.
      Больше пяти — и таблица перестаёт влезать. Замерено на всех одиннадцати
@@ -3673,42 +3923,33 @@ const cover = () => `
    уходят на второй лист — тем же приёмом, что на странице тарифа. Цифры и
    предупреждение остаются вместе на первом: предупреждение относится к ним, и
    разлучать его с ними было бы хуже, чем перенести пояснения. */
-const headlineTwoUp = () =>
-  (!!S.showRevenue && ((T.revMonth || 0) > 0 || (T.potMonth || 0) > 0)) ||
-  !!(S.overlap && !S.overlap.ok) ||
-  !!(S.revGuard && !S.revGuard.ok && S.revGuard.text) ||
-  /* РЕЖИМ РЕАЛИЗАЦИИ РАЗБИВАЕТ ЛИСТ ТОЖЕ. Объяснение допущения — два предложения
-     в блоке оснований расчёта, и замер показал, что с ними лист «The numbers»
-     одним листом больше не держится: блок оснований уходил на 5.6px за полосу
-     набора и уносил за собой подвал. Лечим переносом, как всё остальное в этом
-     файле, а не кеглем. Заодно это честно по смыслу: у документа теперь всегда
-     есть что сказать о том, КАК читать цифры, — раньше бывало, что нечего.
-     Состояния, снятые до появления переключателя, блока не несут и по-прежнему
-     собираются одним листом; эту ветку держит четвёртый случай в
-     check-geometry. */
-  !!(S.realisation && S.realisation.text);
+/* «THE NUMBERS» — ВСЕГДА ТРИ ЛИСТА, И УСЛОВНОГО РАЗБИЕНИЯ БОЛЬШЕ НЕТ.
+   Раньше их было один или два, по содержимому (выручка, предупреждения, режим).
+   С появлением мощности — часы, штатные единицы, кэш-эффект, окупаемость —
+   замер показал, что не держится НИ ОДНА конфигурация: плотное состояние
+   уходило на 228px за полосу, мягкое замечание на 214px, а calc-state-all даже
+   без предупреждения — на 3px. Три пикселя лечатся кеглем за минуту, и ровно
+   поэтому лечить их так нельзя: подгонка развалится от первого более длинного
+   имени партнёра.
 
+   Поэтому ветка убрана целиком — тем же решением и по той же причине, что у
+   страницы «Recommended plan» (см. README, «Sheets that split»): шесть пикселей
+   там тоже были тривиальны, а фит ломался от первого длинного названия тарифа.
+   Условное разбиение, которое иногда не срабатывает, хуже безусловного.
+
+   Листы получили СВОИ ТЕМЫ, а не остаток места:
+     1/3  The numbers            — что клиент получает: деньги, часы, кэш
+     2/3  First-year cost        — что он платит и когда это вернётся
+     3/3  How to read these numbers — предупреждения, основания, чувствительность
+   ЗАМЕРЕНО, А НЕ ВЫБРАНО. Вариант в два листа (обе таблицы вместе, оба
+   предупреждения на второй) пробовался и НЕ ДЕРЖИТСЯ: плотное состояние уходит
+   на 181px за полосу, calc-state-all — на 189px. Две таблицы плюс поясняющая
+   рамка на один A4 не влезают, и это не вопрос вкуса.
+   Цена — лист «First-year cost» выходит воздушным: пять строк таблицы и оговорка.
+   Это принято сознательно: воздух в клиентском PDF не дефект, а срезанный подвал
+   дефект. */
 const headline = () => {
-  const twoUp = headlineTwoUp();
-  const num = i => twoUp ? ` <span style="font-size:.6em;font-weight:600">(${i}/2)</span>` : "";
-  const explain = `
-  <div class="b24-dashed"${twoUp ? "" : ' style="margin-top:var(--b24-s5)"'}>
-    <p class="b24-p" style="margin:0; font-size:13.5px;">
-      <span class="b24-strong">What this figure means.</span> It is the cost of the working time now spent on these tasks. It is not profit, and not cash freed up.
-    </p>
-  </div>
-
-  <div class="b24-quote">
-    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
-    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
-    employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
-    ${int(S.economics.burdenPct)}% employer payroll burden.
-    ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
-    ${/* ТЕКСТ ПРИХОДИТ ГОТОВЫМ ИЗ СОСТОЯНИЯ — тем же порядком, что оба
-         предупреждения: формулировка обязана быть одна на экране и в документе,
-         иначе партнёр говорит клиенту одно, а бумага другое. */
-      R && R.text ? esc(R.text) : ""}
-  </div>`;
+  const num = i => ` <span style="font-size:.6em;font-weight:600">(${i}/3)</span>`;
   const first = `
 <section class="page page--sky">
   ${runhead("Headline")}
@@ -3720,18 +3961,42 @@ const headline = () => {
       <tbody>
         <tr><td>Payroll saving${/* ДОПУЩЕНИЕ В САМОЙ ПОДПИСИ СТРОКИ — тем же приёмом, каким
               помечены оценки в строках выручки («Additional: revenue uplift (estimate)»).
-              Выбрано осознанно вместо блока или отдельной строки под таблицей: этот лист
-              самый плотный в документе, а подпись строки не стоит ни одного пикселя высоты
-              и стоит РЯДОМ с цифрой, к которой относится. Доля тут же, чтобы допущение
-              читалось без перехода на второй лист. */
+              Выбрано осознанно вместо блока или отдельной строки под таблицей: подпись
+              строки не стоит ни одного пикселя высоты и стоит РЯДОМ с цифрой, к которой
+              относится. Доля тут же, чтобы допущение читалось без перехода на другой лист. */
               R ? ` (${esc(R.case)}, ${int(R.pct)}% of named time)` : ""}</td><td>${money(T.fotMonth)}</td><td>${money(T.fotYear)}</td></tr>
+        ${/* ЧАСЫ СРАЗУ ПОД ДЕНЬГАМИ — та же величина в единицах, которые клиент
+             может сверить по своим данным. Деньги остаются первой строкой: это
+             решение заказчика, мощность встаёт рядом, а не вместо.
+             КЭШ-ЭФФЕКТ ТРЕТЬЕЙ СТРОКОЙ, И ОН ПУСТ. Прочерк, а не «$0»: ноль в
+             колонке денег читается как «ничего не даёт», а здесь эффект есть,
+             он просто не в кассе. Вопрос «мы кого-то уволим?» задают первым, и
+             отвечать на него лучше до того, как он задан. */
+          CAP ? `<tr><td>Working hours freed<span class="b24x-td-sub">${fte1(CAP.fte)} full-time equivalents</span></td><td>${hours(CAP.hoursMonth)}</td><td>${hours(CAP.hoursYear)}</td></tr>
+        <tr><td>Cash effect<span class="b24x-td-sub">while the team stays the same size</span></td><td>${DASH}</td><td>${DASH}</td></tr>` : ""}
         ${S.showRevenue && T.revMonth > 0 ? `<tr><td>Additional: revenue uplift (estimate)</td><td>${money(T.revMonth)}</td><td>${money(T.revMonth * 12)}</td></tr>` : ""}
         ${S.showRevenue && T.potMonth > 0 ? `<tr><td>Additional: existing-base potential (estimate)</td><td>${money(T.potMonth)}</td><td>${money(T.potMonth * 12)}</td></tr>` : ""}
       </tbody>
     </table>
   </div>
 
-  <div class="b24-table-wrap" style="margin-top:var(--b24-s6)">
+  <div class="b24-dashed" style="margin-top:var(--b24-s5)">
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      <span class="b24-strong">What this figure means.</span> It is the cost of the working time now spent on these tasks. It is not profit, and not cash freed up. The hours are the same time counted in a unit the client can check against their own records.
+    </p>
+  </div>
+  ${footer()}
+</section>`;
+
+  /* ЛИСТ 2 — ЗАТРАТЫ И ОКУПАЕМОСТЬ. Они уехали с первого листа вместе, и это не
+     остаток места: «сколько это стоит и когда вернётся» — один вопрос, и оговорка
+     про неоценённые сценарии относится к обеим строкам сразу. */
+  const second = `
+<section class="page page--sky">
+  ${runhead("Headline")}
+  <h1 class="b24-h1">First-year cost${num(2)}</h1>
+
+  <div class="b24-table-wrap">
     <table class="b24-table">
       <thead><tr><th>First year</th><th>Amount</th></tr></thead>
       <tbody>
@@ -3741,40 +4006,60 @@ const headline = () => {
               : ""}</td><td>− ${money(T.serviceSum)}</td></tr>
         <tr><td><strong>Total first-year cost</strong></td><td><strong>− ${money(T.firstYearCost)}</strong></td></tr>
         <tr><td><strong>Net first-year payroll saving</strong></td><td><strong>${money(T.netFirstYear)}</strong></td></tr>
+        ${/* ОКУПАЕМОСТЬ ПЕЧАТАЕТСЯ ТОЛЬКО КОГДА ОЦЕНЕНЫ ВСЕ СЦЕНАРИИ. Решение принято
+             в модели, здесь только его исполнение: при неполных затратах дробь выходит
+             короче настоящей ровно на то, что не вписано, а окупаемость — та цифра,
+             которой финансовый директор доверяет больше всего. Вместо числа — причина. */
+          !CAP ? ""
+          : CAP.paybackBlocked === "unquoted"
+            ? `<tr><td>Payback</td><td>not yet — ${int(CAP.unquoted)} scenario(s) have no fee</td></tr>`
+          : CAP.paybackBlocked ? ""
+          : `<tr><td><strong>Payback</strong></td><td><strong>${
+              CAP.paybackMonths < 2
+                ? `${new Intl.NumberFormat(LOC,{maximumFractionDigits:1}).format(Math.round(CAP.paybackMonths*(52/12)*10)/10)} weeks`
+                : `${new Intl.NumberFormat(LOC,{maximumFractionDigits:1}).format(Math.round(CAP.paybackMonths*10)/10)} months`
+            }</strong></td></tr>`}
       </tbody>
     </table>
   </div>
   ${T.serviceUnquoted ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
-    ${int(T.serviceUnquoted)} scenario(s) are not priced yet, so the figure above is not the full implementation cost.</p>` : ""}
-
-  ${overlapBlock()}
-${twoUp ? "" : explain}
+    ${int(T.serviceUnquoted)} scenario(s) are not priced yet, so the figure above is not the full implementation cost, and the payback cannot be worked out from it.</p>` : ""}
   ${footer()}
 </section>`;
-  if (!twoUp) return first;
-  /* Второй лист называется тем, что на нём лежит, а не «The numbers (2/2)»:
-     цифр на нём нет, там только чтение цифр.
 
-     ПРЕДУПРЕЖДЕНИЕ ПО ВЫРУЧКЕ СТОИТ ЗДЕСЬ, А НЕ РЯДОМ С ТАБЛИЦЕЙ. Замер: два
-     предупреждения сразу (перекрытие сценариев и выручка) вместе с двумя
-     таблицами не помещаются — низ уезжал на 183px за полосу и срезал подвал.
-     Разносим по смыслу, а не по остатку места: предупреждение о перекрытии —
-     про экономию ФОТ, то есть про главную цифру первого листа, и остаётся с
-     ней; предупреждение по выручке — про то, КАК читать строки прогноза, а этот
-     лист ровно так и называется. Оно стоит на нём первым блоком и в том же
-     янтарном виде, то есть не спрятано, а поставлено под своим заголовком.
-     Лист существует всегда, когда предупреждение может сработать: guard меряет
-     только при показанной выручке, а показанная выручка сама по себе включает
-     разбиение. */
-  return first + `
+  /* ЛИСТ 3 — КАК ЧИТАТЬ ЦИФРЫ. Сюда переехало ОБА предупреждения о достоверности:
+     раньше предупреждение по экономии ФОТ оставалось при цифрах, а по выручке
+     уезжало сюда. Теперь оба здесь, и это честнее по смыслу — лист ровно так и
+     называется, а предупреждение это и есть инструкция по чтению. */
+  const third = `
 <section class="page page--sky">
   ${runhead("Headline")}
-  <h1 class="b24-h1">How to read these numbers${num(2)}</h1>
+  <h1 class="b24-h1">How to read these numbers${num(3)}</h1>
+  ${overlapBlock()}
   ${revenueBlock()}
-${explain}
+
+  <div class="b24-quote">
+    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
+    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
+    employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
+    ${int(S.economics.burdenPct)}% employer payroll burden.
+    ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
+    ${/* ТЕКСТ ПРИХОДИТ ГОТОВЫМ ИЗ СОСТОЯНИЯ — тем же порядком, что оба
+         предупреждения: формулировка обязана быть одна на экране и в документе,
+         иначе партнёр говорит клиенту одно, а бумага другое. */
+      R && R.text ? esc(R.text) : ""}
+    ${/* ЧУВСТВИТЕЛЬНОСТЬ И КЭШ — тоже готовыми строками, из того же состояния.
+         Чувствительность выражена через режимы, а не отдельным «если половина»:
+         переключатель отвечает на тот же вопрос, и два числа про одно и то же
+         рядом заставили бы читателя выбирать, какое применено. */
+      CAP && CAP.sensitivityText ? esc(CAP.sensitivityText) : ""}
+    ${CAP && CAP.cashNote ? `<span class="b24-strong">Cash effect.</span> ${esc(CAP.cashNote)}` : ""}
+  </div>
   ${footer()}
 </section>`;
+  return first + second + third;
 };
+
 
 /* ПРЕДУПРЕЖДЕНИЕ ПО ВЫРУЧКЕ. Та же логика, что у overlapBlock: клиент вправе
    знать, что прогноз выше уровня, который мы считаем защитимым, — умолчать было

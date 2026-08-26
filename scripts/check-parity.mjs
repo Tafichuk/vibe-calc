@@ -317,6 +317,67 @@ if (S.realisation) {
                     b: "(not found; the report names the mode but not the share it applied)" });
 }
 
+/* МОЩНОСТЬ: ЧАСЫ, ШТАТНЫЕ ЕДИНИЦЫ, ОКУПАЕМОСТЬ. Новые величины, и у каждой своё
+   правило вывода — целые часы с единицей, штатные единицы с одним знаком, недели
+   или месяцы по величине. Правило вывода живёт в двух местах (экран и шаблон
+   отчёта), поэтому разъехаться они могут на округлении, а не на формуле: экран
+   покажет «4,032 h», отчёт — «4032 h», и оба будут «правильные».
+   Окупаемость проверяется в обе стороны: когда она показана — строка обязана
+   совпасть; когда скрыта — её в документе быть НЕ должно, иначе отчёт напечатает
+   число, которого экран не показывает, и именно то, которому финансовый директор
+   доверяет больше всего.
+   Состояния, снятые до этой правки, блока capacity не несут — ветка не идёт. */
+if (S.capacity) {
+  const C = S.capacity;
+  for (const [what, screen] of [
+    ["hours freed / month", D.capHoursMonth],
+    ["hours freed / year",  D.capHoursYear],
+  ]) {
+    if (screen == null)
+      problems.push({ what: `${what} missing from the state`, a: "the screen renders it", b: "(display carries null)" });
+    else if (!reportText.includes(screen))
+      problems.push({ what, a: screen, b: "(not found; the report is rounding hours differently)" });
+  }
+  /* ШТАТНЫЕ ЕДИНИЦЫ. Ищется строка целиком («2.0 full-time equivalents»), а не
+     одно число: «2.0» могло бы случайно совпасть с чем угодно на странице. */
+  if (D.capFte == null)
+    problems.push({ what: "full-time equivalents missing from the state", a: "the screen renders it", b: "(display carries null)" });
+  else if (!reportText.includes(`${D.capFte} full-time equivalents`))
+    problems.push({ what: "full-time equivalents in the report",
+                    a: `${D.capFte} full-time equivalents`,
+                    b: "(not found; the report is rounding the equivalent differently)" });
+
+  if (C.paybackBlocked === null) {
+    if (D.capPayback == null)
+      problems.push({ what: "payback missing from the state",
+                      a: "every scenario is quoted, so the screen shows a payback",
+                      b: "(display carries null)" });
+    else if (!reportText.includes(D.capPayback))
+      problems.push({ what: "payback in the report", a: D.capPayback,
+                      b: "(not found; the report picked a different unit or rounding)" });
+  } else {
+    if (D.capPayback != null)
+      problems.push({ what: "payback exported while it is blocked",
+                      a: `capacity.paybackBlocked is "${C.paybackBlocked}"`,
+                      b: `(display carries ${D.capPayback})` });
+    if (/\bPayback\b[\s\S]{0,40}?\d+(\.\d+)?\s+(weeks|months)/.test(reportText))
+      problems.push({ what: "payback printed while it is blocked",
+                      a: `capacity.paybackBlocked is "${C.paybackBlocked}" — the first-year cost is incomplete`,
+                      b: "(the report prints a payback figure anyway)" });
+  }
+  /* КЭШ-ЭФФЕКТ. Строка почти всегда пуста, и именно поэтому её отсутствие — дефект:
+     это единственное место, где документ отвечает на вопрос «мы кого-то уволим?». */
+  if (!/Cash effect/.test(reportText))
+    problems.push({ what: "cash-effect line missing from the report",
+                    a: "the screen shows it as a dash with the reason",
+                    b: "(the report does not mention the cash effect at all)" });
+  /* ЧУВСТВИТЕЛЬНОСТЬ — готовый текст из состояния, слово в слово. */
+  if (C.sensitivityText && !reportText.includes(C.sensitivityText))
+    problems.push({ what: "sensitivity line differs from the screen",
+                    a: C.sensitivityText,
+                    b: "(not found; the report is wording it differently)" });
+}
+
 /* ДВА ПОРОГА ДОСТОВЕРНОСТИ. Проверяется не только процент, но и КАКОЙ из двух
    блоков напечатан: перепутать мягкое замечание с жёстким предупреждением —
    единственная ошибка в этой правке, которую совпавший процент не покажет.

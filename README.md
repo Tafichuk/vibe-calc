@@ -105,6 +105,17 @@ tool and in the report, because a range quoted to a client should say what it re
 Neither level ever blocks the calculation: you may have a defensible case, and it stays
 your call.
 
+**Capacity sits beside the money.** The same freed time is shown three ways: what it
+costs you today (the headline figure), how many working hours it is, and what it does to
+cash. Hours are the part your client can check against their own records. The cash line
+is a dash on purpose — while the team stays the same size the company keeps paying the
+same payroll, and what changes is what the time is spent on.
+
+**Payback appears only once every selected scenario has a fee.** An empty fee field means
+"not quoted", not zero, so until they are all filled the first-year cost is incomplete
+and the payback would look faster than it is. That is the one figure a finance director
+reads first, so the tool asks you to finish the pricing instead of guessing.
+
 **Nothing is selected when the page loads.** That is on purpose. You choose each scenario
 consciously, so the client never sees a total nobody picked. An honest short list is more
 persuasive than a long one.

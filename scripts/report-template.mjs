@@ -84,6 +84,12 @@ export function buildReport(S, {assets}) {
      имя режима, доля и готовый текст приходят из состояния. */
   const R = S.realisation || null;
   const realCase = R ? R.case : null;
+  /* МОЩНОСТЬ. Состояния, снятые до этой правки, блока не несут — тогда документ
+     собирается ровно как раньше, без строк про часы и окупаемость. */
+  const CAP = S.capacity || null;
+  const hours = n => `${int(n)} h`;
+  const fte1 = n => new Intl.NumberFormat(LOC, {minimumFractionDigits:1, maximumFractionDigits:1})
+    .format(Math.round((n || 0) * 10) / 10);
   /* ШИРИНА НА A4. Отбивка кита (18px по горизонтали, кегль 15-16px) рассчитана на
      пять колонок: при пяти таблица встаёт в 656px против 658px полосы набора.
      Больше пяти — и таблица перестаёт влезать. Замерено на всех одиннадцати
@@ -392,42 +398,33 @@ const cover = () => `
    уходят на второй лист — тем же приёмом, что на странице тарифа. Цифры и
    предупреждение остаются вместе на первом: предупреждение относится к ним, и
    разлучать его с ними было бы хуже, чем перенести пояснения. */
-const headlineTwoUp = () =>
-  (!!S.showRevenue && ((T.revMonth || 0) > 0 || (T.potMonth || 0) > 0)) ||
-  !!(S.overlap && !S.overlap.ok) ||
-  !!(S.revGuard && !S.revGuard.ok && S.revGuard.text) ||
-  /* РЕЖИМ РЕАЛИЗАЦИИ РАЗБИВАЕТ ЛИСТ ТОЖЕ. Объяснение допущения — два предложения
-     в блоке оснований расчёта, и замер показал, что с ними лист «The numbers»
-     одним листом больше не держится: блок оснований уходил на 5.6px за полосу
-     набора и уносил за собой подвал. Лечим переносом, как всё остальное в этом
-     файле, а не кеглем. Заодно это честно по смыслу: у документа теперь всегда
-     есть что сказать о том, КАК читать цифры, — раньше бывало, что нечего.
-     Состояния, снятые до появления переключателя, блока не несут и по-прежнему
-     собираются одним листом; эту ветку держит четвёртый случай в
-     check-geometry. */
-  !!(S.realisation && S.realisation.text);
+/* «THE NUMBERS» — ВСЕГДА ТРИ ЛИСТА, И УСЛОВНОГО РАЗБИЕНИЯ БОЛЬШЕ НЕТ.
+   Раньше их было один или два, по содержимому (выручка, предупреждения, режим).
+   С появлением мощности — часы, штатные единицы, кэш-эффект, окупаемость —
+   замер показал, что не держится НИ ОДНА конфигурация: плотное состояние
+   уходило на 228px за полосу, мягкое замечание на 214px, а calc-state-all даже
+   без предупреждения — на 3px. Три пикселя лечатся кеглем за минуту, и ровно
+   поэтому лечить их так нельзя: подгонка развалится от первого более длинного
+   имени партнёра.
 
+   Поэтому ветка убрана целиком — тем же решением и по той же причине, что у
+   страницы «Recommended plan» (см. README, «Sheets that split»): шесть пикселей
+   там тоже были тривиальны, а фит ломался от первого длинного названия тарифа.
+   Условное разбиение, которое иногда не срабатывает, хуже безусловного.
+
+   Листы получили СВОИ ТЕМЫ, а не остаток места:
+     1/3  The numbers            — что клиент получает: деньги, часы, кэш
+     2/3  First-year cost        — что он платит и когда это вернётся
+     3/3  How to read these numbers — предупреждения, основания, чувствительность
+   ЗАМЕРЕНО, А НЕ ВЫБРАНО. Вариант в два листа (обе таблицы вместе, оба
+   предупреждения на второй) пробовался и НЕ ДЕРЖИТСЯ: плотное состояние уходит
+   на 181px за полосу, calc-state-all — на 189px. Две таблицы плюс поясняющая
+   рамка на один A4 не влезают, и это не вопрос вкуса.
+   Цена — лист «First-year cost» выходит воздушным: пять строк таблицы и оговорка.
+   Это принято сознательно: воздух в клиентском PDF не дефект, а срезанный подвал
+   дефект. */
 const headline = () => {
-  const twoUp = headlineTwoUp();
-  const num = i => twoUp ? ` <span style="font-size:.6em;font-weight:600">(${i}/2)</span>` : "";
-  const explain = `
-  <div class="b24-dashed"${twoUp ? "" : ' style="margin-top:var(--b24-s5)"'}>
-    <p class="b24-p" style="margin:0; font-size:13.5px;">
-      <span class="b24-strong">What this figure means.</span> It is the cost of the working time now spent on these tasks. It is not profit, and not cash freed up.
-    </p>
-  </div>
-
-  <div class="b24-quote">
-    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
-    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
-    employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
-    ${int(S.economics.burdenPct)}% employer payroll burden.
-    ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
-    ${/* ТЕКСТ ПРИХОДИТ ГОТОВЫМ ИЗ СОСТОЯНИЯ — тем же порядком, что оба
-         предупреждения: формулировка обязана быть одна на экране и в документе,
-         иначе партнёр говорит клиенту одно, а бумага другое. */
-      R && R.text ? esc(R.text) : ""}
-  </div>`;
+  const num = i => ` <span style="font-size:.6em;font-weight:600">(${i}/3)</span>`;
   const first = `
 <section class="page page--sky">
   ${runhead("Headline")}
@@ -439,18 +436,42 @@ const headline = () => {
       <tbody>
         <tr><td>Payroll saving${/* ДОПУЩЕНИЕ В САМОЙ ПОДПИСИ СТРОКИ — тем же приёмом, каким
               помечены оценки в строках выручки («Additional: revenue uplift (estimate)»).
-              Выбрано осознанно вместо блока или отдельной строки под таблицей: этот лист
-              самый плотный в документе, а подпись строки не стоит ни одного пикселя высоты
-              и стоит РЯДОМ с цифрой, к которой относится. Доля тут же, чтобы допущение
-              читалось без перехода на второй лист. */
+              Выбрано осознанно вместо блока или отдельной строки под таблицей: подпись
+              строки не стоит ни одного пикселя высоты и стоит РЯДОМ с цифрой, к которой
+              относится. Доля тут же, чтобы допущение читалось без перехода на другой лист. */
               R ? ` (${esc(R.case)}, ${int(R.pct)}% of named time)` : ""}</td><td>${money(T.fotMonth)}</td><td>${money(T.fotYear)}</td></tr>
+        ${/* ЧАСЫ СРАЗУ ПОД ДЕНЬГАМИ — та же величина в единицах, которые клиент
+             может сверить по своим данным. Деньги остаются первой строкой: это
+             решение заказчика, мощность встаёт рядом, а не вместо.
+             КЭШ-ЭФФЕКТ ТРЕТЬЕЙ СТРОКОЙ, И ОН ПУСТ. Прочерк, а не «$0»: ноль в
+             колонке денег читается как «ничего не даёт», а здесь эффект есть,
+             он просто не в кассе. Вопрос «мы кого-то уволим?» задают первым, и
+             отвечать на него лучше до того, как он задан. */
+          CAP ? `<tr><td>Working hours freed<span class="b24x-td-sub">${fte1(CAP.fte)} full-time equivalents</span></td><td>${hours(CAP.hoursMonth)}</td><td>${hours(CAP.hoursYear)}</td></tr>
+        <tr><td>Cash effect<span class="b24x-td-sub">while the team stays the same size</span></td><td>${DASH}</td><td>${DASH}</td></tr>` : ""}
         ${S.showRevenue && T.revMonth > 0 ? `<tr><td>Additional: revenue uplift (estimate)</td><td>${money(T.revMonth)}</td><td>${money(T.revMonth * 12)}</td></tr>` : ""}
         ${S.showRevenue && T.potMonth > 0 ? `<tr><td>Additional: existing-base potential (estimate)</td><td>${money(T.potMonth)}</td><td>${money(T.potMonth * 12)}</td></tr>` : ""}
       </tbody>
     </table>
   </div>
 
-  <div class="b24-table-wrap" style="margin-top:var(--b24-s6)">
+  <div class="b24-dashed" style="margin-top:var(--b24-s5)">
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      <span class="b24-strong">What this figure means.</span> It is the cost of the working time now spent on these tasks. It is not profit, and not cash freed up. The hours are the same time counted in a unit the client can check against their own records.
+    </p>
+  </div>
+  ${footer()}
+</section>`;
+
+  /* ЛИСТ 2 — ЗАТРАТЫ И ОКУПАЕМОСТЬ. Они уехали с первого листа вместе, и это не
+     остаток места: «сколько это стоит и когда вернётся» — один вопрос, и оговорка
+     про неоценённые сценарии относится к обеим строкам сразу. */
+  const second = `
+<section class="page page--sky">
+  ${runhead("Headline")}
+  <h1 class="b24-h1">First-year cost${num(2)}</h1>
+
+  <div class="b24-table-wrap">
     <table class="b24-table">
       <thead><tr><th>First year</th><th>Amount</th></tr></thead>
       <tbody>
@@ -460,40 +481,60 @@ const headline = () => {
               : ""}</td><td>− ${money(T.serviceSum)}</td></tr>
         <tr><td><strong>Total first-year cost</strong></td><td><strong>− ${money(T.firstYearCost)}</strong></td></tr>
         <tr><td><strong>Net first-year payroll saving</strong></td><td><strong>${money(T.netFirstYear)}</strong></td></tr>
+        ${/* ОКУПАЕМОСТЬ ПЕЧАТАЕТСЯ ТОЛЬКО КОГДА ОЦЕНЕНЫ ВСЕ СЦЕНАРИИ. Решение принято
+             в модели, здесь только его исполнение: при неполных затратах дробь выходит
+             короче настоящей ровно на то, что не вписано, а окупаемость — та цифра,
+             которой финансовый директор доверяет больше всего. Вместо числа — причина. */
+          !CAP ? ""
+          : CAP.paybackBlocked === "unquoted"
+            ? `<tr><td>Payback</td><td>not yet — ${int(CAP.unquoted)} scenario(s) have no fee</td></tr>`
+          : CAP.paybackBlocked ? ""
+          : `<tr><td><strong>Payback</strong></td><td><strong>${
+              CAP.paybackMonths < 2
+                ? `${new Intl.NumberFormat(LOC,{maximumFractionDigits:1}).format(Math.round(CAP.paybackMonths*(52/12)*10)/10)} weeks`
+                : `${new Intl.NumberFormat(LOC,{maximumFractionDigits:1}).format(Math.round(CAP.paybackMonths*10)/10)} months`
+            }</strong></td></tr>`}
       </tbody>
     </table>
   </div>
   ${T.serviceUnquoted ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
-    ${int(T.serviceUnquoted)} scenario(s) are not priced yet, so the figure above is not the full implementation cost.</p>` : ""}
-
-  ${overlapBlock()}
-${twoUp ? "" : explain}
+    ${int(T.serviceUnquoted)} scenario(s) are not priced yet, so the figure above is not the full implementation cost, and the payback cannot be worked out from it.</p>` : ""}
   ${footer()}
 </section>`;
-  if (!twoUp) return first;
-  /* Второй лист называется тем, что на нём лежит, а не «The numbers (2/2)»:
-     цифр на нём нет, там только чтение цифр.
 
-     ПРЕДУПРЕЖДЕНИЕ ПО ВЫРУЧКЕ СТОИТ ЗДЕСЬ, А НЕ РЯДОМ С ТАБЛИЦЕЙ. Замер: два
-     предупреждения сразу (перекрытие сценариев и выручка) вместе с двумя
-     таблицами не помещаются — низ уезжал на 183px за полосу и срезал подвал.
-     Разносим по смыслу, а не по остатку места: предупреждение о перекрытии —
-     про экономию ФОТ, то есть про главную цифру первого листа, и остаётся с
-     ней; предупреждение по выручке — про то, КАК читать строки прогноза, а этот
-     лист ровно так и называется. Оно стоит на нём первым блоком и в том же
-     янтарном виде, то есть не спрятано, а поставлено под своим заголовком.
-     Лист существует всегда, когда предупреждение может сработать: guard меряет
-     только при показанной выручке, а показанная выручка сама по себе включает
-     разбиение. */
-  return first + `
+  /* ЛИСТ 3 — КАК ЧИТАТЬ ЦИФРЫ. Сюда переехало ОБА предупреждения о достоверности:
+     раньше предупреждение по экономии ФОТ оставалось при цифрах, а по выручке
+     уезжало сюда. Теперь оба здесь, и это честнее по смыслу — лист ровно так и
+     называется, а предупреждение это и есть инструкция по чтению. */
+  const third = `
 <section class="page page--sky">
   ${runhead("Headline")}
-  <h1 class="b24-h1">How to read these numbers${num(2)}</h1>
+  <h1 class="b24-h1">How to read these numbers${num(3)}</h1>
+  ${overlapBlock()}
   ${revenueBlock()}
-${explain}
+
+  <div class="b24-quote">
+    Payroll saving is the sum of the selected scenarios over twelve months. Scenarios counted
+    in days are scaled to ${int(S.economics.daysMonth)} working days. The hourly cost of an
+    employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
+    ${int(S.economics.burdenPct)}% employer payroll burden.
+    ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
+    ${/* ТЕКСТ ПРИХОДИТ ГОТОВЫМ ИЗ СОСТОЯНИЯ — тем же порядком, что оба
+         предупреждения: формулировка обязана быть одна на экране и в документе,
+         иначе партнёр говорит клиенту одно, а бумага другое. */
+      R && R.text ? esc(R.text) : ""}
+    ${/* ЧУВСТВИТЕЛЬНОСТЬ И КЭШ — тоже готовыми строками, из того же состояния.
+         Чувствительность выражена через режимы, а не отдельным «если половина»:
+         переключатель отвечает на тот же вопрос, и два числа про одно и то же
+         рядом заставили бы читателя выбирать, какое применено. */
+      CAP && CAP.sensitivityText ? esc(CAP.sensitivityText) : ""}
+    ${CAP && CAP.cashNote ? `<span class="b24-strong">Cash effect.</span> ${esc(CAP.cashNote)}` : ""}
+  </div>
   ${footer()}
 </section>`;
+  return first + second + third;
 };
+
 
 /* ПРЕДУПРЕЖДЕНИЕ ПО ВЫРУЧКЕ. Та же логика, что у overlapBlock: клиент вправе
    знать, что прогноз выше уровня, который мы считаем защитимым, — умолчать было
