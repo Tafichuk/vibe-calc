@@ -293,6 +293,30 @@ if (D.agentGatedFotYear) {
   }
 }
 
+/* РЕЖИМ РЕАЛИЗАЦИИ. Экран называет допущение, на котором построена каждая цифра;
+   документ обязан назвать ТО ЖЕ допущение и теми же словами. Расчёт без этой
+   пометки — то же самое, что отчёт без бейджа «estimate»: цифра выглядит
+   измеренной и ею не является.
+   Проверяются обе величины, а не только имя: доля обязана совпасть с той, что
+   стоит на экране, иначе документ назовёт режим правильно и посчитает по
+   другому. Ветка условная — состояния, снятые до появления переключателя, блока
+   не несут и печатать им нечего. */
+if (S.realisation) {
+  if (D.realisationCase == null)
+    problems.push({ what: `realisation mode missing from display`,
+                    a: "the state carries a realisation block",
+                    b: "(display.realisationCase is null)" });
+  else if (!reportText.includes(D.realisationCase))
+    problems.push({ what: `realisation mode in the report`,
+                    a: D.realisationCase,
+                    b: "(not found; the report does not name the assumption the figures are built on)" });
+  const share = `${S.realisation.pct}%`;
+  if (!reportText.includes(share))
+    problems.push({ what: `realisation share in the report`,
+                    a: share,
+                    b: "(not found; the report names the mode but not the share it applied)" });
+}
+
 /* the credibility warning, when it is on, must carry the same percentage */
 if (S.overlap && !S.overlap.ok) {
   /* Знак процента теперь ВНУТРИ строки display.overlapPct: экранный fmtPct1

@@ -88,6 +88,14 @@ section{scroll-margin-top:76px}
   box-shadow:0 1px 3px rgba(0,102,161,.18)}
 .sw-lab{font:600 12px/1 var(--b24-font-body); color:var(--b24-text-mute);
   text-transform:uppercase; letter-spacing:.06em; margin-right:var(--b24-s2)}
+/* Полоса режима реализации. Подсказка длинная намеренно (она несёт всё
+   обоснование), поэтому ширина ограничена по числу знаков, а не по колонке
+   сетки: в три клетки grid-co этот текст читался бы столбиком в 20 символов. */
+.real-strip .field{gap:var(--b24-s2)}
+.real-strip .switch{align-self:flex-start; flex-wrap:wrap}
+.real-strip .hint{max-width:88ch}
+@media (max-width:560px){ .real-strip .switch{width:100%}
+  .real-strip .switch button{flex:1 1 auto} }
 
 /* ---- hero: navy sheet, signature radial gradient only ----
    Padding trimmed: 64/48 left a dead navy band under the pills that read as
@@ -292,6 +300,9 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 /* the clarification sits directly under the headline number, spanning the grid */
 .fot-meaning{grid-column:1/-1; font-size:12.5px; color:var(--b24-on-navy-soft);
   margin:-2px 0 var(--b24-s2); max-width:78ch}
+/* Имя режима внутри строки — полужирным: это единственное слово в сводке, которое
+   партнёр может переключить, и глаз обязан находить его без чтения. */
+.fot-real b{color:var(--b24-on-navy); font-weight:700}
 .hint.logo-err{color:var(--b24x-warning-ink); font-weight:600}
 .qual{grid-column:1/-1; font-size:13px; color:var(--b24-on-navy-soft); margin-top:var(--b24-s3)}
 
@@ -495,6 +506,24 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
     <p class="note-line" data-i18n="ui.companyNote"></p>
     <div class="card">
       <div class="grid-co b24x-field-row" id="co-grid"></div>
+      <!-- РЕЖИМ РЕАЛИЗАЦИИ — СВОЙ РЯД, А НЕ ЧЕТВЁРТОЕ ПОЛЕ В РЯДУ НИЖЕ.
+           Нагрузка, рабочие дни и прогноз выручки — три равноправные настройки, и
+           четвёртая клетка встала бы рядом с ними как ещё одна мелочь. Этот
+           переключатель двигает КАЖДУЮ цифру документа, поэтому у него отдельная
+           полоса на всю ширину карточки и подсказка длиной в объяснение, а не в
+           подпись. Он же единственная настройка, у которой дефолт выбран против
+           интересов продажи. -->
+      <div class="real-strip" style="margin-top:var(--b24-s5); border-top:1px solid var(--b24-line); padding-top:var(--b24-s5)">
+        <div class="field">
+          <label id="real-lab" data-i18n="ui.realLabel"></label>
+          <div class="switch" id="sw-real" role="group" aria-labelledby="real-lab">
+            <button type="button" data-real="conservative" aria-pressed="true"></button>
+            <button type="button" data-real="expected" aria-pressed="false"></button>
+            <button type="button" data-real="optimistic" aria-pressed="false"></button>
+          </div>
+          <span class="hint" data-i18n="ui.realHint"></span>
+        </div>
+      </div>
       <div class="grid-co b24x-field-row" style="margin-top:var(--b24-s5); border-top:1px solid var(--b24-line); padding-top:var(--b24-s5)">
         <div class="field">
           <label for="burden"><span data-i18n="ui.burden"></span></label>
@@ -782,6 +811,79 @@ const hoursMonth = () => daysMonth * C.DAY_HOURS;
 let SHOW_REVENUE = false;
 
 /* =============================================================================
+   REALISATION — КАКАЯ ДОЛЯ НАЗВАННОГО ВРЕМЕНИ ДЕЙСТВИТЕЛЬНО ИСЧЕЗАЕТ
+   Один переключатель на весь расчёт, а не поле у каждого сценария.
+
+   ЧТО ОН ЛЕЧИТ. Охват отвечает на вопрос «кого касается сценарий». На вопрос
+   «какая доля названного времени реально уходит» модель до сих пор не отвечала —
+   она молча брала 100%. То есть предполагалось, что CoPilot убирает названные
+   десять минут на звонок без остатка: без проверки, без правки, без исключений,
+   без привыкания. Ни одно внедрение так не работает, и возврат 23:1 за первый
+   год брался ровно отсюда.
+
+   ПОЧЕМУ ОДИН НА ВСЁ, А НЕ ПОЛЕ У СЦЕНАРИЯ. Поле у каждого — это одиннадцать
+   спорных дефолтов вместо одного и одиннадцать разговоров вместо одного. Один
+   переключатель партнёр объявляет вслух («считаем консервативно»), и планку при
+   клиенте поднимает он сам — это его аргумент, а не наш навязанный коэффициент.
+
+   ОТКУДА ТРИ ЧИСЛА. Каждое — произведение трёх независимых остатков, а не
+   подобранная круглая доля:
+
+       k = (1 − проверка) x (1 − исключения) x освоение
+
+     проверка   — доля названного времени, которая возвращается проверкой и
+                  правкой того, что сделал ИИ: расшифровку читают, поля в
+                  карточке сверяют, документ вычитывают;
+     исключения — доля событий, которые ИИ не берёт вообще (плохая запись,
+                  нетиповая сделка, недостающие данные) — там время не
+                  сокращается ни на минуту;
+     освоение   — средняя доля ПЕРВОГО ГОДА, в течение которой охваченные
+                  сотрудники действительно работают по-новому. Именно первого:
+                  главная цифра калькулятора — за первый год, и раскатка,
+                  обучение и привычка приходятся на него.
+
+     консервативно  0.70 x 0.80 x 0.70 = 0.392 -> 0.40
+     ожидаемо       0.80 x 0.88 x 0.92 = 0.648 -> 0.65
+     оптимистично   0.90 x 0.95 x 1.00 = 0.855 -> 0.85
+
+   ПОЧЕМУ ПОТОЛОК 0.85, А НЕ 1.0. Единица означает «проверки нет, исключений нет,
+   освоение мгновенное и полное» — то есть ровно то допущение, которое эта правка
+   и убирает. Оставить её выбираемой значило бы переименовать сломанное число в
+   «оптимистично» и ждать, что под давлением сделки его никто не нажмёт. Верхний
+   режим обязан оставаться защитимым, поэтому даже в лучшем случае что-то
+   остаётся.
+
+   СВЕРКА С СОБСТВЕННОЙ ДОКУМЕНТАЦИЕЙ. README говорит, что реальные
+   кросс-функциональные внедрения ИИ дают единицы — низкие десятки процентов ФОТ.
+   На дефолтах со всеми одиннадцатью сценариями калькулятор давал 19.5% ФОТ.
+   После множителя: 7.8% (консервативно), 12.7% (ожидаемо), 16.6%
+   (оптимистично). Два нижних режима попадают внутрь диапазона, который проект
+   сам называет реальным, верхний стоит выше него — как и положено верхнему. При
+   множителе 1.0 «оптимистично» дало бы те же 19.5%, то есть первое же открытие
+   калькулятора показывало бы цифру у самого порога правдоподобности.
+
+   К ЧЕМУ ПРИМЕНЯЕТСЯ. К экономии ФОТ — всегда. К выручке — ТОЛЬКО там, где она
+   выведена из высвобожденного времени (признак revFromTime у сценария). См.
+   комментарий у computeScenario: это не двойное занижение, а два разных вопроса
+   подряд.
+   ========================================================================== */
+const REALISATION = [
+  {id:"conservative", k:0.40, review:30, exceptions:20, ramp:70},
+  {id:"expected",     k:0.65, review:20, exceptions:12, ramp:92},
+  {id:"optimistic",   k:0.85, review:10, exceptions:5,  ramp:100},
+];
+/* КОНСЕРВАТИВНО ПО УМОЛЧАНИЮ — по той же причине, по которой при загрузке не
+   выбран ни один сценарий и выключен прогноз выручки: дефолт обязан стоить
+   партнёру денег в моменте, иначе он не покупает доверие. */
+const REALISATION_DEF = "conservative";
+let realisationId = REALISATION_DEF;
+const realisationRow = () => REALISATION.find(r => r.id === realisationId) || REALISATION[0];
+/* Множитель. Единственная точка, из которой его берёт расчёт. */
+const realisation = () => realisationRow().k;
+/* Доля в процентах — для копий, где число печатается словами. */
+const realisationPct = () => Math.round(realisation() * 100);
+
+/* =============================================================================
    PRICING — derived from config/pricing.json (source of record).
    Embedded so the page stays a single static file that also works over file://.
    Re-copy this block when config/pricing.json changes.
@@ -977,6 +1079,25 @@ en: {
   "ui.revWarnReport":"The projected revenue is {projected} a year, which is {pct} of the {pool} it could come from ({parts}). That is above the {limit}% credibility limit. These figures are projections, and the payroll saving does not depend on them.",
   "ui.revPoolTarget":"the sales team's annual target ({v})",
   "ui.revPoolBase":"one purchase from every client in the base ({v})",
+
+  // ---- realisation mode ----
+  /* Формулировки короткие намеренно: переключатель стоит в шаге 1 рядом с
+     нагрузкой и рабочими днями, и подпись обязана читаться с одного взгляда.
+     Развёрнутое объяснение — в подсказке под ним и в отчёте. */
+  "ui.realLabel":"How much of the named time really goes",
+  "ui.realMode.conservative":"Conservative",
+  "ui.realMode.expected":"Expected",
+  "ui.realMode.optimistic":"Optimistic",
+  "ui.realCase.conservative":"conservative case",
+  "ui.realCase.expected":"expected case",
+  "ui.realCase.optimistic":"optimistic case",
+  "ui.realHint":"Naming ten minutes a call does not mean ten minutes disappear. Someone still checks and corrects what the AI produced, some cases it cannot take at all, and the first year includes learning the new way of working. This switch sets the share that really goes and applies to every scenario at once. Conservative keeps {conservative}, Expected {expected}, Optimistic {optimistic} — even the top setting leaves something behind, because no rollout removes the whole task. Conservative is the default on purpose: a smaller number the client believes is worth more than a big one they do not.",
+  /* Строка в сводке. Стоит рядом с главной цифрой, потому что режим — это
+     допущение ИМЕННО под ней, а не общая оговорка внизу. */
+  "ui.realSummary":"Counted on the <b>{realCase}</b>: {realPct} of the named time is treated as really going. The other {realRest} stays with the team — checking, exceptions, learning the new way.",
+  /* Текст для отчёта. Едет ГОТОВЫМ вместе с состоянием, как и оба
+     предупреждения: формулировка обязана быть одна на экране и в документе. */
+  "ui.realReport":"Counted on the {realCase}: {realPct} of the time named in each scenario is treated as really going, and the other {realRest} stays with the team for checking, exceptions and learning the new way. It applies to every scenario in this report. Conservative is the default, and the setting is named here so you can see the assumption these figures are built on.",
 
   // ---- revenue switch ----
   "ui.revToggleLabel":"Revenue projection",
@@ -1301,6 +1422,15 @@ const copyVars = () => ({
   dayh:  C.DAY_HOURS,
   gain:  Math.round(C.MEETING_GAIN * 100) + "%",
   base:  Math.round(C.BASE_UPLIFT * 100) + "%",
+  /* РЕЖИМ РЕАЛИЗАЦИИ И ЕГО ДОЛИ. Ни одно из этих чисел не набирается в
+     переводимой строке руками: правка таблицы REALISATION обязана двигать копию
+     сама, иначе интерфейс начнёт обещать одну долю, а расчёт брать другую.
+     Доли всех трёх режимов нужны в подсказке — она перечисляет их рядом. */
+  realMode: t("ui.realMode." + realisationId),
+  realCase: t("ui.realCase." + realisationId),
+  realPct:  realisationPct() + "%",
+  realRest: (100 - realisationPct()) + "%",
+  ...Object.fromEntries(REALISATION.map(r => [r.id, Math.round(r.k * 100) + "%"])),
 });
 
 /* =============================================================================
@@ -1408,6 +1538,11 @@ const scenarios = [
     /* Пул правдоподобности: годовой план продаж всей команды. Прирост выручки
        здесь — доля этого плана, и сравнивать его правильно именно с ним. */
     revPool:v=>({key:"target", year: v.plan * v.mgr * 12}),
+    /* ВЫРУЧКА ВЫВЕДЕНА ИЗ ВЫСВОБОЖДЕННОГО ВРЕМЕНИ, значит множитель реализации
+       её касается: freedShare — это те же снятые с менеджера минуты. Пул при
+       этом остаётся полным (план продаж от ИИ не зависит), поэтому прогноз
+       занимает в нём меньшую долю — предохранитель по выручке это увидит. */
+    revFromTime:true,
     compute:v=>{
       const savedMinDay = v.calls * v.time;
       const savedHoursMonth = savedMinDay * daysMonth / 60;
@@ -2014,6 +2149,37 @@ function computeScenario(sc, st){
       else r.breakdown.forEach((b,j)=>{ if(breakdown[j]) breakdown[j][1] += b[1]; });
     }
   });
+  /* МНОЖИТЕЛЬ РЕАЛИЗАЦИИ — ЕДИНСТВЕННАЯ ТОЧКА ПРИМЕНЕНИЯ НА ВЕСЬ РАСЧЁТ.
+     Стоит здесь, а не в computeModel, чтобы через него проходил КАЖДЫЙ
+     потребитель без исключения: items и суммы, предохранитель по ФОТ, доля
+     недоступного на выбранном тарифе, обе поверхности вывода. Второго места,
+     где сценарий превращается в деньги, в модели нет.
+
+     Применяется ПОСЛЕ суммирования наборов, а не внутри цикла: умножение
+     линейно, результат тот же до последнего бита, а читается лучше.
+     Инвариант «промежуточные не округляем» не тронут — здесь нет округления.
+
+     ВЫРУЧКА — ТОЛЬКО ПРИ ПРИЗНАКЕ revFromTime, И ЭТО НЕ ДВОЙНОЕ ЗАНИЖЕНИЕ.
+     У сценария 1 прирост выручки выведен ИЗ ТОГО ЖЕ высвобожденного времени
+     (freedShare — доля рабочего дня, снятая с менеджера). Если реально исчезает
+     40% названного времени, то и часов, которые можно продать, существует 40%:
+     не применить множитель здесь значило бы показать на экране уменьшенную
+     экономию и нетронутую выручку, посчитанную с тех же самых минут. Собственный
+     коэффициент конверсии (sc.1.f.coef) отвечает на ДРУГОЙ вопрос — какая доля
+     уже высвобожденного времени превращается в сделки. Два фильтра подряд:
+     сколько времени есть, и сколько оно приносит.
+     Потенциал существующей базы (сценарий 5) времени не содержит вообще —
+     он считается от размера базы, конверсии и чека, — и множителя не получает.
+     Признак объявлен полем У СЦЕНАРИЯ, рядом с формулой, а не собирается здесь
+     по id: сценарий с эффектом на выручку, заведённый завтра, обязан сам
+     сказать, из чего она выведена. */
+  const k = realisation();
+  fot *= k;
+  if(sc.revFromTime) rev *= k;
+  /* Слагаемые в раскрытии — те же деньги, что и в итоге сценария, и обязаны
+     сходиться с ним на экране. Целочисленные строки («инициаторов 2») — это
+     люди, а не деньги, и множителю не подлежат. */
+  if(breakdown) breakdown.forEach(b=>{ if(b[2] !== "int") b[1] *= k; });
   return {fot, rev, breakdown};
 }
 
@@ -2545,6 +2711,13 @@ function renderSummary(model){
       <div class="lbl">${t("ui.sumFot")}</div>
       <div class="num">${fmtMoney(fot)}</div><div class="num year">${fmtMoney(fotYear)}</div>
       <div class="fot-meaning">${t("ui.fotMeaning")}</div>
+      <div class="fot-meaning fot-real">${
+        /* ДОПУЩЕНИЕ СТОИТ ПРИ ЦИФРЕ, А НЕ ОБЩЕЙ ОГОВОРКОЙ ВНИЗУ. Режим двигает
+           именно эту сумму, и партнёр обязан видеть, на чём она построена, в тот
+           же момент, когда её называет. Вид тот же, что у строки «что эта цифра
+           означает», плюс полужирное имя режима: это соседние по смыслу
+           пояснения, но допущение — то, которое партнёр переключает. */
+        t("ui.realSummary", copyVars())}</div>
       ${(SHOW_REVENUE && rev>0)?`<div class="lbl">${t("ui.sumRev")}</div><div class="num">${fmtMoney(rev)}</div>
         <div class="num year">${fmtMoney(rev*12)}</div>`:""}
       ${(SHOW_REVENUE && pot>0)?`<div class="lbl">${t("ui.sumPot")}</div><div class="num">${fmtMoney(pot)}</div>
@@ -2809,6 +2982,21 @@ function reportState(){
     partner: {...partner},
     economics: {daysMonth, dayHours: C.DAY_HOURS, contractDays: C.CONTRACT_DAYS,
                 contractHours: contractHours(), burdenPct},
+    /* РЕЖИМ РЕАЛИЗАЦИИ ЕДЕТ ВМЕСТЕ С ДАННЫМИ, и текст едет ГОТОВЫМ — тем же
+       порядком, что оба предупреждения. Клиент обязан видеть, на каком допущении
+       построен расчёт, а формулировка обязана быть одна на экране и в документе.
+       Множитель кладём числом рядом с именем: отчёту он не нужен для расчёта
+       (он ничего не считает), но без него состояние нельзя проверить глазами.
+       Состояния, снятые до этой правки, блока не несут — печатать им нечего. */
+    realisation: {
+      id: realisationId,
+      k: realisation(),
+      mode: t("ui.realMode." + realisationId),
+      case: t("ui.realCase." + realisationId),
+      pct: realisationPct(),
+      isDefault: realisationId === REALISATION_DEF,
+      text: t("ui.realReport", copyVars()),
+    },
     /* The credibility guard travels WITH the data, so the warning cannot be lost
        between the screen and the PDF. */
     overlap: {
@@ -2876,6 +3064,10 @@ function reportState(){
       planToAnnualTotal: fmtMoney(vibe.annualTotal),
       diffPerMonth: PP.diff ? fmtMoney(PP.diff.perMonth) : null,
       overlapPct:      fmtPct1(m.overlap.pct),
+      /* Имя режима так, как его печатает экран. check-parity ищет ЭТУ строку в
+         документе: расчёт, не назвавший своё допущение, — это тот же отчёт без
+         пометки об оценке. */
+      realisationCase: t("ui.realCase." + realisationId),
       /* Доля прогноза выручки в пуле. Пустая строка, когда мерить нечего:
          check-parity сверяет её с отчётом только когда предохранитель сработал. */
       revGuardPct:     m.revGuard.ok ? null : fmtPct1(m.revGuard.pct),
@@ -2925,7 +3117,7 @@ function reportState(){
        «сохранением», а не выгрузкой для печати. Отчёты этот блок игнорируют. */
     restore: {
       version: 1,
-      burdenPct, daysMonth, showRevenue: SHOW_REVENUE,
+      burdenPct, daysMonth, showRevenue: SHOW_REVENUE, realisation: realisationId,
       company: {...company},
       partner: {...partner},
       plan: {essPlan, tgtPlanName, tgtAuto},
@@ -3021,6 +3213,12 @@ function buildReport(S, {assets}) {
      по-старому. */
   const showRev = !!S.showRevenue;
   const noRev = it => it.hasRev === false;
+  /* РЕЖИМ РЕАЛИЗАЦИИ. Состояния, снятые до появления переключателя, блока не
+     несут — и тогда документ о режиме молчит, а не подставляет «conservative»
+     за расчёт, который считался при 100%. Ни одно число здесь не выводится:
+     имя режима, доля и готовый текст приходят из состояния. */
+  const R = S.realisation || null;
+  const realCase = R ? R.case : null;
   /* ШИРИНА НА A4. Отбивка кита (18px по горизонтали, кегль 15-16px) рассчитана на
      пять колонок: при пяти таблица встаёт в 656px против 658px полосы набора.
      Больше пяти — и таблица перестаёт влезать. Замерено на всех одиннадцати
@@ -3332,7 +3530,17 @@ const cover = () => `
 const headlineTwoUp = () =>
   (!!S.showRevenue && ((T.revMonth || 0) > 0 || (T.potMonth || 0) > 0)) ||
   !!(S.overlap && !S.overlap.ok) ||
-  !!(S.revGuard && !S.revGuard.ok && S.revGuard.text);
+  !!(S.revGuard && !S.revGuard.ok && S.revGuard.text) ||
+  /* РЕЖИМ РЕАЛИЗАЦИИ РАЗБИВАЕТ ЛИСТ ТОЖЕ. Объяснение допущения — два предложения
+     в блоке оснований расчёта, и замер показал, что с ними лист «The numbers»
+     одним листом больше не держится: блок оснований уходил на 5.6px за полосу
+     набора и уносил за собой подвал. Лечим переносом, как всё остальное в этом
+     файле, а не кеглем. Заодно это честно по смыслу: у документа теперь всегда
+     есть что сказать о том, КАК читать цифры, — раньше бывало, что нечего.
+     Состояния, снятые до появления переключателя, блока не несут и по-прежнему
+     собираются одним листом; эту ветку держит четвёртый случай в
+     check-geometry. */
+  !!(S.realisation && S.realisation.text);
 
 const headline = () => {
   const twoUp = headlineTwoUp();
@@ -3350,6 +3558,10 @@ const headline = () => {
     employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
     ${int(S.economics.burdenPct)}% employer payroll burden.
     ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
+    ${/* ТЕКСТ ПРИХОДИТ ГОТОВЫМ ИЗ СОСТОЯНИЯ — тем же порядком, что оба
+         предупреждения: формулировка обязана быть одна на экране и в документе,
+         иначе партнёр говорит клиенту одно, а бумага другое. */
+      R && R.text ? esc(R.text) : ""}
   </div>`;
   const first = `
 <section class="page page--sky">
@@ -3360,7 +3572,13 @@ const headline = () => {
     <table class="b24-table">
       <thead><tr><th>What</th><th>Month</th><th>Year</th></tr></thead>
       <tbody>
-        <tr><td>Payroll saving</td><td>${money(T.fotMonth)}</td><td>${money(T.fotYear)}</td></tr>
+        <tr><td>Payroll saving${/* ДОПУЩЕНИЕ В САМОЙ ПОДПИСИ СТРОКИ — тем же приёмом, каким
+              помечены оценки в строках выручки («Additional: revenue uplift (estimate)»).
+              Выбрано осознанно вместо блока или отдельной строки под таблицей: этот лист
+              самый плотный в документе, а подпись строки не стоит ни одного пикселя высоты
+              и стоит РЯДОМ с цифрой, к которой относится. Доля тут же, чтобы допущение
+              читалось без перехода на второй лист. */
+              R ? ` (${esc(R.case)}, ${int(R.pct)}% of named time)` : ""}</td><td>${money(T.fotMonth)}</td><td>${money(T.fotYear)}</td></tr>
         ${S.showRevenue && T.revMonth > 0 ? `<tr><td>Additional: revenue uplift (estimate)</td><td>${money(T.revMonth)}</td><td>${money(T.revMonth * 12)}</td></tr>` : ""}
         ${S.showRevenue && T.potMonth > 0 ? `<tr><td>Additional: existing-base potential (estimate)</td><td>${money(T.potMonth)}</td><td>${money(T.potMonth * 12)}</td></tr>` : ""}
       </tbody>
@@ -4025,6 +4243,16 @@ function applyLoadedState(st){
     SHOW_REVENUE = !!rev;
     const cb = document.getElementById("show-rev"); if(cb) cb.checked = SHOW_REVENUE;
   }
+  /* РЕЖИМ РЕАЛИЗАЦИИ ИЗ ФАЙЛА. Файл, снятый ДО появления переключателя, поля не
+     несёт — и открывается на консервативном режиме, а не «как считался раньше».
+     Это осознанное пересчитывание: считался он при 100%, а сотни процентов в
+     калькуляторе больше нет и выбрать её нельзя. Открыть старый файл и молча
+     оставить его на недоступном допущении было бы хуже, чем показать цифру
+     ниже: партнёр увидит имя режима на экране и в отчёте и поймёт, что
+     изменилось. Неизвестное имя режима лечится тем же способом — дефолтом. */
+  const rid = R ? R.realisation : st.realisation;
+  realisationId = REALISATION.some(r=>r.id === rid) ? rid : REALISATION_DEF;
+  paintRealisation();
   document.getElementById("burden").value = String(burdenPct);
   document.getElementById("days").value = String(daysMonth);
 
@@ -4490,7 +4718,7 @@ function applyPartnerLogo(){
 }
 
 function rerenderAll(){
-  applyStatic(); buildCompany(); buildPartner(); buildScenarios(); buildServices(); recompute();
+  applyStatic(); paintRealisation(); buildCompany(); buildPartner(); buildScenarios(); buildServices(); recompute();
 }
 
 document.querySelectorAll("#sw-lang button").forEach(b=>{
@@ -4568,6 +4796,31 @@ document.getElementById("show-rev").addEventListener("change", e=>{
   buildScenarios();   // revOnly fields appear/disappear with the switch
   recompute();
 });
+/* РЕЖИМ РЕАЛИЗАЦИИ. Пересчёт полный, а не refreshTotals: множитель меняет и
+   слагаемые в раскрытии внутри карточек, и суммы, и оба предохранителя.
+   Кнопки не перерисовываются — переключается только aria-pressed, потому что
+   имена в них уже стоят от applyStatic. */
+function setRealisation(id){
+  if(!REALISATION.some(r=>r.id === id)) return;
+  realisationId = id;
+  paintRealisation();
+  recompute();
+}
+/* Имя кнопки зависит от её data-real, а не от одного ключа, поэтому data-i18n на
+   ней не работает и подписи ставятся здесь. Отсюда же — вызов после смены языка:
+   applyStatic() эти кнопки не видит.
+   Подсказка перечисляет доли всех трёх режимов и от выбранного не зависит —
+   перерисовывать её не нужно. Строку в сводке рисует renderSummary. */
+function paintRealisation(){
+  document.querySelectorAll("#sw-real button").forEach(b=>{
+    b.textContent = t("ui.realMode." + b.dataset.real);
+    b.setAttribute("aria-pressed", String(b.dataset.real === realisationId));
+  });
+}
+document.getElementById("sw-real").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-real]");
+  if(b) setRealisation(b.dataset.real);
+});
 document.getElementById("dl-state").addEventListener("click", downloadState);
 document.getElementById("pdf-client").addEventListener("click", ()=> reportToPdf());
 document.getElementById("load-state").addEventListener("change", e=> loadStateFile(e.target));
@@ -4580,6 +4833,7 @@ document.getElementById("burden").value = String(C.BURDEN_PCT);
 document.getElementById("days").value = String(C.DAYS_MONTH);
 document.getElementById("show-rev").checked = SHOW_REVENUE;
 applyStatic();
+paintRealisation();
 buildCompany();
 buildPartner();
 Object.keys(AUTOFILL).forEach(applyCompany);

@@ -78,6 +78,12 @@ export function buildReport(S, {assets}) {
      по-старому. */
   const showRev = !!S.showRevenue;
   const noRev = it => it.hasRev === false;
+  /* РЕЖИМ РЕАЛИЗАЦИИ. Состояния, снятые до появления переключателя, блока не
+     несут — и тогда документ о режиме молчит, а не подставляет «conservative»
+     за расчёт, который считался при 100%. Ни одно число здесь не выводится:
+     имя режима, доля и готовый текст приходят из состояния. */
+  const R = S.realisation || null;
+  const realCase = R ? R.case : null;
   /* ШИРИНА НА A4. Отбивка кита (18px по горизонтали, кегль 15-16px) рассчитана на
      пять колонок: при пяти таблица встаёт в 656px против 658px полосы набора.
      Больше пяти — и таблица перестаёт влезать. Замерено на всех одиннадцати
@@ -389,7 +395,17 @@ const cover = () => `
 const headlineTwoUp = () =>
   (!!S.showRevenue && ((T.revMonth || 0) > 0 || (T.potMonth || 0) > 0)) ||
   !!(S.overlap && !S.overlap.ok) ||
-  !!(S.revGuard && !S.revGuard.ok && S.revGuard.text);
+  !!(S.revGuard && !S.revGuard.ok && S.revGuard.text) ||
+  /* РЕЖИМ РЕАЛИЗАЦИИ РАЗБИВАЕТ ЛИСТ ТОЖЕ. Объяснение допущения — два предложения
+     в блоке оснований расчёта, и замер показал, что с ними лист «The numbers»
+     одним листом больше не держится: блок оснований уходил на 5.6px за полосу
+     набора и уносил за собой подвал. Лечим переносом, как всё остальное в этом
+     файле, а не кеглем. Заодно это честно по смыслу: у документа теперь всегда
+     есть что сказать о том, КАК читать цифры, — раньше бывало, что нечего.
+     Состояния, снятые до появления переключателя, блока не несут и по-прежнему
+     собираются одним листом; эту ветку держит четвёртый случай в
+     check-geometry. */
+  !!(S.realisation && S.realisation.text);
 
 const headline = () => {
   const twoUp = headlineTwoUp();
@@ -407,6 +423,10 @@ const headline = () => {
     employee comes from ${int(S.economics.contractHours)} contracted hours a month and a
     ${int(S.economics.burdenPct)}% employer payroll burden.
     ${S.showRevenue ? "Revenue figures are projections and are shown separately. They never enter the net saving." : "This report leaves revenue projections out."}
+    ${/* ТЕКСТ ПРИХОДИТ ГОТОВЫМ ИЗ СОСТОЯНИЯ — тем же порядком, что оба
+         предупреждения: формулировка обязана быть одна на экране и в документе,
+         иначе партнёр говорит клиенту одно, а бумага другое. */
+      R && R.text ? esc(R.text) : ""}
   </div>`;
   const first = `
 <section class="page page--sky">
@@ -417,7 +437,13 @@ const headline = () => {
     <table class="b24-table">
       <thead><tr><th>What</th><th>Month</th><th>Year</th></tr></thead>
       <tbody>
-        <tr><td>Payroll saving</td><td>${money(T.fotMonth)}</td><td>${money(T.fotYear)}</td></tr>
+        <tr><td>Payroll saving${/* ДОПУЩЕНИЕ В САМОЙ ПОДПИСИ СТРОКИ — тем же приёмом, каким
+              помечены оценки в строках выручки («Additional: revenue uplift (estimate)»).
+              Выбрано осознанно вместо блока или отдельной строки под таблицей: этот лист
+              самый плотный в документе, а подпись строки не стоит ни одного пикселя высоты
+              и стоит РЯДОМ с цифрой, к которой относится. Доля тут же, чтобы допущение
+              читалось без перехода на второй лист. */
+              R ? ` (${esc(R.case)}, ${int(R.pct)}% of named time)` : ""}</td><td>${money(T.fotMonth)}</td><td>${money(T.fotYear)}</td></tr>
         ${S.showRevenue && T.revMonth > 0 ? `<tr><td>Additional: revenue uplift (estimate)</td><td>${money(T.revMonth)}</td><td>${money(T.revMonth * 12)}</td></tr>` : ""}
         ${S.showRevenue && T.potMonth > 0 ? `<tr><td>Additional: existing-base potential (estimate)</td><td>${money(T.potMonth)}</td><td>${money(T.potMonth * 12)}</td></tr>` : ""}
       </tbody>
