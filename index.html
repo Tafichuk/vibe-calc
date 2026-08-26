@@ -535,20 +535,24 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
         </div>
       </div>
       <div class="grid-co b24x-field-row" style="margin-top:var(--b24-s5); border-top:1px solid var(--b24-line); padding-top:var(--b24-s5)">
-        <div class="field">
+        <div class="field" data-field="burden">
           <label for="burden"><span data-i18n="ui.burden"></span></label>
           <div class="in-wrap">
-            <input class="b24x-input" id="burden" type="text" inputmode="decimal">
+            <input class="b24x-input" id="burden" type="text" inputmode="decimal"
+                   role="spinbutton" aria-valuemin="0" aria-valuemax="200" data-min="0" data-max="200">
             <span class="suf">%</span>
           </div>
+          <span class="err"></span>
           <span class="hint" data-i18n="ui.burdenHint"></span>
         </div>
-        <div class="field">
+        <div class="field" data-field="days">
           <label for="days"><span data-i18n="ui.days"></span></label>
           <div class="in-wrap">
-            <input class="b24x-input" id="days" type="text" inputmode="decimal">
+            <input class="b24x-input" id="days" type="text" inputmode="decimal"
+                   role="spinbutton" aria-valuemin="1" aria-valuemax="31" data-min="1" data-max="31">
             <span class="suf" data-i18n="suf.days"></span>
           </div>
+          <span class="err"></span>
           <span class="hint" data-i18n="ui.daysHint"></span>
         </div>
         <div class="field">
@@ -1463,6 +1467,20 @@ en: {
   "sc.2.f.total":"Requests per day (total)", "sc.2.f.ai":"Of those, closed by AI (per day)",
   "sc.2.f.time":"Time a specialist spends on one request",
   "sc.2.err.ai":"Cannot be more than the total requests",
+
+  // ---- границы полей (P12) ----
+  /* КОРОТКО И ПРО ПРИЧИНУ, а не про правило. «Must be a whole number» человек
+     исправляет сразу; «Value violates constraint» — нет. Предел подставляется из
+     таблицы LIMITS, а не набирается в строке. */
+  "err.notNumber":"This does not look like a number. Retype it, or clear the field to count it as zero.",
+  "err.negative":"Cannot be less than zero.",
+  "err.min":"Cannot be less than {min}.",
+  "err.max":"Cannot be more than {max}. Above that the figure stops describing a company.",
+  "err.whole":"Needs to be a whole number — half a person or half an event does not happen.",
+  /* Полоса над сводкой, когда невалидно поле ВНЕ сценария: такие поля питают все
+     сценарии сразу, и назвать один нельзя. */
+  "ui.globalErrH":"Check the company details",
+  "ui.globalErrBody":"One of the figures in step 1 is outside what the model can use, so the calculation is on hold. The field is marked below.",
   "info.2":"How many requests a day the AI closes instead of a specialist, and how many minutes a specialist used to spend on one request. The AI closes the whole request, so the whole time goes. We turn that into hours per month (x {days} working days) and multiply it by the specialist's hourly cost.",
   "int.2":"The integrator connects the open channels, fills the knowledge base with answers, sets the hand-off rules for complex cases, defines what to capture from the dialogue into the card and trains the support team. Scope depends on specialists and channels.",
 
@@ -1585,38 +1603,48 @@ const localeOf = () => (LANG === "de" ? "de-DE" : "en-US");
    разных минуса. Подменяем ведущий дефис на настоящий минус. */
 const toWhole = n => Math.round(Math.round((n || 0) * 100) / 100);
 const fixMinus = str => str.replace(/^-/, "\u2212");
-const fmtMoney = n => fixMinus(new Intl.NumberFormat(localeOf(), {
+/* ПОСЛЕДНИЙ РУБЕЖ ПЕРЕД ПИКСЕЛЯМИ. Валидация не даёт невалидному значению попасть
+   в расчёт, отказ сборки не даёт собрать отчёт — но форматтер это место, ГДЕ
+   ЧИСЛО СТАНОВИТСЯ ТЕКСТОМ, и он не имеет права напечатать «NaN%» или «$∞» ни при
+   каких обстоятельствах. Прогон до правки показал ровно эти две строки в
+   собранном отчёте: fmtPct1(NaN) давал «NaN%», fmtMoney(Infinity) давал «$∞».
+   Печатаем прочерк — тот же знак, которым в этом документе обозначено «величины
+   нет», и он не выглядит цифрой. Проверяется check-bounds.mjs. */
+const NO_VALUE = "\u2014";
+const finiteOr = (n, fn) => Number.isFinite(n) ? fn(n) : NO_VALUE;
+const fmtMoney = n => finiteOr(n, m => fixMinus(new Intl.NumberFormat(localeOf(), {
   style:"currency", currency:CUR, maximumFractionDigits:0
-}).format(toWhole(n)));
-const fmtInt = n => new Intl.NumberFormat(localeOf()).format(toWhole(n));
+}).format(toWhole(m))));
+const fmtInt = n => finiteOr(n, m => new Intl.NumberFormat(localeOf()).format(toWhole(m)));
 /* ПРОЦЕНТ БЕЗ ПРОБЕЛА. Было «70 %» здесь и «100%» в таблице отчёта — один
    документ, два вида записи. Приведено к варианту без пробела: он же стоит в
    шапках колонок и в подписях охвата, и его же ждёт check-parity. */
-const fmtPct = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
-  .format(Math.round(v * 1000) / 10) + "%";
+const fmtPct = v => finiteOr(v, x => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
+  .format(Math.round(x * 1000) / 10) + "%");
 /* ЧАСЫ — ЦЕЛЫМИ, СО РАЗДЕЛИТЕЛЕМ РАЗРЯДОВ И ЕДИНИЦЕЙ. Единица стоит в самой
    строке, а не в подписи: «4,033 h» читается как величина, а «4,033» в колонке
    рядом с деньгами читается как деньги без знака валюты.
    ШТАТНЫЕ ЕДИНИЦЫ — с одним знаком после запятой и всегда. «2 человека» звучит
    как факт о штатном расписании, «2.0» — как расчётная величина, и это правда:
    ноль целых чего-то там сотрудника не существует, существует эквивалент. */
-const fmtHours = n => new Intl.NumberFormat(localeOf()).format(toWhole(n)) + " h";
-const fmtFte = n => new Intl.NumberFormat(localeOf(), {minimumFractionDigits:1,
-  maximumFractionDigits:1}).format(Math.round((n || 0) * 10) / 10);
+const fmtHours = n => finiteOr(n, m => new Intl.NumberFormat(localeOf()).format(toWhole(m)) + " h");
+const fmtFte = n => finiteOr(n, m => new Intl.NumberFormat(localeOf(), {minimumFractionDigits:1,
+  maximumFractionDigits:1}).format(Math.round(m * 10) / 10));
 /* СРОК ОКУПАЕМОСТИ: недели или месяцы, и единицу выбирает величина, а не автор.
    До двух месяцев недели — «3.4 weeks» человек представляет, «0.8 months» нет.
    От двух месяцев месяцы: «11.3 weeks» уже требует деления в голове. */
 const PAYBACK_WEEK_LIMIT = 2;         /* месяцев */
 const fmtPayback = m => {
   if(m === null || m === undefined) return null;
+  if(!Number.isFinite(m)) return NO_VALUE;
   const one = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1}).format(Math.round(v * 10) / 10);
   return m < PAYBACK_WEEK_LIMIT
     ? t("ui.payWeeks", {n: one(m * (52 / 12))})
     : t("ui.payMonths", {n: one(m)});
 };
 /* already-a-percentage formatter (fmtPct takes a 0..1 share) */
-const fmtPct1 = v => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
-  .format(Math.round(v * 10) / 10) + "%";
+const fmtPct1 = v => finiteOr(v, x => new Intl.NumberFormat(localeOf(), {maximumFractionDigits:1})
+  .format(Math.round(x * 10) / 10) + "%");
 /* СЛАГАЕМЫЕ ПУЛА СЛОВАМИ. Перечисляются только ненулевые: сценарий 1 без
    сценария 5 не должен читать про базу, которой в расчёте нет. Фраза собирается
    в одном месте, потому что её печатают обе поверхности — экран и отчёт. */
@@ -1638,12 +1666,44 @@ function groupFmt(s){
   i = i.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   return p.length > 1 ? i + "." + p[1] : i;
 }
+/* РАЗБОР ЧИСЛА ИЗ ТЕКСТА, В ТОМ ЧИСЛЕ ВСТАВЛЕННОГО ИЗ ТАБЛИЦЫ.
+   Пробелы всех видов разбирались верно и раньше: \s в JS покрывает и неразрывный
+   U+00A0, и узкий U+202F, и тонкий U+2009 — прогон это подтвердил. Ломались
+   РАЗДЕЛИТЕЛИ РАЗРЯДОВ: «$4,000» из англоязычной таблицы давало 4, потому что
+   первая запятая становилась десятичной точкой. Молчаливая ошибка в тысячу раз,
+   в поле оклада.
+
+   ПРАВИЛО: разделитель, за которым стоит РОВНО ТРИ цифры и ничего после, —
+   разрядный; иначе десятичный. Отсюда:
+     «4,000» и «4.000» -> 4000        «1,234,567» -> 1234567
+     «1.234,56» -> 1234.56            «4,5» и «4.5» -> 4.5
+   Осознанная плата: «4.000», если имелось в виду ровно четыре, прочитается как
+   четыре тысячи. Выбор в пользу разрядного чтения сделан потому, что наш
+   собственный форматтер трёхзначной дробной части не печатает никогда, а вставка
+   сгруппированного числа — обычное дело.
+
+   ОТРИЦАТЕЛЬНОЕ И НЕЧИСЛО по-прежнему дают 0: минус в поле не набрать, и это
+   верно. Значения из ЗАГРУЖЕННОГО ФАЙЛА через эту функцию не проходят — их
+   проверяют границы (fieldErrors), а не парсер. */
 function parseNum(s){
-  s = String(s).replace(/[\s ]/g,"").replace(",",".").replace(/[^\d.]/g,"");
-  const n = parseFloat(s);
-  return isNaN(n) || n < 0 ? 0 : n;
+  let t = String(s).replace(/\s/g,"").replace(/[^\d.,]/g,"");
+  const last = Math.max(t.lastIndexOf("."), t.lastIndexOf(","));
+  if(last >= 0){
+    const tail = t.slice(last + 1);
+    const grouped = /^\d{3}$/.test(tail);
+    const head = t.slice(0, last).replace(/[.,]/g, "");
+    t = grouped ? head + tail : head + "." + tail.replace(/[.,]/g,"");
+  }
+  const n = parseFloat(t);
+  return isFinite(n) && n >= 0 ? n : 0;
 }
 function onNumInput(inp){
+  /* ВСТАВКА С ЗАПЯТОЙ нормализуется до форматирования. groupFmt срезает запятую и
+     оставляет точку, поэтому «$4,000» в поле показывалось как «4.000» — значение
+     при этом уже верное (4000), но глазами читается как дробь. Прогоняем такой
+     ввод через parseNum и переформатируем от числа. Только при наличии запятой:
+     при обычном набоpе строка не должна перестраиваться под курсором. */
+  if(inp.value.indexOf(",") >= 0) inp.value = String(parseNum(inp.value));
   const old = inp.value, sel = inp.selectionStart;
   const before = old.slice(0, sel).replace(/[^\d]/g,"").length;
   const f = groupFmt(old);
@@ -1663,6 +1723,79 @@ function onNumInput(inp){
 /* Ключ suf у поля — это СМЫСЛ величины, а не готовая надпись: по нему решается
    и единица, и поведение («share» делится на 100, «money» берёт знак валюты).
    Поэтому у каждого события своя единица, а не общая «штука». */
+/* =============================================================================
+   ГРАНИЦЫ ЧИСЛОВЫХ ПОЛЕЙ — P12.
+   Границы отсекают НЕВОЗМОЖНОЕ, а не НЕОБЫЧНОЕ. Инструмент продаёт
+   консервативность; отсечь законный выброс он права не имеет, а вот
+   арифметическую бессмыслицу пропускать не должен. Поэтому каждое число ниже
+   выведено из уже существующей величины или из опубликованного факта, а не взято
+   круглым.
+
+   ЧТО ПОКАЗАЛ ПРОГОН ДО ПРАВКИ — масштаб оказался не тем, что предполагал разбор:
+     ВВОД С КЛАВИАТУРЫ был безопасен. parseNum срезает всё, кроме цифр и точки:
+       минус превращался в положительное число, а все виды пробелов (включая
+       неразрывный U+00A0 и узкий U+202F) разбирались верно — \s в JS их покрывает.
+     ЛОМАЛИСЬ РАЗДЕЛИТЕЛИ РАЗРЯДОВ: «$4,000» давало 4. Молчаливая ошибка в тысячу
+       раз — починено в parseNum.
+     А НЕ ПРОВЕРЯЛАСЬ ВОВСЕ ЗАГРУЗКА ФАЙЛА. Отрицательный оклад давал −$31 200 в
+       отчёте, 1e308 давал «$∞», строка вместо числа давала «NaN%», и отчёт во всех
+       трёх случаях СОБИРАЛСЯ.
+   Механизм отказа при этом был готов целиком (validate -> scenarioErrors ->
+   invalid -> состояние -> отказ build-report), и пользовался им ровно один
+   сценарий из одиннадцати. Здесь он становится общим — это и есть вся правка.
+
+   ОТКУДА ПОТОЛКИ:
+     MAX_MIN = 480 = C.DAY_HOURS x 60 — один рабочий день. Ничто, что происходит
+       «на звонок», «на документ» или «сэкономлено за день», не может занимать
+       больше рабочего дня: дневной сценарий умножает минуты в день на рабочие
+       дни, а день в модели восемь часов. Величина ПРОИЗВОДНАЯ, не назначенная.
+     Событий на человека в день — тоже не больше 480: чаще одного события в минуту
+       весь день не делает никто.
+     ppl 100 000 — сто крат от верхней опубликованной ступени Essentials (1000+
+       мест, config/pricing.json). Реального клиента не отсечёт, а 1e25 остановит.
+     bookings 100 000 в месяц — десять крат от рабочих минут в месяце (21 x 8 x 60
+       = 10 080). Десять записей в минуту без перерыва — за пределами любой стойки.
+     meetings 1 000 в месяц — примерно 48 в рабочий день, потолок с большим запасом.
+     money 10 000 000 — величины здесь МЕСЯЧНЫЕ (оклад, план продаж, средний чек).
+       Крупнейшая законная из них — месячный план или чек корпоративной сделки;
+       десять миллионов выше любой в этом рынке и далеко от переполнения double.
+     clients 10 000 000 — база больше десяти миллионов это не средний B2B, куда
+       продаётся инструмент.
+     share 100 — предел ОПРЕДЕЛЕНИЯ, а не оценки: доля целого не бывает больше
+       целого. Правдоподобность внутри 0..100 — работа предохранителей, не границы.
+       Два разных слоя, две разных задачи.
+     days 1..31 — календарный месяц. Ноль делил бы на ноль.
+
+   ЦЕЛОЧИСЛЕННОСТЬ. Людей и события считаем целыми: «6.5 сотрудника» на экране
+   читается как дефект инструмента, а не как оценка. Минуты и деньги дробные
+   законно (2.5 минуты, оклад 4500.50).
+   ========================================================================== */
+const MAX_MIN = C.DAY_HOURS * 60;
+const LIMITS = {
+  /* ДОЛЯ — ЕДИНСТВЕННАЯ ЕДИНИЦА, ГДЕ ЭКРАН И СОСТОЯНИЕ МЕРЯЮТ РАЗНЫМ. В поле
+     партнёр видит проценты (10), в состоянии лежит доля единицы (0.1). Границы
+     объявлены в ЭКРАННОЙ единице — они же уезжают в aria-valuemax и в текст
+     сообщения, — а сравнивать надо в единице состояния, поэтому scale:100.
+     Без этого 500% проходило проверку: 5.0 меньше 100, и предел молчал. Нашла
+     это check-bounds, а не глаза. */
+  share:    {min:0, max:100,       step:0.1, int:false, scale:100},
+  ppl:      {min:0, max:100000,    step:1,   int:true},
+  clients:  {min:0, max:10000000,  step:1,   int:true},
+  min:      {min:0, max:MAX_MIN,   step:1,   int:false},
+  money:    {min:0, max:10000000,  step:1,   int:false},
+  calls:    {min:0, max:MAX_MIN,   step:1,   int:true},
+  ops:      {min:0, max:MAX_MIN,   step:1,   int:true},
+  enq:      {min:0, max:MAX_MIN,   step:1,   int:true},
+  lookups:  {min:0, max:MAX_MIN,   step:1,   int:true},
+  docs:     {min:0, max:MAX_MIN,   step:1,   int:true},
+  bookings: {min:0, max:100000,    step:1,   int:true},
+  meetings: {min:0, max:1000,      step:1,   int:true},
+  days:     {min:1, max:31,        step:1,   int:true},
+};
+/* Границы поля — по смыслу единицы, но сценарий может уточнить своим lim.
+   Уточнение объявляется У ПОЛЯ, рядом с формулой, — как revPool и hours. */
+const limOf = f => Object.assign({}, LIMITS[f.suf] || {min:0, max:10000000, step:1, int:false}, f.lim || {});
+
 const SUF = {ppl:"suf.ppl", clients:"suf.clients", min:"suf.min", share:"suf.share",
              money:"suf.money", days:"suf.days",
              calls:"suf.calls", ops:"suf.ops", enq:"suf.enq",
@@ -1895,7 +2028,10 @@ const scenarios = [
     effect:["fot"],
     fields:[
       {k:"visits",def:800,  suf:"bookings"},
-      {k:"perRec",def:2,    suf:"calls"},
+      /* «Звонков на запись» — это НЕ звонки в день, хотя единица та же. Потолок
+         сотня: у одной записи не бывает больше сотни звонков. Уточнение объявлено
+         у поля — так же, как объявляются пул выручки и часы. */
+      {k:"perRec",def:2,    suf:"calls", lim:{max:100}},
       {k:"time",  def:3,    suf:"min"},
       {k:"admSal",def:2600, suf:"money", est:true},
     ],
@@ -2053,13 +2189,17 @@ const sufText = key => key === "money" ? (CUR === "EUR" ? "€" : "$") : t(SUF[k
 function buildCompany(){
   const g = document.getElementById("co-grid");
   g.innerHTML = COMPANY.map(c=>`
-    <div class="field">
+    <div class="field" data-field="co-${c.k}">
       <label for="co-${c.k}">${t("co."+c.k)}${c.est?`<span class="est">${t("ui.estimate")}</span>`:""}</label>
       <div class="in-wrap">
         <input class="b24x-input comp-in" id="co-${c.k}" data-comp="${c.k}"
-               type="text" inputmode="decimal" value="${groupFmt(String(company[c.k]))}">
+               type="text" inputmode="decimal"
+               role="spinbutton" aria-valuemin="${COMPANY_LIM[c.k].min}" aria-valuemax="${COMPANY_LIM[c.k].max}"
+               data-min="${COMPANY_LIM[c.k].min}" data-max="${COMPANY_LIM[c.k].max}"
+               value="${groupFmt(String(company[c.k]))}">
         <span class="suf">${c.k.endsWith("Sal") ? sufText("money") : sufText("ppl")}</span>
       </div>
+      <span class="err"></span>
     </div>`).join("");
   g.querySelectorAll(".comp-in").forEach(inp=>{
     inp.addEventListener("input", ()=>{
@@ -2122,11 +2262,23 @@ function fieldHtml(sc, f, vals, segIdx){
   const val = vals[f.k];
   const disp = f.suf === "share" ? String(Math.round(val*1000)/10) : groupFmt(String(val));
   const seg = segIdx == null ? "" : ` data-seg="${segIdx}"`;
+  /* Границы поля. У доли предел объявлен в процентах (0..100), и на экране поле
+     тоже в процентах, поэтому подставляется как есть; остальные единицы совпадают
+     с экранными по определению. */
+  const lim = limOf(f);
   return `
   <div class="field" data-field="${f.k}">
     <label>${t(`sc.${sc.id}.f.${f.k}`)}${f.est?`<span class="est">${t("ui.estimate")}</span>`:""}</label>
     <div class="in-wrap" data-suf="${f.suf}">
-      <input class="b24x-input num-in" data-k="${f.k}"${seg} type="text" inputmode="decimal" value="${disp}">
+      ${/* ГРАНИЦЫ ОБЪЯВЛЕНЫ НА САМОМ ПОЛЕ. type остаётся text: type="number" отнял бы
+           у нас разрядные пробелы, которые ставит groupFmt, и вставку из таблиц.
+           Поэтому min/max/step стоят в aria-атрибутах — их читают вспомогательные
+           технологии, — и в data-атрибутах, откуда их берёт проверка. Браузер по
+           ним ничего не блокирует, и это ровно то, что нужно: ввод не упирается,
+           нарушение объясняется. */""}
+      <input class="b24x-input num-in" data-k="${f.k}"${seg} type="text" inputmode="decimal"
+             role="spinbutton" aria-valuemin="${lim.min}" aria-valuemax="${lim.max}"
+             data-min="${lim.min}" data-max="${lim.max}" data-step="${lim.step}" value="${disp}">
       <span class="suf">${sufText(f.suf)}</span>
     </div>
     <span class="err"></span>
@@ -2356,14 +2508,92 @@ function wireScenarios(){
    отчёт. Теперь ответ один: невалидный сценарий из расчёта исключён целиком.
    Сегменты проверяются тем же правилом: одна ошибка в любом наборе значений
    делает сценарий невалидным — считать половину сценария бессмысленно. */
+/* =============================================================================
+   ГРАНИЦЫ ПОЛЯ -> ОШИБКА. Одна функция на весь калькулятор: и сценарии, и блок о
+   компании, и экономика. Возвращает ключ строки с подстановками, а не готовый
+   текст, — формулировка живёт в i18n, как всё остальное.
+
+   ПОРЯДОК ПРОВЕРОК ОТ САМОГО ГРУБОГО К САМОМУ МЯГКОМУ, и он важен: партнёру надо
+   сказать ОДНУ вещь, самую близкую к причине. «Не число» раньше «меньше нуля»,
+   потому что NaN технически не меньше нуля ни при каком сравнении.
+
+   ПУСТОЕ ПОЛЕ — НЕ ОШИБКА, А НОЛЬ, и это прежнее поведение сохранено осознанно:
+   пустой оклад даёт нулевую экономию, а не сломанный расчёт, и партнёр видит ноль.
+   Исключение — рабочие дни, где ноль делил бы на ноль: там min 1. */
+function limitError(v, lim){
+  if(typeof v !== "number" || !Number.isFinite(v))
+    return {k:"err.notNumber", p:{}};
+  if(v < 0)          return {k:"err.negative", p:{}};
+  /* СРАВНИВАЕМ В ЕДИНИЦЕ СОСТОЯНИЯ, ПЕЧАТАЕМ В ЕДИНИЦЕ ЭКРАНА. Расходятся они
+     только у доли (scale:100), но перепутать их — значит не поймать 500%. */
+  const k = lim.scale || 1;
+  const unit = k === 100 ? "%" : "";
+  if(v < lim.min / k) return {k:"err.min", p:{min: fmtInt(lim.min) + unit}};
+  if(v > lim.max / k) return {k:"err.max", p:{max: fmtInt(lim.max) + unit}};
+  if(lim.int && !Number.isInteger(v)) return {k:"err.whole", p:{}};
+  return null;
+}
+
+/* ОШИБКИ ПО ГРАНИЦАМ ПОЛЕЙ СЦЕНАРИЯ. Проверяются ВСЕ наборы значений — базовый и
+   каждый сегмент: сегмент с невалидным значением так же ломает итог сценария, как
+   базовый набор, и молчать о нём нельзя. */
+function boundsErrors(sc, vals){
+  const out = {};
+  sc.fields.forEach(f=>{
+    /* Поля, которых при выключенном переключателе выручки на экране нет, не
+       проверяем: подсветить невидимое поле значит сообщить о проблеме, которую
+       негде увидеть и нечем исправить. В расчёт они при этом тоже не идут. */
+    if(f.revOnly && !SHOW_REVENUE) return;
+    const e = limitError(vals[f.k], limOf(f));
+    if(e) out[f.k] = e;
+  });
+  return Object.keys(out).length ? out : null;
+}
+
+/* ОШИБКИ СЦЕНАРИЯ = ГРАНИЦЫ ПОЛЕЙ + СОБСТВЕННАЯ ПРОВЕРКА СЦЕНАРИЯ.
+   Границы идут ПЕРВЫМИ: пока значение не число или вне диапазона, сравнивать его с
+   другим полем бессмысленно — у сценария 2 проверка «закрыто AI не больше общего
+   объёма» на NaN дала бы false и пропустила бы значение дальше.
+   Механизм, который висит на результате этой функции, уже готов целиком и
+   проверен на сценарии 2: карточка подсвечивает поле и печатает причину,
+   computeModel исключает сценарий из ВСЕХ сумм, список едет в состоянии полем
+   invalid, а build-report ОТКАЗЫВАЕТСЯ собирать отчёт. Здесь он становится
+   общим — это и была вся правка P12 по сути. */
 function scenarioErrors(sc, st){
-  if(!sc.validate) return null;
   const sets = [st.values].concat(st.segments || []);
   for(const vals of sets){
-    const e = sc.validate(vals);
-    if(e) return e;
+    const b = boundsErrors(sc, vals);
+    if(b) return b;
+    if(sc.validate){
+      const e = sc.validate(vals);
+      if(e) return e;
+    }
   }
   return null;
+}
+
+/* ГРАНИЦЫ ВНЕ СЦЕНАРИЕВ: блок о компании и экономика. Эти поля питают ВСЕ
+   сценарии сразу — численность и оклад входят в знаменатель предохранителя, дни и
+   нагрузка в стоимость часа, — поэтому их нарушение нельзя списать на один
+   сценарий. Возвращается карта «id поля -> ошибка». */
+const COMPANY_LIM = {
+  empCount: LIMITS.ppl, mgrCount: LIMITS.ppl, ropCount: LIMITS.ppl,
+  empSal: LIMITS.money, mgrSal: LIMITS.money, ropSal: LIMITS.money,
+};
+function globalErrors(){
+  const out = {};
+  Object.entries(COMPANY_LIM).forEach(([k, lim])=>{
+    const e = limitError(company[k], lim);
+    if(e) out["co-" + k] = e;
+  });
+  const d = limitError(daysMonth, LIMITS.days);
+  if(d) out["days"] = d;
+  /* НАГРУЗКА НА ФОТ — процент поверх оклада, но не «доля целого»: она законно
+     больше нуля и меньше сотни в наших рынках, а потолок 200 стоит вдвое выше
+     самой высокой реальной ставки, чтобы не отсечь законный ввод. */
+  const b = limitError(burdenPct, {min:0, max:200, step:0.1, int:false});
+  if(b) out["burden"] = b;
+  return Object.keys(out).length ? out : null;
 }
 
 function computeScenario(sc, st){
@@ -2618,7 +2848,27 @@ function computeModel(){
   };
 }
 
+/* ПОДСВЕТКА ПОЛЕЙ ВНЕ СЦЕНАРИЕВ. Та же механика, что у карточки: класс invalid на
+   .field и причина в .err. Отдельная функция, потому что эти поля живут в шаге 1 и
+   перерисовываются другим кодом. */
+function paintGlobalErrors(errs){
+  document.querySelectorAll('#company .field[data-field]').forEach(f=>{
+    f.classList.remove("invalid");
+    const e = f.querySelector(".err"); if(e) e.textContent = "";
+    const i = f.querySelector("input"); if(i) i.removeAttribute("aria-invalid");
+  });
+  if(!errs) return;
+  Object.entries(errs).forEach(([k, msg])=>{
+    const f = document.querySelector(`#company .field[data-field="${k}"]`);
+    if(!f) return;
+    f.classList.add("invalid");
+    const e = f.querySelector(".err"); if(e) e.textContent = t(msg.k, msg.p);
+    const i = f.querySelector("input"); if(i) i.setAttribute("aria-invalid","true");
+  });
+}
+
 function recompute(){
+  paintGlobalErrors(globalErrors());
   const model = computeModel();
   const byId = {};
   model.items.forEach(it=> byId[it.sc.id] = it);
@@ -2631,9 +2881,13 @@ function recompute(){
 
     card.querySelectorAll(".field").forEach(f=>f.classList.remove("invalid"));
     const errs = scenarioErrors(sc, st);
-    if(errs) Object.entries(errs).forEach(([k,msgKey])=>{
+    /* Значение ошибки — либо ключ строки (так объявлена проверка сценария 2), либо
+       {k, p} с подстановками (так приходят границы: в тексте стоит сам предел). */
+    if(errs) Object.entries(errs).forEach(([k,msg])=>{
+      const msgKey = typeof msg === "string" ? msg : msg.k;
+      const msgVars = typeof msg === "string" ? undefined : msg.p;
       const f = card.querySelector(`.field[data-field="${k}"]`);
-      if(f){ f.classList.add("invalid"); f.querySelector(".err").textContent = t(msgKey);
+      if(f){ f.classList.add("invalid"); f.querySelector(".err").textContent = t(msgKey, msgVars);
              const i = f.querySelector("input"); if(i) i.setAttribute("aria-invalid","true"); }
     });
     if(!errs) card.querySelectorAll("input[aria-invalid]").forEach(i=>i.removeAttribute("aria-invalid"));
@@ -3460,6 +3714,16 @@ function reportState(){
     /* Список исключённых по ошибке ввода едет вместе с данными: сборка отчёта
        обязана отказаться, а не решать это по своим догадкам. */
     invalid: (m.invalid || []).map(x => ({id: x.id, title: x.title})),
+    /* ОШИБКИ ПОЛЕЙ ВНЕ СЦЕНАРИЕВ едут отдельным списком и тоже обязаны
+       останавливать сборку. Их нельзя списать на один сценарий: численность и
+       оклад входят в знаменатель предохранителя, дни и нагрузка — в стоимость
+       часа, то есть испорчено сразу всё. Едут ПОДПИСИ полей, а не ключи: отказ
+       читает человек, и «Total employees» ему говорит больше, чем «co-empCount». */
+    inputErrors: Object.entries(globalErrors() || {}).map(([k, msg]) => ({
+      field: k, label: k === "days" ? t("ui.days") : k === "burden" ? t("ui.burden")
+                     : t("co." + k.replace(/^co-/, "")),
+      text: t(msg.k, msg.p),
+    })),
     company: {...company},
     items,
     totals: {
@@ -4442,7 +4706,13 @@ ${pages}
      опасен: он молча не содержит сценария, который партнёр выбрал и показал
      клиенту на экране. Отказ, а не оговорка. */
   const blocked = (S.invalid || []).map(x =>
-    `scenario "${x.title}" has an input error and was left out of every total`);
+    `scenario "${x.title}" has an input error and was left out of every total`)
+  /* ПОЛЯ ВНЕ СЦЕНАРИЕВ — В ТОТ ЖЕ ОТКАЗ. Численность и оклад входят в знаменатель
+     предохранителя, рабочие дни и нагрузка — в стоимость часа: испорченное поле
+     шага 1 портит не один сценарий, а весь документ. Состояния, снятые до правки
+     P12, поля inputErrors не несут, и для них ветка просто пуста. */
+    .concat((S.inputErrors || []).map(x =>
+      `"${x.label}" in the company details is not a usable figure: ${x.text}`));
   const missing = requiredDisclosures(html, gate, gated, GATE_MARK, money, {
     required: disclosureRequired, planCarriesAgents,
     ids: AGENT_SCENARIO_IDS, items: S.items || [],

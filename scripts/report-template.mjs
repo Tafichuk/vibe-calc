@@ -880,7 +880,13 @@ ${pages}
      опасен: он молча не содержит сценария, который партнёр выбрал и показал
      клиенту на экране. Отказ, а не оговорка. */
   const blocked = (S.invalid || []).map(x =>
-    `scenario "${x.title}" has an input error and was left out of every total`);
+    `scenario "${x.title}" has an input error and was left out of every total`)
+  /* ПОЛЯ ВНЕ СЦЕНАРИЕВ — В ТОТ ЖЕ ОТКАЗ. Численность и оклад входят в знаменатель
+     предохранителя, рабочие дни и нагрузка — в стоимость часа: испорченное поле
+     шага 1 портит не один сценарий, а весь документ. Состояния, снятые до правки
+     P12, поля inputErrors не несут, и для них ветка просто пуста. */
+    .concat((S.inputErrors || []).map(x =>
+      `"${x.label}" in the company details is not a usable figure: ${x.text}`));
   const missing = requiredDisclosures(html, gate, gated, GATE_MARK, money, {
     required: disclosureRequired, planCarriesAgents,
     ids: AGENT_SCENARIO_IDS, items: S.items || [],

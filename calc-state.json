@@ -80,6 +80,7 @@
     "rowNote": "Needs Alaio Professional Vibe+ or higher. The recommended plan does not include AI agents."
   },
   "invalid": [],
+  "inputErrors": [],
   "company": {
     "empCount": 50,
     "empSal": 4000,
