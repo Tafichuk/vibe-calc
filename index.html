@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Value Calculator — Bitrix24 Vibe+</title>
+<!-- ВНЕШНЕЕ ИМЯ ИНСТРУМЕНТА — «AI Value Calculator», и только оно. Слово «vibe»
+     остаётся внутри репозитория и в названиях тарифов, которые приходят из
+     официального прайса и нашими не являются. Из заголовка вкладки «Vibe+» убран
+     не из вкусовщины: этот заголовок — один из двух возможных источников имени
+     файла PDF, который клиент сохраняет себе на диск (см. reportToPdf). -->
+<title>AI Value Calculator — Bitrix24</title>
 <link rel="stylesheet" href="css/brand-ext.css">
 <style>
 /* =============================================================================
@@ -4744,6 +4749,15 @@ const headline = () => {
   </div>
   ${T.serviceUnquoted ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
     ${int(T.serviceUnquoted)} scenario(s) are not priced yet, so the figure above is not the full implementation cost, and the payback cannot be worked out from it.</p>` : ""}
+  <!-- ПЕРВОЕ ПОЯВЛЕНИЕ СЛОВА «ALAIO» В ДОКУМЕНТЕ — проверено по собранному отчёту:
+       до этой строки его нет ни на обложке, ни на листе цифр, а здесь оно приходит
+       названием тарифа в строке подписки. Западный клиент этого слова никогда не
+       слышал, поэтому один раз и коротко: что это за ряд тарифов и чем он
+       отличается от того, на котором клиент сидит. Ни слова рекламы — только то,
+       что стоит в самом прайсе: два ряда, AI есть в одном. Дальше по документу
+       название повторяется без пояснений: расшифровка нужна однажды. -->
+  <p class="b24-small" style="margin-top:var(--b24-s3)">
+    Alaio Vibe+ is the Bitrix24 plan line that includes the AI features; Essentials is the line without them.</p>
   ${footer()}
 </section>`;
 
@@ -5625,6 +5639,11 @@ function pdfSay(msgKey, params){
   box.hidden = false;
 }
 
+/* Заголовок вкладки до печати: на время печати он подменяется заголовком отчёта,
+   чтобы имя файла PDF не зависело от того, какой из двух документов браузер
+   возьмёт за источник. Берём один раз при загрузке — см. reportToPdf. */
+const BASE_TITLE = document.title;
+
 function reportToPdf(){
   pdfSay(null);
   const model = computeModel();
@@ -5663,6 +5682,23 @@ function reportToPdf(){
   const doc = frame.contentDocument;
   doc.open(); doc.write(html); doc.close();
 
+  /* ИМЯ ФАЙЛА PDF. Браузер предлагает его по заголовку документа, но КАКОГО именно
+     при печати из фрейма — верхнего или самого фрейма — прочитать программно
+     нельзя: имя живёт в диалоге печати, а не в странице. Поэтому не угадываем, а
+     делаем оба заголовка одинаковыми на время печати: при любом поведении браузера
+     клиент получает «<Партнёр> — AI value assessment.pdf», а не имя страницы
+     калькулятора. BASE_TITLE взят один раз при загрузке: при двух печатях подряд
+     вторая иначе запомнила бы «исходным» заголовок отчёта. */
+  document.title = doc.title || BASE_TITLE;
+  const restoreTitle = () => { document.title = BASE_TITLE; };
+  /* Возврат заголовка — тремя путями, потому что ни один не надёжен в одиночку:
+       1. afterprint у ФРЕЙМА: печать вызывается у него, значит и событие приходит
+          ему, а не верхнему окну (частая ошибка — слушать window);
+       2. сразу после print(): в Chrome вызов держит поток до закрытия диалога;
+       3. таймер с запасом: если браузер не сделал ни того, ни другого. */
+  frame.contentWindow.addEventListener("afterprint", restoreTitle, {once:true});
+  setTimeout(restoreTitle, 120000);
+
   /* Дождаться ВСЕГО, что влияет на раскладку листа. Замерено: без ожидания
      таблицы стилей первое нажатие уходило в печать по неоформленному документу —
      лист выходил 202x57mm вместо 210x297mm. readyState после document.write уже
@@ -5688,6 +5724,7 @@ function reportToPdf(){
     try {
       frame.contentWindow.focus();
       frame.contentWindow.print();
+      restoreTitle();
     } catch(e){
       /* Совсем старый браузер — открываем отчёт отдельной вкладкой, печать вручную. */
       const w = window.open("", "_blank");

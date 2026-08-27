@@ -505,6 +505,15 @@ const headline = () => {
   </div>
   ${T.serviceUnquoted ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
     ${int(T.serviceUnquoted)} scenario(s) are not priced yet, so the figure above is not the full implementation cost, and the payback cannot be worked out from it.</p>` : ""}
+  <!-- ПЕРВОЕ ПОЯВЛЕНИЕ СЛОВА «ALAIO» В ДОКУМЕНТЕ — проверено по собранному отчёту:
+       до этой строки его нет ни на обложке, ни на листе цифр, а здесь оно приходит
+       названием тарифа в строке подписки. Западный клиент этого слова никогда не
+       слышал, поэтому один раз и коротко: что это за ряд тарифов и чем он
+       отличается от того, на котором клиент сидит. Ни слова рекламы — только то,
+       что стоит в самом прайсе: два ряда, AI есть в одном. Дальше по документу
+       название повторяется без пояснений: расшифровка нужна однажды. -->
+  <p class="b24-small" style="margin-top:var(--b24-s3)">
+    Alaio Vibe+ is the Bitrix24 plan line that includes the AI features; Essentials is the line without them.</p>
   ${footer()}
 </section>`;
 

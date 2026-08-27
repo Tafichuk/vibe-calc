@@ -1,4 +1,4 @@
-# AI Value Calculator for Bitrix24 — Vibe+ edition
+# AI Value Calculator for Bitrix24
 
 A calculator you fill in **together with your client** to show what AI in Bitrix24 is
 actually worth to their business, and what moving from Essentials to Alaio Vibe+ costs.
