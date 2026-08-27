@@ -350,7 +350,13 @@ const footer = () => `
          running header on every page, and repeating it twice per sheet reads as
          clutter rather than co-branding. -->
     <img class="b24-plogo b24-plogo--foot" src="${assets.lockupDark}" alt="Bitrix24 Partners">
+    <!-- ДАТА АКТУАЛЬНОСТИ ЦЕН В ПОДВАЛЕ КАЖДОГО ЛИСТА (P16). Раньше она стояла
+         только в прозе на странице тарифа, то есть документ, открытый на любой
+         другой странице, не говорил, на какой момент цены верны. Своей строкой, а
+         не приписью к первой: имя партнёра бывает 62 символа, и на длинном имени
+         одна строка уезжала бы за полосу — замерено check-geometry. -->
     <span>${esc(partnerName)}${PT.email ? " · " + esc(PT.email) : ""} · Page <span class="b24-pageno"></span></span>
+    ${P.effectiveFrom ? `<span class="b24x-foot-prices">Prices as of ${esc(P.effectiveFrom)}</span>` : ""}
   </div>`;
 
 /* ---------- page 1: cover ---------- */
@@ -427,7 +433,7 @@ const headline = () => {
   const num = i => ` <span style="font-size:.6em;font-weight:600">(${i}/3)</span>`;
   const first = `
 <section class="page page--sky">
-  ${runhead("Headline")}
+  ${runhead("Summary")}
   <h1 class="b24-h1">The numbers${num(1)}</h1>
 
   <div class="b24-table-wrap">
@@ -468,7 +474,7 @@ const headline = () => {
      про неоценённые сценарии относится к обеим строкам сразу. */
   const second = `
 <section class="page page--sky">
-  ${runhead("Headline")}
+  ${runhead("Summary")}
   <h1 class="b24-h1">First-year cost${num(2)}</h1>
 
   <div class="b24-table-wrap">
@@ -508,7 +514,7 @@ const headline = () => {
      называется, а предупреждение это и есть инструкция по чтению. */
   const third = `
 <section class="page page--sky">
-  ${runhead("Headline")}
+  ${runhead("Summary")}
   <h1 class="b24-h1">How to read these numbers${num(3)}</h1>
   ${overlapBlock()}
   ${revenueBlock()}
@@ -643,45 +649,171 @@ const clientFieldCount = () => {
   });
   return seen.size;
 };
-const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
-                                       it => 1 + (it.segments || []).length).map((group, i, all) => `
-<section class="page page--sky">
-  ${runhead("Inputs used")}
-  <h1 class="b24-h1">The numbers we entered${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
-  ${group.map(it => {
-    /* СЕГМЕНТЫ. Сценарий может быть посчитан по нескольким наборам значений:
-       базовый плюс добавленные в калькуляторе сегменты. Итог всегда учитывал их
-       все, а эта страница печатала только базовый набор — клиенту предлагалось
-       сверить сумму по неполным входным данным. Теперь каждый набор идёт своей
-       строкой. Пока сегментов нет, страница выглядит ровно как раньше: одна
-       строка полей без заголовка «Segment 1». */
+/* ================================================== ЛИСТ ДОПУЩЕНИЙ (P16) =====
+   ЭТО НЕ НОВЫЙ ЛИСТ, А ПЕРЕСТРОЕННЫЙ СТАРЫЙ, и это главное решение задачи.
+   Страница «The numbers we entered» уже перечисляла КАЖДОЕ введённое значение по
+   каждому выбранному сценарию, включая сегменты. Разбор просил «полную таблицу
+   всех введённых значений со столбцом происхождения» — то есть ту же таблицу плюс
+   один столбец. Второй таблицы тех же чисел в документе быть не должно: она
+   немедленно порождает вопрос «а почему они разные?», даже когда они одинаковые.
+   Поэтому старая страница получила столбец происхождения, блок общих допущений и
+   новое имя, а не соседа.
+
+   ЧТО ИЗМЕНИЛОСЬ ПО ФОРМЕ. Значения шли строкой через точку-разделитель
+   («поле: значение · поле: значение»), и шесть полей в такой строке глазами не
+   сканируются. Финансисту нужно ровно сканирование: найти величину, посмотреть
+   происхождение, решить, верит ли он. Поэтому таблица в три колонки. Дороже по
+   высоте — за это платит разбиение, а не кегль.
+
+   ТОЛЬКО ВЫБРАННЫЕ СЦЕНАРИИ, А НЕ ВСЕ 48 ПОЛЕЙ. Это не компромисс по месту, а
+   единственный правильный ответ: задача листа — защитить ИМЕННО ЭТУ сумму. Поля
+   невыбранных сценариев в неё не входили, и печатать их значило бы приглашать
+   вопрос «а это откуда здесь?». Поля, скрытые выключенным переключателем выручки,
+   не печатаются по той же причине — они не участвовали.
+
+   ОБЩИЕ ДОПУЩЕНИЯ ИДУТ ПЕРВОЙ ТАБЛИЦЕЙ. До правки они были размазаны: длина
+   месяца пряталась в блоке оснований, режим реализации — в подписи строки итога,
+   численность и оклад не печатались вовсе. Финансисту нужно сначала это: на каких
+   общих величинах стоит вся сумма.
+   ========================================================================== */
+/* Вес сценария в листах: заголовок + строка на поле + строка на поле сегмента.
+   Считается по фактическому числу полей, а не по числу наборов, потому что
+   единица высоты теперь строка таблицы, а не абзац. */
+/* СТРОК НА ЛИСТ. Замер: строка таблицы допущений — 35px при коротком названии и
+   до 52px, когда название переносится («Time spent after one call, replaying it and
+   filling the card»). Полоса набора 1054px, минус заголовок листа и подвал —
+   остаётся около 900px, то есть 17 переносящихся строк. Берём 16 с запасом на
+   заголовок сценария и подзаголовок сегмента.
+   У ПЕРВОГО ЛИСТА БЮДЖЕТ МЕНЬШЕ: на нём стоит блок общих допущений (6 строк плюс
+   шапка и отбивка, около 300px). Вычитаем его вес, а не занижаем лимит для всех —
+   иначе последние листы стояли бы полупустыми. */
+/* БЮДЖЕТ ЛИСТА В «ПОЛОВИНКАХ СТРОКИ», А НЕ В СТРОКАХ.
+   Первая версия считала строки поштучно, и это давало выбор из двух плохих
+   вариантов: бюджет под плотное состояние (13) оставлял разреженные листы
+   заполненными на 40%, а бюджет под разреженные переполнял плотные на 83px.
+   Причина в том, что строки РАЗНОЙ ВЫСОТЫ: короткая подпись 35px, переносящаяся —
+   52px, то есть ровно полторы. Значит и считать надо полуторками.
+   Колонка названия — около 46 знаков в строке при кегле 12.5px на полосе 656px;
+   подпись длиннее переносится и весит 3 полуединицы вместо 2.
+   Бюджет 32 полуединицы ≈ 16 коротких строк или 10 длинных. Замеры по пути: на
+   40 лист уходил на 104px за полосу, на 34 — на 17.8px при 62-символьном имени
+   партнёра (подвал с датой цен становится трёхстрочным). 32 держатся на всех
+   пяти состояниях. Мерено, а не подобрано под одно. */
+const ASSUM_HALF_BUDGET = 32;
+const ASSUM_WRAP_CHARS = 46;
+/* Подзаголовок сегмента весит больше обычной строки: у него своя отбивка сверху
+   (padding-top:8px). Заголовок сценария — обычные две единицы. */
+const rowWeight = r => r.t === "field"
+  ? (String(r.f.label || "").length > ASSUM_WRAP_CHARS ? 3 : 2)
+  : (r.t === "seg" ? 3 : 2);
+const ASSUM_ROWS_PER_PAGE = ASSUM_HALF_BUDGET;
+/* Блок общих допущений: шесть строк, из них одна переносящаяся, плюс шапка и
+   отбивка. В полуединицах — около 18. */
+const ASSUM_SHARED_WEIGHT = 18;
+const assumWeight = it => 1 + (it.fields || []).length
+  + (it.segments || []).reduce((a, fs) => a + 1 + fs.length, 0);
+
+const originCell = o => o ? `<span class="b24x-td-sub" style="display:inline; text-transform:none; letter-spacing:0;">${esc(o)}</span>` : "";
+
+const assumptionPages = () => {
+  /* Блок общих допущений стоит только на ПЕРВОМ листе: повторять его на каждом
+     значило бы утверждать, что он относится к сценариям этого листа, а он
+     относится ко всему расчёту. */
+  const shared = (S.assumptions || []).length ? `
+  <div class="b24-table-wrap">
+    <table class="b24-table b24x-table--assum">
+      <thead><tr><th>Across the whole calculation</th><th>Value</th><th>Where it comes from</th></tr></thead>
+      <tbody>
+        ${S.assumptions.map(a => `<tr><td>${esc(a.label)}</td><td>${esc(a.value)}</td><td>${originCell(a.origin)}</td></tr>`).join("")}
+      </tbody>
+    </table>
+  </div>` : "";
+
+  /* РЕЖЕМ ПО СТРОКАМ, А НЕ ПО СЦЕНАРИЯМ, и вот почему это пришлось переделать.
+     Первая версия разбивала список сценариев целиком: сценарий не мог быть разорван
+     между листами. Замер показал, что этого не хватает — сценарий 1 с двумя
+     сегментами весит 21 строку, то есть БОЛЬШЕ ЦЕЛОГО ЛИСТА, и оставался
+     переполненным, сколько бы ни уменьшали бюджет. Сценариев с сегментами может
+     быть сколько угодно, значит резать надо внутри.
+     Разорванный сценарий получает свой заголовок снова, с пометкой continued: без
+     неё вторая половина его полей выглядела бы принадлежащей предыдущему
+     сценарию — а это ровно та ошибка чтения, из-за которой лист и заводился. */
+  const rows = [];
+  (S.items || []).forEach(it => {
     const segs = it.segments || [];
-    /* ЦИФРЫ КЛИЕНТА ПОМЕЧЕНЫ, ОСТАЛЬНЫЕ НЕТ. Отметка стоит у величин, источника у
-       которых нет и быть не может, потому что они про эту компанию: их клиент
-       подтверждает или заменяет. Родословную остальных сорока с лишним полей на
-       эту страницу не выводим — она плотная, а нужна она партнёру, не клиенту, и
-       живёт на экране под плашкой у каждого поля. Итог одной строкой ниже. */
-    const line = fs => fs.map(f => `${esc(f.label)}${f.client ? CLIENT_MARK : ""}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ");
-    const para = (n, fs) => `
-    <p class="b24-p" style="margin:${n === null ? "0" : "6px 0 0"}; font-size:13px;">
-      ${n === null ? "" : `<span class="b24-strong">Segment ${n}</span> — `}${line(fs)}
-    </p>`;
+    rows.push({t: "head", it});
+    it.fields.forEach(f => rows.push({t: "field", it, f, seg: segs.length ? 1 : null}));
+    segs.forEach((fs, k) => {
+      rows.push({t: "seg", it, n: k + 2});
+      fs.forEach(f => rows.push({t: "field", it, f, seg: k + 2}));
+    });
+  });
+
+  const pages = [];
+  let cur = [], load = 0;
+  let budget = ASSUM_HALF_BUDGET - (shared ? ASSUM_SHARED_WEIGHT : 0);
+  for (const r of rows) {
+    const w = rowWeight(r);
+    if (cur.length && load + w > budget) {
+      /* ВИСЯЧИЙ ЗАГОЛОВОК НЕ ОСТАЁТСЯ ПОСЛЕДНЕЙ СТРОКОЙ ЛИСТА: заголовок сценария
+         или подзаголовок сегмента без своих полей читается как пустая рубрика.
+         Переносим его на следующий лист вместе с полями. */
+      const carry = [];
+      while (cur.length && cur[cur.length - 1].t !== "field") carry.unshift(cur.pop());
+      pages.push(cur);
+      cur = carry; load = carry.reduce((a, x) => a + rowWeight(x), 0);
+      budget = ASSUM_HALF_BUDGET;
+    }
+    cur.push(r); load += w;
+  }
+  if (cur.length) pages.push(cur);
+
+  const cell = r => {
+    if (r.t === "head" || r.t === "cont") {
+      const segs = r.it.segments || [];
+      return `<tr><td colspan="3" style="background:var(--b24-card);">
+        <span class="b24-strong">${esc(r.it.title)}</span>${r.t === "cont"
+          ? ' <span style="font-weight:600;">(continued)</span>'
+          : segs.length ? ` <span style="font-weight:600;">(${int(segs.length + 1)} value sets)</span>` : ""}</td></tr>`;
+    }
+    if (r.t === "seg") return `<tr><td colspan="3" style="padding-top:8px;">
+        <span class="b24-strong">Segment ${int(r.n)}</span></td></tr>`;
+    return `<tr>
+        <td>${esc(r.f.label)}${r.f.client ? CLIENT_MARK : ""}</td>
+        <td><span class="b24-strong">${esc(r.f.value)}</span></td>
+        <td>${originCell(r.f.origin)}</td></tr>`;
+  };
+
+  return pages.map((group, i, all) => {
+    /* Если лист начинается с поля, а не с заголовка, — сценарий разорван: дописываем
+       его заголовок с пометкой continued. */
+    const body = (group[0] && group[0].t === "field"
+      ? [{t: "cont", it: group[0].it}].concat(group[0].seg && group[0].seg > 1
+          ? [{t: "seg", it: group[0].it, n: group[0].seg}] : [])
+      : []).concat(group);
     return `
-  <div class="b24-card b24-card--white" style="margin-bottom:var(--b24-s4); padding:var(--b24-s4) var(--b24-s5);">
-    <p class="b24-label" style="margin:0 0 6px;">${esc(it.title)}${
-      segs.length ? ` <span style="font-weight:600; text-transform:none;">(${int(segs.length + 1)} segments)</span>` : ""}</p>
-    ${para(segs.length ? 1 : null, it.fields)}
-    ${segs.map((fs, k) => para(k + 2, fs)).join("")}
-  </div>`;
-  }).join("")}
-  ${/* ОДНА СТРОКА ПРО ПРОИСХОЖДЕНИЕ, а не сорок восемь. Она говорит клиенту то,
-       что ему нужно: вендорских бенчмарков здесь нет, вот эти цифры ваши,
-       остальные — наши стартовые допущения. Полный лист допущений — отдельная
-       правка (P16), и эта строка ей не мешает, а готовит место. */
-    clientFieldCount() > 0 && S.orgLegend ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
+<section class="page page--sky">
+  ${runhead("What we assumed")}
+  <h1 class="b24-h1">What we assumed${all.length > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${all.length})</span>` : ""}</h1>
+  ${i === 0 ? shared : ""}
+  <div class="b24-table-wrap"${i === 0 && shared ? ' style="margin-top:var(--b24-s5)"' : ""}>
+    <table class="b24-table b24x-table--assum">
+      <thead><tr><th>What we used</th><th>Value</th><th>Where it comes from</th></tr></thead>
+      <tbody>
+        ${body.map(cell).join("")}
+      </tbody>
+    </table>
+  </div>
+  ${/* ОДНА СТРОКА ПРО ПРОИСХОЖДЕНИЕ — на последнем листе, чтобы читалась как итог
+       таблицы, а не как её преамбула. Столбец уже сказал тип у каждой строки; эта
+       строка говорит то, чего в столбце нет: вендорских бенчмарков здесь нет вовсе,
+       а помеченные величины — ваши, их надо подтвердить. */
+    i === all.length - 1 && S.orgLegend ? `<p class="b24-small" style="margin-top:var(--b24-s3)">
     ${esc(S.orgLegend)}</p>` : ""}
   ${footer()}
-</section>`).join("");
+</section>`;
+  }).join("");
+};
 
 /* AI-СТУПЕНЬ ВЫБРАННОГО ТАРИФА. Блок называется «What <тариф> adds», значит в нём
    и должно стоять то, что даёт ЭТОТ тариф. Раньше сюда печаталась вся лестница
@@ -792,6 +924,133 @@ const planPage = () => {
 };
 
 
+/* ================================================= ЛИСТ ПРЕДЛОЖЕНИЯ (P16) ====
+   ЧЕСТНО: ЭТО ЗАГОТОВКА, И ЛИСТ ГОВОРИТ ЭТО ВСЛУХ. Состав работ у каждого
+   партнёра свой, и выдумать его за него нельзя. Но и пустой лист с полями «впишите
+   сами» отдавать клиенту нельзя тоже. Поэтому лист собран из ТОГО, ЧТО МЫ ЗНАЕМ
+   ТОЧНО, а знаем мы больше, чем кажется:
+
+     ЧТО ВХОДИТ — список выбранных сценариев. Это и есть состав фазы 1 на том
+       уровне, который клиента интересует: не «две сессии и настройка воронки», а
+       «подключаем расшифровку звонков и агента по базе знаний». Выведено из
+       расчёта, ничего не придумано.
+     СКОЛЬКО СТОИТ — итог услуг партнёра плюс годовая подписка. Обе величины уже
+       посчитаны моделью.
+     КОГДА НАЧАТЬ — поле партнёра, свободной строкой. Пустое печатается как
+       «to be agreed», а не как выдуманная дата.
+     ЧТО ИМЕННО ЗА РАБОТА — поле партнёра. Пустое НЕ печатается вовсе: список
+       сценариев уже несёт смысл, а строка-заглушка в документе у клиента выглядела
+       бы как недоделка.
+
+   ПОСТАТЕЙНЫХ ЦЕН УСЛУГ ЗДЕСЬ НЕТ И БЫТЬ НЕ МОЖЕТ. Это инвариант проекта: в
+   клиентский отчёт идёт ОДНА итоговая строка внедрения, разбивка по сценариям —
+   партнёрская экономика. Список сценариев печатается БЕЗ сумм рядом. Проверяется
+   аудитом (auditClient), и правило там теперь не только про заголовок, но и про
+   сами цифры.
+   ========================================================================== */
+/* СТРОК СОСТАВА НА ЛИСТ. Замер: строка списка сценариев около 44px, вступительный
+   абзац и шапка таблицы съедают около 200px, таблица цены с тремя строками около
+   190px, блок с датой около 90px. На одном листе цена и дата обязаны стоять вместе
+   с последней частью состава — это одно предложение, а не два. Отсюда восемь строк
+   на лист с ценой и двенадцать на лист без неё. */
+/* СКОЛЬКО СТРОК СОСТАВА УМЕЩАЕТСЯ ВМЕСТЕ С ЦЕНОЙ. Выше этого числа цена уезжает на
+   свой лист целиком.
+   ЧЕТЫРЕ, И ЭТО ЗАМЕР, А НЕ ОСТОРОЖНОСТЬ. На пяти строках лист уходил на 11.9px за
+   полосу — при 62-символьном названии партнёра, где подвал с датой актуальности цен
+   становится трёхстрочным. Пробовал шесть и пять, обе версии переполнялись именно
+   на этом состоянии.
+   Цена такого решения понятна и приемлема: при пяти и более сценариях предложение
+   занимает два листа — полный состав на первом, цена и дата на втором. Это читается
+   как два разворота предложения, а не как разорванный список: состав НИКОГДА не
+   рвётся, пока умещается в PROPOSAL_ROWS_FIRST. */
+const PROPOSAL_ROWS_LAST = 4;
+const PROPOSAL_ROWS_FIRST = 12;
+const proposal = () => {
+  const items = S.items || [];
+  const unpriced = T.serviceUnquoted || 0;
+  const start = (PT.startDate || "").trim();
+  const note = (PT.scopeNote || "").trim();
+  const firstYear = (T.serviceSum || 0) + (T.subscriptionYear || 0);
+  /* РАЗБИЕНИЕ, А НЕ УЖАТИЕ — но разбивать надо ПРАВИЛЬНОЕ.
+     Первая версия дробила список сценариев так, чтобы последняя часть уместилась
+     вместе с ценой. На пяти сценариях это дало один сценарий на первом листе и
+     четыре на втором: первый лист на девяносто процентов пустой, и документ
+     выглядит сломанным, хотя по полосе набора всё в порядке.
+
+     Правильное деление — по СМЫСЛУ, а не по остатку места: пока состав умещается с
+     ценой, лист один; когда не умещается, цена уезжает на свой лист целиком.
+     Получается «что входит» и «сколько стоит и когда начинаем» — два разворота
+     предложения, а не разорванный список. */
+  const oneSheet = items.length <= PROPOSAL_ROWS_LAST;
+  const scopeChunks = oneSheet ? [items] : (() => {
+    const out = []; let cur = [];
+    for (const it of items) {
+      if (cur.length >= PROPOSAL_ROWS_FIRST) { out.push(cur); cur = []; }
+      cur.push(it);
+    }
+    if (cur.length) out.push(cur);
+    return out;
+  })();
+  /* Всего листов: листы состава плюс лист цены, если она не влезла к составу. */
+  const total = scopeChunks.length + (oneSheet ? 0 : 1);
+  const intro = `<p class="b24-p" style="margin:0 0 var(--b24-s5); font-size:13.5px;">
+    Prepared from the calculation in this document. The scope below is the list of scenarios
+    you picked; the wording of the work itself and the start date come from
+    ${esc(PT.person || partnerName)}.
+  </p>`;
+  const scopeTable = (rows, i, all) => `
+  <div class="b24-table-wrap">
+    <table class="b24-table">
+      <thead><tr><th>What phase 1 covers${all > 1 ? ` (${i + 1}/${all})` : ""}</th><th>Who it is for</th></tr></thead>
+      <tbody>
+        ${rows.map(it => `<tr><td>${esc(it.title)}${isGated(it) ? `<sup class="b24x-gate-mark">${GATE_MARK}</sup>` : ""}</td><td>${esc(it.role)}</td></tr>`).join("")}
+      </tbody>
+    </table>
+  </div>`;
+  const head = i => `
+  ${runhead("Phase 1")}
+  <h1 class="b24-h1">Phase 1 — what we propose${total > 1 ? ` <span style="font-size:.6em;font-weight:600">(${i + 1}/${total})</span>` : ""}</h1>`;
+  const priceBlock = `
+  <div class="b24-table-wrap"${oneSheet ? ' style="margin-top:var(--b24-s5)"' : ""}>
+    <table class="b24-table">
+      <thead><tr><th>What it costs</th><th>Amount</th></tr></thead>
+      <tbody>
+        <tr><td>Implementation of the scenarios above, one-off</td><td>${money(T.serviceSum)}</td></tr>
+        <tr><td>${esc(P.to)} subscription, first year</td><td>${money(T.subscriptionYear)}</td></tr>
+        <tr><td><strong>First-year commitment</strong></td><td><strong>${money(firstYear)}</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  ${unpriced ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
+    ${int(unpriced)} of the scenarios above are not priced yet, so the implementation figure is not final.</p>` : ""}
+
+  <div class="b24-dashed" style="margin-top:var(--b24-s5)">
+    <p class="b24-p" style="margin:0; font-size:13.5px;">
+      <span class="b24-strong">Phase 1 can start:</span> ${start ? esc(start) : "to be agreed"}.
+      ${note ? "" : "The scope of work is agreed in the first working session."}
+    </p>
+  </div>
+  ${note ? `<div class="b24-quote" style="margin-top:var(--b24-s4)">${esc(note)}</div>` : ""}`;
+
+  /* СБОРКА. Один лист, когда состав умещается с ценой; иначе листы состава плюс
+     лист цены. Вступительный абзац — только на первом. */
+  const scopeSheets = scopeChunks.map((rows, i) => `
+<section class="page page--sky">
+  ${head(i)}
+  ${i === 0 ? intro : ""}
+  ${scopeTable(rows, i, scopeChunks.length)}
+  ${oneSheet ? priceBlock : ""}
+  ${footer()}
+</section>`).join("");
+  if (oneSheet) return scopeSheets;
+  return scopeSheets + `
+<section class="page page--sky">
+  ${head(total - 1)}
+  ${priceBlock}
+  ${footer()}
+</section>`;
+};
+
 /* ---------- closing CTA + partner contacts ---------- */
 const closing = () => `
 <section class="page page--partner-navy" style="text-align:center; align-items:center; justify-content:center;">
@@ -826,8 +1085,9 @@ const pages = [
   cover(),
   headline(),
   scenarioPages(),
-  inputPages(),
+  assumptionPages(),
   planPage(),
+  proposal(),
   closing(),
 ].filter(Boolean).join("\n");
 
@@ -876,6 +1136,24 @@ ${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags
   .b24x-td-sub{display:block; font-family:var(--b24-font-body); font-weight:600;
                font-size:10.5px; color:var(--b24-text-mute); text-transform:none;
                margin-top:3px}
+
+  /* ДАТА АКТУАЛЬНОСТИ ЦЕН В ПОДВАЛЕ. Своей строкой под именем партнёра, а не
+     приписью к нему: имя бывает 62 символа, и на длинном имени одна строка уехала
+     бы за полосу набора. Приглушённым кеглем — это сноска к документу, а не его
+     содержание. Подвал в ките — флекс-строка, поэтому обёртка получает
+     flex-direction:column у правой половины. */
+  .b24-footer{align-items:flex-end}
+  .b24x-foot-prices{display:block; font-family:var(--b24-font-body); font-weight:600;
+                    font-size:9.5px; color:var(--b24-text-mute); margin-top:2px;
+                    text-align:right}
+
+  /* ЛИСТ ДОПУЩЕНИЙ. Три колонки: величина, значение, происхождение. Колонка
+     происхождения самая узкая — это метка, а не текст, — и не переносится по
+     словам, иначе «carried over» встаёт столбиком. */
+  .b24x-table--assum tbody td:nth-child(3),
+  .b24x-table--assum thead th:nth-child(3){width:1%; white-space:nowrap}
+  .b24x-table--assum tbody td{padding:9px 12px; font-size:12.5px}
+  .b24x-table--assum thead th{padding:11px 12px; font-size:13px}
   .b24-table tbody td.b24x-est{color:var(--b24-text-mute)}
   /* Знак † у названия сценария, которому нужен AI-агент. Цвет — тот же
      предупреждающий #A15C00, что у блока про порог достоверности и у раскрытия
@@ -893,7 +1171,8 @@ ${pages}
   const pageCount = (html.match(/<section class="page/g) || []).length;
   /* Аудит без исключений: сборка одна, и «партнёрской» сборки, где внутреннее
      было бы допустимо, больше нет. */
-  const hits = auditClient(html, P, money);
+  const hits = auditClient(html, P, money,
+    {items: S.items || [], serviceSum: (S.totals || {}).serviceSum || 0});
   /* ОБЯЗАТЕЛЬНОЕ РАСКРЫТИЕ — это не «внутреннее в отчёте», а наоборот: то, что
      обязано в нём быть. Поэтому список отдельный: у него другая причина и другая
      формулировка отказа. Реакция та же — сборка не состоится. */
@@ -1010,7 +1289,7 @@ function requiredDisclosures(doc, gate, gated, mark, money, own) {
   return out;
 }
 
-function auditClient(doc, P, money) {
+function auditClient(doc, P, money, own) {
   const hay = visibleText(doc).toLowerCase();
   const banned = [
     ["itemised partner fees",   /my services/],
@@ -1020,6 +1299,33 @@ function auditClient(doc, P, money) {
   ];
   const hits = banned.filter(([, re]) => re.test(hay)).map(([label]) => label);
 
+  /* ПОСТАТЕЙНЫЕ ЦЕНЫ УСЛУГ — РАЗБИВКА, А НЕ ПРОСТО СОВПАВШАЯ СУММА.
+     Запрет на разбивку был записан в инварианте и в комментарии, а проверялся
+     только по заголовку «my services»: таблица с теми же суммами без этого
+     заголовка прошла бы аудит. Появление листа предложения (P16) сделало это
+     опасным на практике: лист печатает список сценариев, и приписать к каждому его
+     цену — соблазн в одну строку кода.
+
+     ПЕРВАЯ ВЕРСИЯ ПРАВИЛА ИСКАЛА САМУ СУММУ В ТЕКСТЕ И ДАЛА ЛОЖНОЕ СРАБАТЫВАНИЕ:
+     на плотном состоянии $5,000 — это оклад менеджера в сегменте сценария 1, а не
+     цена услуги. Денежные величины в документе совпадают сплошь, и «сумма
+     встречается где-нибудь» ничего не доказывает.
+
+     Поэтому ищется РАЗБИВКА как таковая: строка таблицы, в которой стоят и
+     название сценария, и его собственная цена. Это и есть запрещённая конструкция,
+     а совпадение суммы в другом месте — не она. */
+  if (own && own.items) {
+    const rows = String(doc).match(/<tr[\s\S]*?<\/tr>/g) || [];
+    const cells = r => visibleText(r).replace(/\s+/g, " ").trim();
+    own.items.forEach(it => {
+      if (typeof it.service !== "number" || it.service <= 0) return;
+      const fig = money(it.service).replace(/\s/g, " ");
+      const title = String(it.title || "").replace(/\s+/g, " ").trim();
+      if (!title) return;
+      const leak = rows.some(r => { const c = cells(r); return c.includes(title) && c.includes(fig); });
+      if (leak) hits.push(`per-scenario implementation fee ${fig} next to "${title}"`);
+    });
+  }
   return hits;
 }
 
