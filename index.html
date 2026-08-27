@@ -740,6 +740,7 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
           <p class="hint" style="margin:4px 0 0" data-i18n="ui.saveHint"></p>
         </div>
         <div class="b24x-save-actions">
+          <button type="button" class="b24x-btn-ghost" id="copy-link" data-i18n="ui.copyLink"></button>
           <button type="button" class="b24x-btn-ghost" id="dl-state" data-i18n="ui.dlState"></button>
           <label class="b24x-file b24x-file--btn">
             <input type="file" id="load-state" accept="application/json,.json">
@@ -747,6 +748,22 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
           </label>
         </div>
       </div>
+      <!-- ЧТО ЕДЕТ В ССЫЛКЕ — ГАЛОЧКОЙ, ПО УМОЛЧАНИЮ СНЯТОЙ. Партнёрская экономика
+           (цены услуг по сценариям) и контакты партнёра включаются осознанно.
+           Причина в комментарии к кодеку: ссылка контролируется хуже PDF, а PDF
+           эти цены не несёт ни при каких условиях. -->
+      <label class="rev-toggle" for="link-mine" style="margin-top:var(--b24-s3)">
+        <input type="checkbox" id="link-mine">
+        <span data-i18n="ui.linkMine"></span>
+      </label>
+      <p class="hint" style="margin:4px 0 0" data-i18n="ui.linkMineHint"></p>
+      <!-- Поле с готовой ссылкой. Нужно не для красоты: из file:// буфер обмена
+           браузеру недоступен (не защищённый контекст), и тогда партнёр копирует
+           отсюда руками. На живом сайте поле показывает то же, что уже в буфере. -->
+      <div class="in-wrap" id="link-box" hidden style="margin-top:var(--b24-s3)">
+        <input class="b24x-input" id="link-out" type="text" readonly>
+      </div>
+      <p class="hint" id="link-msg" style="margin:var(--b24-s2) 0 0" hidden></p>
       <p class="hint" id="load-msg" style="margin:var(--b24-s3) 0 0" hidden></p>
     </div>
   </section>
@@ -1390,8 +1407,22 @@ en: {
   "ui.pdfRefused":"The report was not built: it would have carried internal, partner-only content ({what}). This is a bug, so please report it. Do not work around it. There is one report and it goes to the client.",
   "ui.pdfNoScenarios":"Pick at least one scenario in Step 3. There is nothing to put in a report yet.",
   "ui.saveH":"Save the calculation",
-  "ui.saveHint":"A JSON file with everything you entered, so you can reopen this calculation later or send it to a colleague. It is not the report: the button above makes that.",
+  "ui.saveHint":"Two ways to keep this calculation, and neither is the report — the button above makes that. A <b>link</b> carries the calculation inside the address itself: paste it into a message, and whoever opens it sees these figures and can change them. A <b>JSON file</b> carries everything, including your logo, and is the one to use if a mail client mangles the link. Both reopen through the same route, so a link and a file restore the same calculation.",
   "ui.dlState":"Save calculation (JSON)",
+  // ---- ссылка на расчёт (P8) ----
+  "ui.copyLink":"Copy link to this calculation",
+  "ui.linkMine":"Include my fees and contacts",
+  "ui.linkMineHint":"Off by default, and deliberately. Without it the link carries the calculation — scenarios, figures, coverage, plan, mode — and not your per-scenario fees, your name, email or phone. Those are yours: the report never shows a fee next to a scenario, and a link travels further than a PDF and stays in mail and chat history. Turn it on when you are sending the link to yourself or a colleague. Your logo never goes into a link at all — it would make the address 40,000 characters long.",
+  "ui.linkCopied":"Link copied — {n} characters. It restores everything the link carries; anything left out stays at its default.",
+  "ui.linkManual":"Here is the link — {n} characters. This browser will not let a local file write to the clipboard, so copy it from the field above.",
+  "ui.linkLong":"The link is {n} characters. Browsers handle that, but some mail clients and messengers cut links past about 2,000. If it arrives broken, send the JSON file instead.",
+  "ui.linkRestored":"Calculation opened from a link: {n} scenario(s), plan {plan}.",
+  "ui.linkRestoredPartial":"Opened from a link, but it was saved in an older format — some of it may be missing. Check the figures before you quote them.",
+  "ui.linkBad":"That link could not be read ({why}). It may have been cut on the way — mail clients break long links. Ask for the JSON file instead.",
+  /* ВЕРСИИ. Молчаливого «ничего не произошло» быть не должно ни в одну сторону. */
+  "ui.stateNoVersion":"the calculation does not say which format it is in",
+  "ui.stateNewer":"it was saved by a newer version of this calculator",
+  "ui.stateOlder":"it was saved by an older version of this calculator",
   "ui.loadState":"Open a saved calculation",
   "ui.loadOk":"Loaded: {n} scenario(s), {plan}. Everything you entered is back.",
   "ui.loadOkPartial":"Loaded: {n} scenario(s), {plan}. An older version saved this file, so the numbers inside each scenario were filled again from the company data. Check them before you send a report.",
@@ -5590,6 +5621,12 @@ function loadStateFile(input){
     if(!st || !Array.isArray(st.items) || !st.company){
       show("ui.loadBad", {why: "no scenarios or company block"}); input.value = ""; return;
     }
+    /* ТА ЖЕ ПРОВЕРКА ВЕРСИИ, ЧТО У ССЫЛКИ. До этой правки файл будущего формата
+       принимался: ветка restore требует version === 1, иначе applyLoadedState
+       уходила на старый формат, не находила там ничего и молча оставляла расчёт
+       почти нетронутым. Одна функция на оба пути. */
+    const problem = stateVersionProblem(st);
+    if(problem){ show("ui.loadBad", {why: t(problem)}); input.value = ""; return; }
     const full = applyLoadedState(st);
     show(full ? "ui.loadOk" : "ui.loadOkPartial",
          {n: (st.restore ? st.restore.scenarios.length : st.items.length),
@@ -5597,6 +5634,127 @@ function loadStateFile(input){
     input.value = "";
   };
   fr.readAsText(f);
+}
+
+/* =============================================================================
+   ССЫЛКА НА РАСЧЁТ — P8.
+   Состояние кладётся в адрес после решётки. Бэкенда нет и не появляется: то, что
+   стоит после «#», браузер на сервер не отправляет вовсе, поэтому ограничение
+   single-file не нарушается и ссылка работает даже с локальной копии файла.
+
+   ФОРМАТ: #s<версия формата>.<deflate-raw, base64url>
+   Две версии, и они про разное:
+     версия ФОРМАТА ссылки (здесь) — как упакованы байты;
+     версия СОСТОЯНИЯ (restore.version) — что внутри.
+   Чужая любая из двух — отказ с внятным текстом, а не молчаливое «ничего не
+   произошло». Раньше файл будущего формата applyLoadedState принимал и тихо
+   применял почти ничего: ветка restore требует version === 1, иначе уходит на
+   старый формат и не находит там ни сценариев, ни компании.
+
+   ЗАМЕР ДЛИНЫ, самое плотное состояние (11 сценариев, сегменты у пяти, длинные
+   имена партнёра, все услуги оценены):
+     JSON как в файле                    2 656 байт
+     deflate + base64url                 1 311 знаков
+     адрес целиком                       1 352 знака
+   Практический предел ставят не браузеры (они держат десятки килобайт в хеше), а
+   почтовые клиенты и мессенджеры: линкификаторы рвут ссылку около двух тысяч
+   знаков. 1 352 проходят с запасом — значит сжатия достаточно и урезать состав
+   ради длины не нужно. Состав урезан по другой причине, см. ниже.
+
+   ЛОГОТИП В ССЫЛКУ НЕ ИДЁТ НИКОГДА. Реальный PNG 30 КБ в виде data URI даёт адрес
+   на 41 269 знаков — это мимо любого клиента. И не нужен: логотип лежит в
+   localStorage браузера партнёра, и при открытии своей же ссылки он останется на
+   месте, потому что applyLoadedState не трогает поля партнёра, которых в файле нет.
+
+   ЧТО ЕЩЁ НЕ ИДЁТ ПО УМОЛЧАНИЮ — решение, а не экономия места:
+     ЦЕНЫ УСЛУГ ПО СЦЕНАРИЯМ. Это партнёрская экономика. Отчёт их не несёт ни при
+       каких условиях — auditClient отказывается собирать документ, в котором
+       рядом с названием сценария стоит его цена. Ссылка контролируется ХУЖЕ
+       PDF: она уходит в почту и мессенджеры, пересылается дальше, остаётся в
+       истории. Класть в неё по умолчанию то, что запрещено в документе, значит
+       обойти собственный запрет через другую дверь.
+     КОНТАКТЫ И ЗАМЕТКА ПАРТНЁРА. Имя, почта, телефон, состав работ из листа
+       предложения. Партнёру они нужны, когда он присылает ссылку себе или коллеге;
+       клиенту в адресной строке они не нужны.
+   Оба включаются галочкой, по умолчанию снятой — как всё остальное в этом
+   инструменте, что стоит денег в моменте: ничего не выбрано при загрузке, прогноз
+   выручки выключен, режим консервативный.
+
+   ЧЕГО В СОСТОЯНИИ НЕТ ВОВСЕ, вопреки ожиданию: НАЗВАНИЯ КОМПАНИИ КЛИЕНТА. Такого
+   поля в калькуляторе не существует — «company» это численность и оклады, а
+   partner.company это компания ПАРТНЁРА. Оклады в ссылке остаются: без них расчёта
+   нет, и это те же оклады, которые партнёр уже показал клиенту на экране.
+   ========================================================================== */
+const LINK_V = 1;                 /* версия ФОРМАТА ссылки: как упакованы байты */
+const STATE_V = 1;                /* версия СОСТОЯНИЯ: что внутри (restore.version) */
+const LINK_PREFIX = "s" + LINK_V + ".";
+/* Порог предупреждения. Не запрет: длинную ссылку всё равно можно скопировать, но
+   партнёр должен знать, что она может не выжить в письме. */
+const LINK_WARN_LEN = 1800;
+
+const b64urlEnc = bytes => {
+  let s = ""; for(const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+};
+const b64urlDec = str => {
+  const s = atob(str.replace(/-/g,"+").replace(/_/g,"/"));
+  const out = new Uint8Array(s.length);
+  for(let i=0;i<s.length;i++) out[i] = s.charCodeAt(i);
+  return out;
+};
+/* Сжатие штатным CompressionStream — он есть во всех движках, которые мы мерили.
+   Если его нет, кладём несжатым: ссылка станет вдвое длиннее, о чём скажет порог
+   предупреждения, но работать будет. Тихо ломаться нельзя. */
+const hasZip = typeof CompressionStream === "function" && typeof DecompressionStream === "function";
+async function zip(str){
+  const bytes = new TextEncoder().encode(str);
+  if(!hasZip) return {bytes, zipped:false};
+  const cs = new CompressionStream("deflate-raw");
+  const w = cs.writable.getWriter(); w.write(bytes); w.close();
+  const buf = await new Response(cs.readable).arrayBuffer();
+  return {bytes: new Uint8Array(buf), zipped:true};
+}
+async function unzip(bytes){
+  if(!hasZip) return new TextDecoder().decode(bytes);
+  try{
+    const ds = new DecompressionStream("deflate-raw");
+    const w = ds.writable.getWriter(); w.write(bytes); w.close();
+    const buf = await new Response(ds.readable).arrayBuffer();
+    return new TextDecoder().decode(buf);
+  }catch(e){
+    /* Несжатая ссылка от браузера без CompressionStream — читаем как есть. */
+    return new TextDecoder().decode(bytes);
+  }
+}
+
+/* СОСТАВ ССЫЛКИ. Берётся ТОТ ЖЕ блок restore, что уходит в файл: одна модель
+   состояния, одна ветка восстановления. Здесь только вычитание. */
+function linkPayload({withPartner}){
+  const r = JSON.parse(JSON.stringify(reportState().restore));
+  delete r.partner.logo;
+  delete r.partner.logoInk;
+  if(!withPartner){
+    delete r.partner;
+    r.scenarios.forEach(sc=> delete sc.service);
+  }
+  return {restore: r};
+}
+async function buildLink({withPartner}){
+  const json = JSON.stringify(linkPayload({withPartner}));
+  const {bytes} = await zip(json);
+  const base = location.href.split("#")[0];
+  return base + "#" + LINK_PREFIX + b64urlEnc(bytes);
+}
+
+/* ПРОВЕРКА ВЕРСИИ — ОДНА НА ОБА ПУТИ, файл и ссылку. Возвращает null, если
+   состояние можно применять, иначе ключ строки с причиной. */
+function stateVersionProblem(st){
+  const r = st && st.restore;
+  if(!r) return null;                       /* старый формат без restore — своя ветка */
+  if(typeof r.version !== "number") return "ui.stateNoVersion";
+  if(r.version > STATE_V) return "ui.stateNewer";
+  if(r.version < STATE_V) return "ui.stateOlder";
+  return null;
 }
 
 function downloadState(){
@@ -6181,6 +6339,64 @@ document.getElementById("sw-real").addEventListener("click", e=>{
   if(b) setRealisation(b.dataset.real);
 });
 document.getElementById("dl-state").addEventListener("click", downloadState);
+
+/* ---- ССЫЛКА НА РАСЧЁТ: копирование ---- */
+document.getElementById("copy-link").addEventListener("click", async ()=>{
+  const msg = document.getElementById("link-msg");
+  const box = document.getElementById("link-box");
+  const out = document.getElementById("link-out");
+  const withPartner = document.getElementById("link-mine").checked;
+  let url;
+  try { url = await buildLink({withPartner}); }
+  catch(e){ msg.hidden = false; msg.textContent = t("ui.linkBad", {why: e.message}); return; }
+  out.value = url;
+  box.hidden = false;
+  /* Буфер обмена требует защищённого контекста: из file:// он недоступен, и это не
+     ошибка, а свойство браузера. Тогда показываем поле и просим скопировать оттуда,
+     а не молчим и не делаем вид, что скопировали. */
+  let copied = false;
+  try {
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(url); copied = true;
+    }
+  } catch(e){ copied = false; }
+  if(!copied){ out.focus(); out.select(); }
+  msg.hidden = false;
+  msg.textContent = t(copied ? "ui.linkCopied" : "ui.linkManual", {n: fmtInt(url.length)})
+    + (url.length > LINK_WARN_LEN ? " " + t("ui.linkLong", {n: fmtInt(url.length)}) : "");
+});
+
+/* ---- ССЫЛКА НА РАСЧЁТ: открытие ----
+   Стоит ПОСЛЕ загрузки страницы и после первого рендера: восстановление идёт через
+   тот же applyLoadedState, что и файл, а он ожидает уже собранный интерфейс.
+   Хеш НЕ вычищается: обновление страницы должно давать тот же расчёт. */
+async function restoreFromHash(){
+  const h = String(location.hash || "").replace(/^#/, "");
+  if(!h) return;
+  const msg = document.getElementById("load-msg");
+  const show = (key, params, bad) => { if(msg){ msg.textContent = t(key, params); msg.hidden = false;
+                                                msg.classList.toggle("logo-err", !!bad); } };
+  /* Чужой формат ссылки — отказ с внятным текстом. Префикс несёт свою версию, и
+     ссылка из будущего не должна тихо не сработать. */
+  /* НЕ НАШ ХЕШ — МОЛЧИМ. В странице есть обычные якоря (#top, #summary, #scenarios),
+     и открытая по такому якорю ссылка не должна встречать читателя красной ошибкой.
+     Ругаемся только на то, что ПОХОЖЕ на ссылку с расчётом: префикс s<цифры>. */
+  const m = /^s(\d+)\.(.*)$/.exec(h);
+  if(!m) return;
+  if(!m[2]){ show("ui.linkBad", {why: "the link carries no data — it was cut"}, true); return; }
+  if(+m[1] !== LINK_V){
+    show("ui.linkBad", {why: `link format v${m[1]}, this calculator reads v${LINK_V}`}, true); return;
+  }
+  let st;
+  try { st = JSON.parse(await unzip(b64urlDec(m[2]))); }
+  catch(e){ show("ui.linkBad", {why: "the packed data is damaged or truncated"}, true); return; }
+  const problem = stateVersionProblem(st);
+  if(problem){ show("ui.linkBad", {why: t(problem)}, true); return; }
+  const full = applyLoadedState(st);
+  const n = st.restore ? st.restore.scenarios.length : 0;
+  show(full ? "ui.linkRestored" : "ui.linkRestoredPartial",
+       {n: fmtInt(n), plan: (st.restore && st.restore.plan && st.restore.plan.tgtPlanName) || "—"});
+}
 document.getElementById("pdf-client").addEventListener("click", ()=> reportToPdf());
 document.getElementById("load-state").addEventListener("change", e=> loadStateFile(e.target));
 
@@ -6204,6 +6420,21 @@ buildServices();     /* пустое состояние шага 4: «выбер
    must consciously pick each scenario, so the opening screen never shows a total
    nobody chose. Do not pre-select scenarios here. */
 recompute();
+
+/* ССЫЛКА НА РАСЧЁТ — ПОСЛЕДНИМ ШАГОМ ЗАГРУЗКИ. После recompute(), потому что
+   applyLoadedState рассчитывает на собранный интерфейс: он ищет поля карточек и
+   перекрашивает переключатели. Асинхронно — распаковка идёт через
+   DecompressionStream. Ошибку глотать нельзя: она печатается в ту же строку, что
+   и результат загрузки файла. */
+/* ССЫЛКА, ВСТАВЛЕННАЯ В АДРЕСНУЮ СТРОКУ УЖЕ ОТКРЫТОЙ СТРАНИЦЫ, перезагрузки не
+   вызывает — меняется только хеш. Слушаем и восстанавливаем; на обычные якоря
+   restoreFromHash не реагирует и молчит. */
+window.addEventListener("hashchange", ()=> restoreFromHash().catch(()=>{}));
+restoreFromHash().catch(e=>{
+  const msg = document.getElementById("load-msg");
+  if(msg){ msg.hidden = false; msg.classList.add("logo-err");
+           msg.textContent = t("ui.linkBad", {why: e.message}); }
+});
 </script>
 </body>
 </html>
