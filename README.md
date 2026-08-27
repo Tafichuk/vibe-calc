@@ -120,8 +120,17 @@ reads first, so the tool asks you to finish the pricing instead of guessing.
 consciously, so the client never sees a total nobody picked. An honest short list is more
 persuasive than a long one.
 
-**Everything marked `estimate` is a placeholder.** Salaries, payroll burden, working days,
-coverage — all of it. Replace with the client's real figures before you quote.
+**Every default says where it comes from.** The pill next to a field name gives you the type
+at a glance — *carried over*, *our estimate*, *ask the client*, *from coverage* — and clicking
+it prints the full sentence. Use it when the client asks where a number came from, because
+they will.
+
+There is no vendor benchmark data behind any of these figures, and the tool says so. Most of
+the scenario defaults were carried over from the earlier Russian version of this calculator,
+where they were also just defaults. Salaries are our own estimate of market rates, not a
+currency conversion. The figures marked *ask the client* are facts about their company —
+there is no source for those and there cannot be one. Replace them all with the client's real
+figures before you quote.
 
 ---
 

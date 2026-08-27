@@ -161,6 +161,12 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .in-wrap[data-suf="meetings"] input{padding-right:100px}
 .field .err{display:none; font-size:12px; color:var(--b24x-error-ink); font-weight:600}
 .field.invalid .err{display:block}
+/* Плашка происхождения — кнопка, но выглядит плашкой: приподнятого вида ей не
+   нужно, нужен курсор и подчёркивание при наведении, чтобы было видно, что она
+   нажимается. Красный не используется: он занят валидацией. */
+.est-btn{border:0; font:inherit; cursor:pointer; text-transform:inherit; letter-spacing:inherit}
+.est-btn:hover{text-decoration:underline}
+.est-btn:focus-visible{outline:2px solid var(--b24-cyan); outline-offset:1px}
 .est{display:inline-block; background:var(--b24-card); color:var(--b24-deep);
   border-radius:var(--b24-r-pill); padding:2px 8px; font-size:11px; font-weight:700;
   text-transform:uppercase; letter-spacing:.05em; margin-left:6px; vertical-align:1px}
@@ -1147,6 +1153,32 @@ en: {
   "ui.burden":"Employer payroll burden",
   "ui.burdenHint":"Added on top of gross salary to get the real cost of an employee. The right figure depends on the country and the type of contract. Set it to your market before you quote.",
   "ui.estimate":"estimate",
+
+  // ---- происхождение дефолтов (P6) ----
+  /* НАДПИСЬ НА ПЛАШКЕ — ДВА СЛОВА, потому что она стоит в подписи поля и не имеет
+     права занимать высоту. Тип видно с одного взгляда, полная строка — по клику.
+     Формулировки называют тип честно и не изобретают источников. */
+  "org.pill.carried":"carried over",
+  "org.pill.ours":"our estimate",
+  "org.pill.client":"ask the client",
+  "org.pill.coverage":"from coverage",
+  "org.title":"Where this default comes from",
+  /* ПОЛНЫЕ СТРОКИ. Каждая называет происхождение и говорит, что с этим делать.
+     Ни одна не ссылается на исследование или выгрузку: таких данных у нас нет. */
+  "org.ru":"Carried over from the Russian version of this calculator, where it was the default. There is no benchmark behind it — no study, no vendor data, no partner survey. It was one person's working assumption in another tool. Ask the client for their own figure; if they do not have one, say out loud that this is a starting point.",
+  "org.ruCall":"Carried over from the Russian version, where the field asked for the whole handling time of a call and the default was 10 minutes. We renamed the field to the work that actually disappears — the minutes after the call — and halved the default, because 20 calls x 10 minutes came to 3 hours 20 minutes of post-call admin a day, 42% of a working day. Five minutes is still our estimate, not a measurement.",
+  "org.ruOps":"Carried over from the Russian version, where the default was 30 operations a day. We halved it: thirty is an active user of the system, and this scenario is claimed for all staff. Fifteen is still our estimate, not a measurement.",
+  "org.mkt":"Our estimate of a market rate for this region. It is NOT a conversion of the Russian figure — the Russian defaults were in roubles and the numbers here were picked fresh (MIGRATION_NOTES, OPEN_QUESTIONS §5). Replace it with the client's actual payroll: they know it, we do not.",
+  "org.client":"This is a fact about this client, so no source exists and none can. We put in a deliberately modest placeholder so an untouched calculator does not flatter the result. Set it together with the client — and if they do not know it either, that is worth saying rather than guessing.",
+  /* ОХВАТ. Формулировка называет и происхождение, и то, что это самое
+     чувствительное число модели: она двигает итог линейно, и подтверждённых
+     значений по рынку у нас нет (OPEN_QUESTIONS §5, §8). */
+  "org.coverage":"Our estimate, and the most sensitive number in the whole model — it moves the total in a straight line. The share for each scenario was reasoned from who plausibly uses that feature, not measured: 100% where the scenario names a role that already is a share of the company, 12% for document work, 20-30% for the agent scenarios because that is early-adopter behaviour rather than the whole company. We have no confirmed market figures for this. If the client can name who will really use the feature, use their number.",
+  "org.cov":"Not typed here. It comes from the headcount in step 1 multiplied by the coverage share above this field. Change one of those two, not this box.",
+  /* Строка под таблицей входных данных в отчёте. Одна, а не по числу на каждое
+     поле: страница и без того плотная, а клиенту нужно знать ДВЕ вещи — какие
+     цифры его собственные и что вендорских бенчмарков здесь нет вовсе. */
+  "org.reportLegend":"Where these figures come from: none of them is vendor benchmark data. {client} of them are facts about your company and are marked {mark} — please confirm or replace those. The rest are our starting assumptions, carried over from the earlier version of this calculator or estimated by us.",
   "ui.step5":"Step 5", "ui.step6":"Step 6", "ui.step7":"Step 7", "ui.step8":"Step 8",
 
   // ---- coverage ----
@@ -1770,6 +1802,49 @@ function onNumInput(inp){
    читается как дефект инструмента, а не как оценка. Минуты и деньги дробные
    законно (2.5 минуты, оклад 4500.50).
    ========================================================================== */
+/* =============================================================================
+   ПРОИСХОЖДЕНИЕ ДЕФОЛТОВ — P6.
+   Первый вопрос финансового директора: откуда десять минут на звонок. Ответить
+   было нечем, и партнёр говорил «это примерная оценка» — после чего примерной
+   становилась вся модель.
+
+   АРХЕОЛОГИЯ ПРОВЕДЕНА ПО РЕПОЗИТОРИЮ, А НЕ ПО ПАМЯТИ. Источники:
+     INVENTORY.md из первого коммита (e0decf6) — построчный разбор русского
+       исходника github.com/BelMihMed/calc-serv со ВСЕМИ его дефолтами;
+     MIGRATION_NOTES.md оттуда же — что мы заменили осознанно и почему;
+     OPEN_QUESTIONS.md §5 — оклады и услуги интегратора объявлены оценочными;
+     DEMO_SUMMARY.md — происхождение долей охвата.
+
+   ЧТО ВЫЯСНИЛОСЬ, И ЭТО НЕПРИЯТНО, НО ЭТО ПРАВДА: подтверждённый ИСТОЧНИК есть
+   ровно у двух величин — у прайса (config/pricing.json, официальная выгрузка) и
+   у границы наличия AI-агентов по тарифам (подтверждение заказчицы). У всех
+   остальных дефолтов источника нет. Большинство числовых дефолтов сценариев —
+   ПЕРЕНОС ИЗ РУССКОЙ ВЕРСИИ, где за ними тоже не стояло ни исследования, ни
+   выгрузки: они были дефолтами в чужом калькуляторе. Так и написано.
+
+   ЛОЖНАЯ РОДОСЛОВНАЯ ХУЖЕ ЕЁ ОТСУТСТВИЯ, поэтому ни одна строка ниже не
+   ссылается на «медиану по внедрениям» или «опрос партнёров»: таких данных у нас
+   нет. Вариант «данных нет, задайте вместе с клиентом» — полноценный ответ и в
+   переговорной работает лучше выдуманной цифры.
+   ========================================================================== */
+const ORIGINS = {
+  /* Перенос из русского калькулятора без изменения. Бенчмарка за числом нет. */
+  ru:      {pill:"org.pill.carried", text:"org.ru"},
+  /* Перенос, который мы потом уменьшили — и у каждого своя причина, поэтому
+     отдельные ключи, а не общий текст. */
+  ruCall:  {pill:"org.pill.carried", text:"org.ruCall"},
+  ruOps:   {pill:"org.pill.carried", text:"org.ruOps"},
+  /* Наша рыночная оценка. Русские оклады НЕ конвертировались по курсу — числа
+     подобраны заново (MIGRATION_NOTES §8, OPEN_QUESTIONS §5). */
+  mkt:     {pill:"org.pill.ours",    text:"org.mkt"},
+  /* Про конкретного клиента. Источника нет и быть не может — мы поставили
+     заведомо скромный плейсхолдер. */
+  client:  {pill:"org.pill.client",  text:"org.client"},
+  /* Поле не набирается: его заполняет охват от численности из шага 1. */
+  cov:     {pill:"org.pill.coverage",text:"org.cov"},
+};
+const orgOf = f => ORIGINS[f.org] || null;
+
 const MAX_MIN = C.DAY_HOURS * 60;
 const LIMITS = {
   /* ДОЛЯ — ЕДИНСТВЕННАЯ ЕДИНИЦА, ГДЕ ЭКРАН И СОСТОЯНИЕ МЕРЯЮТ РАЗНЫМ. В поле
@@ -1818,9 +1893,9 @@ const scenarios = [
   { id:1, group:"crm", driver:"daily", cov:{src:"mgrCount", target:"mgr", def:100}, link:"https://helpdesk.bitrix24.com/open/25855535/",
     effect:["fot","rev"],
     fields:[
-      {k:"mgr",  def:1,     suf:"ppl"},
-      {k:"sal",  def:4000,  suf:"money", est:true},
-      {k:"calls",def:20,    suf:"calls"},
+      {k:"mgr",  def:1,     suf:"ppl", org:"cov"},
+      {k:"sal",  def:4000,  suf:"money", org:"mkt"},
+      {k:"calls",def:20,    suf:"calls", org:"ru"},
       /* ВРЕМЯ ПОСЛЕ ЗВОНКА: 10 -> 5 МИНУТ, И ВОТ ПОЧЕМУ.
          Само число не менялось с первой версии, а вот вопрос, на который оно
          отвечает, изменился. Пока поле называлось «Handling time per call», десять
@@ -1835,11 +1910,11 @@ const scenarios = [
          ПРАВИТСЯ СЧЁТЧИК ВРЕМЕНИ, А НЕ ЧИСЛО ЗВОНКОВ: двадцать звонков в день у
          менеджера по продажам — норма, и занижать её значило бы прятать проблему
          не там, где она есть.
-         Помечено est:true — пометки не было, хотя источника у числа нет и быть не
-         может: это оценка ровно того же сорта, что оклады и охват. */
-      {k:"time", def:5,     suf:"min", est:true},
-      {k:"plan", def:40000, suf:"money", est:true, revOnly:true},
-      {k:"coef", def:0.3,   suf:"share", revOnly:true},
+         Происхождение помечено как перенос из русской версии, уменьшенный нами:
+         источника у числа нет и не было. См. ORIGINS/org.ruCall. */
+      {k:"time", def:5,     suf:"min", org:"ruCall"},
+      {k:"plan", def:40000, suf:"money", revOnly:true, org:"client"},
+      {k:"coef", def:0.3,   suf:"share", revOnly:true, org:"ru"},
     ],
     /* Пул правдоподобности: годовой план продаж всей команды. Прирост выручки
        здесь — доля этого плана, и сравнивать его правильно именно с ним. */
@@ -1872,9 +1947,9 @@ const scenarios = [
   { id:4, group:"crm", driver:"share", cov:{src:"ropCount", target:"rop", def:100}, link:"https://helpdesk.bitrix24.com/open/23763142/",
     effect:["fot"],
     fields:[
-      {k:"rop",  def:1,    suf:"ppl"},
-      {k:"sal",  def:6500, suf:"money", est:true},
-      {k:"share",def:0.10, suf:"share"},
+      {k:"rop",  def:1,    suf:"ppl", org:"cov"},
+      {k:"sal",  def:6500, suf:"money", org:"mkt"},
+      {k:"share",def:0.10, suf:"share", org:"ru"},
     ],
     /* ЧАСОВ В ФОРМУЛЕ НЕТ — она берёт долю месячной стоимости. Но полная месячная
        стоимость это и есть contractHours() оплаченных часов, поэтому доля стоимости
@@ -1913,14 +1988,15 @@ const scenarios = [
      Стало: 500 x 0.02 x 500 = $5,000 в месяц, $60,000 в год — десятая часть
      годовой экономии ФОТ вместо четырёхкратного превышения.
 
-     ВСЕ ТРИ ПОМЕЧЕНЫ est:true. Раньше пометка «estimate» стояла только у чека,
-     хотя выдуманы одинаково все три. Пометка — та же, что у охвата и окладов. */
+     ВСЕ ТРИ ПОМЕЧЕНЫ org:"client" — «про конкретного клиента, источника нет и
+     быть не может». Раньше пометка «estimate» стояла только у чека, хотя выдуманы
+     одинаково все три. */
   { id:5, group:"crm", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/25766347/",
     effect:["rev"], revLabel:"ui.revBase", segments:true,
     fields:[
-      {k:"base", def:500, suf:"clients", est:true},
-      {k:"check",def:500, suf:"money",   est:true},
-      {k:"conv", def:0.02, suf:"share",  est:true},
+      {k:"base", def:500, suf:"clients", org:"client"},
+      {k:"check",def:500, suf:"money",   org:"client"},
+      {k:"conv", def:0.02, suf:"share",  org:"client"},
     ],
     /* Пул правдоподобности: вся база, купившая по одному разу. Годовой прогноз
        повторных продаж, превышающий его, означает, что каждый клиент базы
@@ -1934,8 +2010,8 @@ const scenarios = [
   { id:9, group:"agents", agent:true, driver:"daily", cov:{src:"empCount", target:"mgr", def:20}, link:"https://helpdesk.bitrix24.com/open/25866707/", note:true,
     effect:["fot"],
     fields:[
-      {k:"mgr", def:1,    suf:"ppl",   src:"empCount"},
-      {k:"sal", def:4000, suf:"money", src:"empSal", est:true},
+      {k:"mgr", def:1,    suf:"ppl",   src:"empCount", org:"cov"},
+      {k:"sal", def:4000, suf:"money", src:"empSal", org:"mkt"},
       /* ОПЕРАЦИИ В ДЕНЬ: 30 -> 15, И ПОЧЕМУ ПРАВИТСЯ СЧЁТЧИК, А НЕ ВРЕМЯ.
          Тридцать операций в Битрикс24 в день — это поведение активного
          пользователя системы, а сценарий заявлен НА ВСЕХ сотрудников (охват 20%
@@ -1948,9 +2024,9 @@ const scenarios = [
          величину с большим разбросом — значит прятать неопределённость в число,
          которое партнёр всё равно не проверит. Счётчик он проверяет по своей
          практике за минуту.
-         Помечено est:true по той же причине, что и у сценария 1. */
-      {k:"ops", def:15,   suf:"ops", est:true},
-      {k:"time",def:3,    suf:"min"},
+         Происхождение — перенос из русской версии, уменьшенный нами (org.ruOps). */
+      {k:"ops", def:15,   suf:"ops", org:"ruOps"},
+      {k:"time",def:3,    suf:"min", org:"ru"},
     ],
     hours:v=> v.ops * v.time * daysMonth / 60 * v.mgr,
     compute:v=>{
@@ -1972,10 +2048,10 @@ const scenarios = [
   { id:2, group:"agents", agent:true, driver:"daily", link:null,
     effect:["fot"],
     fields:[
-      {k:"sal",  def:3000, suf:"money", est:true},
-      {k:"total",def:40,   suf:"enq"},
-      {k:"ai",   def:30,   suf:"enq"},
-      {k:"time", def:7,    suf:"min"},
+      {k:"sal",  def:3000, suf:"money", org:"mkt"},
+      {k:"total",def:40,   suf:"enq", org:"ru"},
+      {k:"ai",   def:30,   suf:"enq", org:"ru"},
+      {k:"time", def:7,    suf:"min", org:"ru"},
     ],
     validate:v=> v.ai > v.total ? {ai:"sc.2.err.ai"} : null,
     /* min(ai, total) — та же страховка, что в деньгах: часы не имеют права
@@ -1992,11 +2068,11 @@ const scenarios = [
   { id:10, group:"agents", agent:true, driver:"daily", cov:{src:"empCount", target:"emp", def:30}, link:"https://helpdesk.bitrix24.com/open/25970567/", note:true,
     effect:["fot"],
     fields:[
-      {k:"emp",  def:50,   suf:"ppl",   src:"empCount"},
-      {k:"sal",  def:4000, suf:"money", src:"empSal", est:true},
-      {k:"q",    def:3,    suf:"lookups"},
-      {k:"t",    def:10,   suf:"min"},
-      {k:"share",def:0.7,  suf:"share"},
+      {k:"emp",  def:50,   suf:"ppl",   src:"empCount", org:"cov"},
+      {k:"sal",  def:4000, suf:"money", src:"empSal", org:"mkt"},
+      {k:"q",    def:3,    suf:"lookups", org:"ru"},
+      {k:"t",    def:10,   suf:"min", org:"ru"},
+      {k:"share",def:0.7,  suf:"share", org:"ru"},
     ],
     hours:v=> v.q * v.t * v.share * daysMonth / 60 * v.emp,
     compute:v=>{
@@ -2007,12 +2083,12 @@ const scenarios = [
   { id:11, group:"agents", agent:true, driver:"daily", cov:{src:"empCount", target:"emp", def:25}, link:null, note:true,
     effect:["fot"],
     fields:[
-      {k:"emp",   def:50,   suf:"ppl",   src:"empCount"},
-      {k:"empSal",def:4000, suf:"money", src:"empSal", est:true},
-      {k:"empMin",def:20,   suf:"min"},
-      {k:"mgr",   def:5,    suf:"ppl"},
-      {k:"mgrSal",def:6500, suf:"money", est:true},
-      {k:"mgrMin",def:30,   suf:"min"},
+      {k:"emp",   def:50,   suf:"ppl",   src:"empCount", org:"cov"},
+      {k:"empSal",def:4000, suf:"money", src:"empSal", org:"mkt"},
+      {k:"empMin",def:20,   suf:"min", org:"ru"},
+      {k:"mgr",   def:5,    suf:"ppl", org:"client"},
+      {k:"mgrSal",def:6500, suf:"money", org:"mkt"},
+      {k:"mgrMin",def:30,   suf:"min", org:"ru"},
     ],
     /* ДВЕ СТАВКИ. В часах слагаемые просто складываются — час сотрудника и час
        руководителя это одинаковые часы; в деньгах они стоят разного. Поэтому
@@ -2027,13 +2103,13 @@ const scenarios = [
   { id:12, group:"agents", agent:true, driver:"monthly", link:null,
     effect:["fot"],
     fields:[
-      {k:"visits",def:800,  suf:"bookings"},
+      {k:"visits",def:800,  suf:"bookings", org:"ru"},
       /* «Звонков на запись» — это НЕ звонки в день, хотя единица та же. Потолок
          сотня: у одной записи не бывает больше сотни звонков. Уточнение объявлено
          у поля — так же, как объявляются пул выручки и часы. */
-      {k:"perRec",def:2,    suf:"calls", lim:{max:100}},
-      {k:"time",  def:3,    suf:"min"},
-      {k:"admSal",def:2600, suf:"money", est:true},
+      {k:"perRec",def:2,    suf:"calls", lim:{max:100}, org:"ru"},
+      {k:"time",  def:3,    suf:"min", org:"ru"},
+      {k:"admSal",def:2600, suf:"money", org:"mkt"},
     ],
     hours:v=> v.visits * v.perRec * v.time / 60,
     compute:v=>{
@@ -2044,10 +2120,10 @@ const scenarios = [
   { id:3, group:"other", driver:"daily", cov:{src:"empCount", target:"emp", def:12}, link:null,
     effect:["fot"],
     fields:[
-      {k:"emp", def:5,    suf:"ppl",   src:"empCount"},
-      {k:"sal", def:4000, suf:"money", src:"empSal", est:true},
-      {k:"docs",def:5,    suf:"docs"},
-      {k:"time",def:20,   suf:"min"},
+      {k:"emp", def:5,    suf:"ppl",   src:"empCount", org:"cov"},
+      {k:"sal", def:4000, suf:"money", src:"empSal", org:"mkt"},
+      {k:"docs",def:5,    suf:"docs", org:"ru"},
+      {k:"time",def:20,   suf:"min", org:"ru"},
     ],
     hours:v=> v.docs * v.time * daysMonth / 60 * v.emp,
     compute:v=>{
@@ -2058,11 +2134,11 @@ const scenarios = [
   { id:6, group:"other", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/25345201/",
     effect:["fot"],
     fields:[
-      {k:"meet",def:8,    suf:"meetings"},
-      {k:"dur", def:60,   suf:"min"},
-      {k:"part",def:6,    suf:"ppl"},
-      {k:"psal",def:4000, suf:"money", est:true},
-      {k:"asal",def:3000, suf:"money", est:true},
+      {k:"meet",def:8,    suf:"meetings", org:"ru"},
+      {k:"dur", def:60,   suf:"min", org:"ru"},
+      {k:"part",def:6,    suf:"ppl", org:"ru"},
+      {k:"psal",def:4000, suf:"money", org:"mkt"},
+      {k:"asal",def:3000, suf:"money", org:"mkt"},
     ],
     /* ТРИ СЛАГАЕМЫХ В МИНУТАХ, ДВЕ СТАВКИ. Встречи короче и участников меньше —
        минуты участников, и это одна и та же величина (meet x dur x GAIN x part),
@@ -2081,10 +2157,10 @@ const scenarios = [
   { id:7, group:"vibe", driver:"share", cov:{src:"empCount", target:"emp", def:30}, link:"https://vibecode.bitrix24.com/quickstart",
     effect:["fot"], qualitative:"qual.7",
     fields:[
-      {k:"emp",  def:10,   suf:"ppl",   src:"empCount"},
-      {k:"share",def:0.10, suf:"share"},
-      {k:"simp", def:0.30, suf:"share"},
-      {k:"sal",  def:4000, suf:"money", src:"empSal", est:true},
+      {k:"emp",  def:10,   suf:"ppl",   src:"empCount", org:"cov"},
+      {k:"share",def:0.10, suf:"share", org:"ru"},
+      {k:"simp", def:0.30, suf:"share", org:"ru"},
+      {k:"sal",  def:4000, suf:"money", src:"empSal", org:"mkt"},
     ],
     /* Как у сценария 4: формула берёт доли месячной стоимости, а полная месячная
        стоимость это contractHours() оплаченных часов. Округление числа инициативных
@@ -2164,10 +2240,13 @@ const AUTOFILL = {
   ropCount:[[4,"rop"]],
   ropSal:  [[4,"sal"]],
 };
+/* Численность — факт о клиенте, оклады — наша рыночная оценка. Признак org
+   заменил прежний est:true: он говорит не только «это не факт», но и ЧТО именно
+   за числом стоит. См. таблицу ORIGINS. */
 const COMPANY = [
-  {k:"empCount", def:50},   {k:"empSal", def:4000, est:true},
-  {k:"mgrCount", def:5},    {k:"mgrSal", def:4000, est:true},
-  {k:"ropCount", def:1},    {k:"ropSal", def:6500, est:true},
+  {k:"empCount", def:50, org:"client"},   {k:"empSal", def:4000, org:"mkt"},
+  {k:"mgrCount", def:5,  org:"client"},   {k:"mgrSal", def:4000, org:"mkt"},
+  {k:"ropCount", def:1,  org:"client"},   {k:"ropSal", def:6500, org:"mkt"},
 ];
 const company = {};
 
@@ -2190,7 +2269,8 @@ function buildCompany(){
   const g = document.getElementById("co-grid");
   g.innerHTML = COMPANY.map(c=>`
     <div class="field" data-field="co-${c.k}">
-      <label for="co-${c.k}">${t("co."+c.k)}${c.est?`<span class="est">${t("ui.estimate")}</span>`:""}</label>
+      <label for="co-${c.k}">${t("co."+c.k)}${orgOf(c) ? `<button type="button" class="est est-btn"
+             data-info="org-co-${c.k}" aria-label="${t("org.title")}">${t(orgOf(c).pill)}</button>` : ""}</label>
       <div class="in-wrap">
         <input class="b24x-input comp-in" id="co-${c.k}" data-comp="${c.k}"
                type="text" inputmode="decimal"
@@ -2266,9 +2346,17 @@ function fieldHtml(sc, f, vals, segIdx){
      тоже в процентах, поэтому подставляется как есть; остальные единицы совпадают
      с экранными по определению. */
   const lim = limOf(f);
+  const org = orgOf(f);
   return `
   <div class="field" data-field="${f.k}">
-    <label>${t(`sc.${sc.id}.f.${f.k}`)}${f.est?`<span class="est">${t("ui.estimate")}</span>`:""}</label>
+    ${/* ПЛАШКА ПРОИСХОЖДЕНИЯ ВМЕСТО ПРЕЖНЕЙ «estimate». Тот же слот в подписи, та
+         же нулевая стоимость по высоте, но говорит она больше: не «это не факт», а
+         КАКОГО СОРТА за числом стоит основание. Плашка — кнопка: по клику
+         открывается та же панель, что у «как это считается», и печатает полную
+         строку происхождения. Так партнёр в переговорной видит тип с одного
+         взгляда, а точную формулировку достаёт одним нажатием. */""}
+    <label>${t(`sc.${sc.id}.f.${f.k}`)}${org ? `<button type="button" class="est est-btn"
+      data-info="org-${sc.id}-${f.k}" aria-label="${t("org.title")}">${t(org.pill)}</button>` : ""}</label>
     <div class="in-wrap" data-suf="${f.suf}">
       ${/* ГРАНИЦЫ ОБЪЯВЛЕНЫ НА САМОМ ПОЛЕ. type остаётся text: type="number" отнял бы
            у нас разрядные пробелы, которые ставит groupFmt, и вставку из таблиц.
@@ -2388,7 +2476,8 @@ function scHtml(sc){
       ${sc.cov?`
       <div class="cov-row">
         <div class="field" style="max-width:260px">
-          <label for="cov-${sc.id}">${t("ui.coverage")}<span class="est">${t("ui.estimate")}</span></label>
+          <label for="cov-${sc.id}">${t("ui.coverage")}<button type="button" class="est est-btn"
+            data-info="org-cov-${sc.id}" aria-label="${t("org.title")}">${t("org.pill.ours")}</button></label>
           <div class="in-wrap">
             <input class="b24x-input cov-in" id="cov-${sc.id}" data-cov="${sc.id}"
                    type="text" inputmode="decimal" value="${covOf(sc)}">
@@ -3555,6 +3644,13 @@ function reportState(){
   const fieldsOf = (sc, vals) => sc.fields
     .filter(f=>!f.revOnly || SHOW_REVENUE)
     .map(f=>({label: t(`sc.${sc.id}.f.${f.k}`),
+              /* ПРИЗНАК «ЭТО ЦИФРА КЛИЕНТА» едет в отчёт, а полная родословная —
+                 нет, и это решение. Клиенту на странице входных данных нужны две
+                 вещи: какие числа его собственные (их он подтверждает или
+                 заменяет) и что вендорских бенчмарков здесь нет вовсе. Тип
+                 происхождения каждого из сорока восьми полей ему не нужен —
+                 он нужен ПАРТНЁРУ, и живёт на экране. */
+              client: f.org === "client",
               value: f.suf==="share"
                 ? fmtPct(vals[f.k])
                 : (f.suf==="money" ? fmtMoney(vals[f.k])
@@ -3714,6 +3810,16 @@ function reportState(){
     /* Список исключённых по ошибке ввода едет вместе с данными: сборка отчёта
        обязана отказаться, а не решать это по своим догадкам. */
     invalid: (m.invalid || []).map(x => ({id: x.id, title: x.title})),
+    /* ГОТОВАЯ СТРОКА ПРО ПРОИСХОЖДЕНИЕ — как и оба предупреждения, собирается
+       здесь: формулировка обязана быть одна на экран и на документ. Число цифр
+       клиента считается по тем же items, которые печатает отчёт. */
+    orgLegend: (() => {
+      const seen = new Set();
+      m.items.forEach(it => it.sc.fields.forEach(f=>{
+        if(f.org === "client" && (!f.revOnly || SHOW_REVENUE)) seen.add(it.sc.id + ":" + f.k);
+      }));
+      return seen.size ? t("org.reportLegend", {client: fmtInt(seen.size), mark: "\u2022"}) : null;
+    })(),
     /* ОШИБКИ ПОЛЕЙ ВНЕ СЦЕНАРИЕВ едут отдельным списком и тоже обязаны
        останавливать сборку. Их нельзя списать на один сценарий: численность и
        оклад входят в знаменатель предохранителя, дни и нагрузка — в стоимость
@@ -4458,6 +4564,17 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
 </section>`).join("");
 
 /* ---------- inputs used, chunked (transparency: the client can check our numbers) ---------- */
+/* Отметка у цифр клиента. Тот же приём, что у пометки сценариев на AI-агентах:
+   надстрочный знак плюс объяснение под таблицей. */
+const CLIENT_MARK = '<sup class="b24x-gate-mark">\u2022</sup>';
+const clientFieldCount = () => {
+  const seen = new Set();
+  (S.items || []).forEach(it => {
+    (it.fields || []).forEach(f => { if (f.client) seen.add(it.id + ":" + f.label); });
+    (it.segments || []).forEach(fs => fs.forEach(f => { if (f.client) seen.add(it.id + ":" + f.label); }));
+  });
+  return seen.size;
+};
 const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
                                        it => 1 + (it.segments || []).length).map((group, i, all) => `
 <section class="page page--sky">
@@ -4471,7 +4588,12 @@ const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
        строкой. Пока сегментов нет, страница выглядит ровно как раньше: одна
        строка полей без заголовка «Segment 1». */
     const segs = it.segments || [];
-    const line = fs => fs.map(f => `${esc(f.label)}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ");
+    /* ЦИФРЫ КЛИЕНТА ПОМЕЧЕНЫ, ОСТАЛЬНЫЕ НЕТ. Отметка стоит у величин, источника у
+       которых нет и быть не может, потому что они про эту компанию: их клиент
+       подтверждает или заменяет. Родословную остальных сорока с лишним полей на
+       эту страницу не выводим — она плотная, а нужна она партнёру, не клиенту, и
+       живёт на экране под плашкой у каждого поля. Итог одной строкой ниже. */
+    const line = fs => fs.map(f => `${esc(f.label)}${f.client ? CLIENT_MARK : ""}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ");
     const para = (n, fs) => `
     <p class="b24-p" style="margin:${n === null ? "0" : "6px 0 0"}; font-size:13px;">
       ${n === null ? "" : `<span class="b24-strong">Segment ${n}</span> — `}${line(fs)}
@@ -4484,6 +4606,12 @@ const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
     ${segs.map((fs, k) => para(k + 2, fs)).join("")}
   </div>`;
   }).join("")}
+  ${/* ОДНА СТРОКА ПРО ПРОИСХОЖДЕНИЕ, а не сорок восемь. Она говорит клиенту то,
+       что ему нужно: вендорских бенчмарков здесь нет, вот эти цифры ваши,
+       остальные — наши стартовые допущения. Полный лист допущений — отдельная
+       правка (P16), и эта строка ей не мешает, а готовит место. */
+    clientFieldCount() > 0 && S.orgLegend ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
+    ${esc(S.orgLegend)}</p>` : ""}
   ${footer()}
 </section>`).join("");
 
@@ -5072,7 +5200,33 @@ document.addEventListener("click", e=>{
   e.stopPropagation();
   const key = b.dataset.info;
   let title = t("ui.howCalc"), body = "";
-  if(key === "svc-summary"){ title = t("ui.aboutSvc"); body = t("ui.svcSummaryInfo"); }
+  /* ПРОИСХОЖДЕНИЕ ДЕФОЛТА. Ключ несёт адрес поля: org-<сценарий>-<поле> или
+     org-co-<поле> для блока о компании. Заголовок панели — название поля, чтобы в
+     переговорной было видно, о каком числе речь. */
+  if(String(key).startsWith("org-")){
+    const rest = key.slice(4);
+    if(rest.startsWith("cov-")){
+      /* ДОЛЯ ОХВАТА — своё происхождение: она наша, и она же самый чувствительный
+         параметр модели. Текст один на все семь сценариев: их доли подобраны одним
+         и тем же способом, и врать про раздельное обоснование не надо. */
+      title = t("org.title") + " · " + t("ui.coverage");
+      body = t("org.coverage");
+    }
+    else if(rest.startsWith("co-")){
+      const k = rest.slice(3);
+      const c = COMPANY.find(x => x.k === k);
+      title = t("org.title") + " · " + t("co." + k);
+      body = c && orgOf(c) ? t(orgOf(c).text) : "";
+    } else {
+      const cut = rest.indexOf("-");
+      const scId = rest.slice(0, cut), fk = rest.slice(cut + 1);
+      const sc = scenarios.find(x => String(x.id) === scId);
+      const f = sc && sc.fields.find(x => x.k === fk);
+      title = t("org.title") + " · " + t(`sc.${scId}.f.${fk}`);
+      body = f && orgOf(f) ? t(orgOf(f).text) : "";
+    }
+  }
+  else if(key === "svc-summary"){ title = t("ui.aboutSvc"); body = t("ui.svcSummaryInfo"); }
   else if(String(key).startsWith("svc-")){
     const id = key.slice(4);
     title = t("ui.aboutSvc") + " · " + t(`sc.${id}.title`);

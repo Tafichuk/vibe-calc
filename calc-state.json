@@ -80,6 +80,7 @@
     "rowNote": "Needs Alaio Professional Vibe+ or higher. The recommended plan does not include AI agents."
   },
   "invalid": [],
+  "orgLegend": null,
   "inputErrors": [],
   "company": {
     "empCount": 50,
@@ -108,18 +109,22 @@
       "fields": [
         {
           "label": "Number of managers",
+          "client": false,
           "value": "5"
         },
         {
           "label": "Manager salary (gross)",
+          "client": false,
           "value": "$4,000"
         },
         {
           "label": "Calls per manager per day",
+          "client": false,
           "value": "20 calls"
         },
         {
           "label": "Time spent after one call, replaying it and filling the card",
+          "client": false,
           "value": "10 min"
         }
       ],
@@ -143,18 +148,22 @@
       "fields": [
         {
           "label": "Employees who will work this way",
+          "client": false,
           "value": "10"
         },
         {
           "label": "Average employee salary",
+          "client": false,
           "value": "$4,000"
         },
         {
           "label": "Bitrix24 operations per employee per day",
+          "client": false,
           "value": "30 operations"
         },
         {
           "label": "Time saved per operation, versus doing it by hand",
+          "client": false,
           "value": "3 min"
         }
       ],
@@ -178,22 +187,27 @@
       "fields": [
         {
           "label": "Employees using the knowledge base",
+          "client": false,
           "value": "15"
         },
         {
           "label": "Average employee salary",
+          "client": false,
           "value": "$4,000"
         },
         {
           "label": "Knowledge-base lookups per employee per day",
+          "client": false,
           "value": "3 lookups"
         },
         {
           "label": "Time spent looking for one answer today",
+          "client": false,
           "value": "10 min"
         },
         {
           "label": "Share of questions the AI answers",
+          "client": false,
           "value": "70%"
         }
       ],
@@ -217,18 +231,22 @@
       "fields": [
         {
           "label": "Employees preparing documents",
+          "client": false,
           "value": "6"
         },
         {
           "label": "Average employee salary",
+          "client": false,
           "value": "$4,000"
         },
         {
           "label": "Documents or letters per employee per day",
+          "client": false,
           "value": "5 documents"
         },
         {
           "label": "Time spent writing one document by hand",
+          "client": false,
           "value": "20 min"
         }
       ],
@@ -252,18 +270,22 @@
       "fields": [
         {
           "label": "Employees this covers",
+          "client": false,
           "value": "15"
         },
         {
           "label": "Share of self-starters",
+          "client": false,
           "value": "10%"
         },
         {
           "label": "Share of their own work self-starters simplify",
+          "client": false,
           "value": "30%"
         },
         {
           "label": "Average salary",
+          "client": false,
           "value": "$4,000"
         }
       ],

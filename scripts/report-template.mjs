@@ -632,6 +632,17 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
 </section>`).join("");
 
 /* ---------- inputs used, chunked (transparency: the client can check our numbers) ---------- */
+/* Отметка у цифр клиента. Тот же приём, что у пометки сценариев на AI-агентах:
+   надстрочный знак плюс объяснение под таблицей. */
+const CLIENT_MARK = '<sup class="b24x-gate-mark">\u2022</sup>';
+const clientFieldCount = () => {
+  const seen = new Set();
+  (S.items || []).forEach(it => {
+    (it.fields || []).forEach(f => { if (f.client) seen.add(it.id + ":" + f.label); });
+    (it.segments || []).forEach(fs => fs.forEach(f => { if (f.client) seen.add(it.id + ":" + f.label); }));
+  });
+  return seen.size;
+};
 const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
                                        it => 1 + (it.segments || []).length).map((group, i, all) => `
 <section class="page page--sky">
@@ -645,7 +656,12 @@ const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
        строкой. Пока сегментов нет, страница выглядит ровно как раньше: одна
        строка полей без заголовка «Segment 1». */
     const segs = it.segments || [];
-    const line = fs => fs.map(f => `${esc(f.label)}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ");
+    /* ЦИФРЫ КЛИЕНТА ПОМЕЧЕНЫ, ОСТАЛЬНЫЕ НЕТ. Отметка стоит у величин, источника у
+       которых нет и быть не может, потому что они про эту компанию: их клиент
+       подтверждает или заменяет. Родословную остальных сорока с лишним полей на
+       эту страницу не выводим — она плотная, а нужна она партнёру, не клиенту, и
+       живёт на экране под плашкой у каждого поля. Итог одной строкой ниже. */
+    const line = fs => fs.map(f => `${esc(f.label)}${f.client ? CLIENT_MARK : ""}: <span class="b24-strong">${esc(f.value)}</span>`).join(" · ");
     const para = (n, fs) => `
     <p class="b24-p" style="margin:${n === null ? "0" : "6px 0 0"}; font-size:13px;">
       ${n === null ? "" : `<span class="b24-strong">Segment ${n}</span> — `}${line(fs)}
@@ -658,6 +674,12 @@ const inputPages = () => chunkByWeight(S.items, FIELD_ROWS_PER_PAGE,
     ${segs.map((fs, k) => para(k + 2, fs)).join("")}
   </div>`;
   }).join("")}
+  ${/* ОДНА СТРОКА ПРО ПРОИСХОЖДЕНИЕ, а не сорок восемь. Она говорит клиенту то,
+       что ему нужно: вендорских бенчмарков здесь нет, вот эти цифры ваши,
+       остальные — наши стартовые допущения. Полный лист допущений — отдельная
+       правка (P16), и эта строка ей не мешает, а готовит место. */
+    clientFieldCount() > 0 && S.orgLegend ? `<p class="b24-small" style="margin-top:var(--b24-s2)">
+    ${esc(S.orgLegend)}</p>` : ""}
   ${footer()}
 </section>`).join("");
 
