@@ -183,11 +183,52 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .b24x-scope-field textarea{width:100%; resize:vertical; min-height:76px;
   font:inherit; line-height:1.45; padding:10px 12px}
 .est-btn{border:0; font:inherit; cursor:pointer; text-transform:inherit; letter-spacing:inherit}
-.est-btn:hover{text-decoration:underline}
+/* Плашка происхождения — КНОПКА (открывает полную строку). У неё была рамка, и
+   рамка сама намекала на нажимаемость; у безрамочных её заменяет точечное
+   подчёркивание — обычный для интерфейсов знак «термин с пояснением». */
+.est:not(.est--check){text-decoration:underline dotted; text-underline-offset:3px;
+  text-decoration-thickness:1px}
+.est-btn:hover{text-decoration:underline; text-underline-offset:3px}
 .est-btn:focus-visible{outline:2px solid var(--b24-cyan); outline-offset:1px}
-.est{display:inline-block; background:var(--b24-card); color:var(--b24-deep);
-  border-radius:var(--b24-r-pill); padding:2px 8px; font-size:11px; font-weight:700;
+/* ==========================================================================
+   СИСТЕМА ПОМЕТОК. ЦВЕТ ГОВОРИТ, ТРЕБУЕТ ЛИ ПОМЕТКА ДЕЙСТВИЯ. СЛОВО ГОВОРИТ, ЧТО
+   ЭТО ТАКОЕ. Раньше цвет не говорил ничего: роль, ссылка и происхождение имели
+   одну заливку, требование тарифа — янтарную заливку предупреждения, а самые
+   спорные сценарии («Revenue uplift») были помечены лаймом, то есть цветом
+   акцента бренда, который в западном интерфейсе читается как «хорошо, безопасно».
+
+     заливка бледно-голубым  — факт о сценарии, делать ничего не нужно: РОЛЬ
+     контур синим            — требование продукта: НУЖЕН ТАРИФ (решение о тарифе,
+                               не о числе)
+     контур янтарным         — число не проверено и ждёт партнёра: ОЦЕНКИ ВЫРУЧКИ,
+                               «our estimate», «ask the client»
+     без рамки, тусклым      — происхождение, по которому действовать не нужно:
+                               «carried over», «derived», «from coverage»
+     ссылка                  — ссылка, а не пометка
+
+   Лайм в ряду пометок больше не появляется НИГДЕ. Разбор предлагал отдать его
+   нейтральным ролевым бейджам — не отдаём: роли есть у всех одиннадцати карточек,
+   и акцент на каждой перестаёт быть акцентом; а главное — лайм на этом же экране
+   уже занят СОСТОЯНИЕМ: номер выбранного сценария становится лаймовым. Отдать тот
+   же цвет ещё и роли значит размыть единственный сигнал «этот сценарий выбран».
+   Смысл требования разбора — убрать лайм с рискованных пометок — выполнен.
+
+   Рамки сделаны inset-тенью, а не border: у border появились бы лишние 2px, и
+   пометки в одном ряду встали бы разной высоты. Свои цвета не вводятся: янтарь —
+   токены предупреждения из brand-ext (§2), синий и бледно-голубой — токены кита.
+   ========================================================================== */
+/* Плашка происхождения (P6) по умолчанию БЕЗ РАМКИ: у поля их бывает по одной на
+   строку, и четыре боксика в карточке читались бы как четыре проблемы. Рамка
+   появляется только там, где партнёр обязан что-то сделать, — см. .est--check. */
+/* background:none обязателен: .est-btn — это <button>, и без явного сброса
+   проступает серая заливка браузера по умолчанию (поймано на снимке). */
+.est{display:inline-block; background:none; color:var(--b24-text);
+  padding:2px 4px; font-size:11px; font-weight:700;
   text-transform:uppercase; letter-spacing:.05em; margin-left:6px; vertical-align:1px}
+/* «our estimate» и «ask the client»: число выдумано нами или не спрошено у
+   клиента. Единственные два типа происхождения, требующие действия. */
+.est--check{color:var(--b24x-warning-ink); border-radius:var(--b24-r-pill);
+  padding:2px 8px; box-shadow:inset 0 0 0 1px var(--b24x-warning-ink)}
 
 .rev-toggle{display:flex; align-items:center; gap:10px; cursor:pointer;
   font-size:13px; font-weight:600; color:var(--b24-text); min-height:48px}
@@ -257,17 +298,35 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .sc-ttl h3{margin:0 0 4px; font:700 17px/1.3 var(--b24-font-display); color:var(--b24p-deep)}
 .sc-ttl p{margin:0; font-size:13.5px; color:var(--b24-text)}
 .sc-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:var(--b24-s3)}
+/* Волосяная рамка тона линий — не «контур» в смысле системы пометок, а способ
+   остаться плашкой на ЛЮБОЙ подложке: у выбранной карточки шапка того же цвета,
+   что заливка плашки, и роль без рамки читалась как простой текст. */
 .tag{background:var(--b24-card); color:var(--b24-deep); border-radius:var(--b24-r-pill);
-  padding:3px 10px; font-size:11.5px; font-weight:700}
-.tag--lime{background:var(--b24-green); color:var(--b24-lime-ink)}
-/* ПОМЕТКА «НУЖЕН PROFESSIONAL VIBE+» — того же семейства, что .tag--lime, и
-   поэтому живёт здесь, а не в brand-ext.css: .tag и .tag--lime тоже страничные.
-   В brand-ext она уже стояла и не работала — этот блок подключён ПОСЛЕ него, и
-   .tag{background} перебивал её при равной специфичности.
-   Цвета — токены предупреждения из brand-ext (§2), своих нет; контраст ink на
-   surface 5.19. Кегль, радиус и высота строки как у остальных пометок: она
-   постоянная, и список сценариев не должен читаться как список проблем. */
-.tag--plan{background:var(--b24x-warning-surface); color:var(--b24x-warning-ink)}
+  padding:3px 10px; font-size:11.5px; font-weight:700;
+  box-shadow:inset 0 0 0 1px var(--b24-line)}
+/* ПОМЕТКА «НУЖЕН PROFESSIONAL VIBE+» — контур синим, а не янтарная заливка, как
+   было. Требование тарифа — не сомнение в числе: оно точно известно и решается
+   выбором тарифа. Янтарь после этой правки означает ровно одно — «число не
+   проверено», и заливка предупреждения на постоянной пометке этот смысл забирала
+   себе на пяти карточках из одиннадцати.
+   Живёт здесь, а не в brand-ext.css: .tag тоже страничный, а brand-ext подключён
+   РАНЬШЕ — .tag{background} перебивал бы правило при равной специфичности. */
+.tag--plan{background:transparent; color:var(--b24-deep);
+  box-shadow:inset 0 0 0 1px var(--b24-deep)}
+/* ОЦЕНКА ВЫРУЧКИ. Контур янтарным плюс слово «estimate» в тексте: цветом одним
+   этого говорить нельзя — его не видят при дальтонизме и он теряется в печати
+   экрана. Отчёт то же самое пишет словом уже давно («Additional: revenue uplift
+   (estimate)»), экран отставал. */
+.tag--est{background:transparent; color:var(--b24x-warning-ink);
+  box-shadow:inset 0 0 0 1px var(--b24x-warning-ink)}
+/* «LEARN MORE» БОЛЬШЕ НЕ ПОМЕТКА. Ссылка в виде плашки выглядела ровно как метка
+   роли рядом: одинаковая заливка, одинаковый кегль, и ничто не подсказывало, что
+   по ней можно нажать. Теперь это ссылка со стрелкой. */
+.tag-link{align-self:center; font-size:11.5px; font-weight:700;
+  color:var(--b24-deep); text-decoration:none}
+.tag-link:hover{text-decoration:underline}
+.tag-link:focus-visible{outline:2px solid var(--b24-cyan); outline-offset:2px;
+  border-radius:var(--b24-r-inner)}
 .sc-body{display:none; padding:0 var(--b24-s6) var(--b24-s6); border-top:1px solid var(--b24-line)}
 .sc.on .sc-body{display:block}
 /* Подпись под прочерком в блоке результатов: сценарий только на выручке при
@@ -1368,8 +1427,12 @@ en: {
      а не «вот значение»: старая подпись стояла среди посчитанных строк и читалась
      как результат. */
   "ui.svcH":"Price your services",
-  "ui.svcNote":"Your one-off fee per scenario: connection, setup for the client's processes, staff training. Nothing is filled in for you. You price each scenario yourself. A blank field means NOT QUOTED: it stays out of the total and out of the average instead of counting as zero. A deliberate 0 is a real quote and does count.",
-  "ui.svcEmpty":"No scenarios picked yet. Choose them in Step 3 and each one appears here as a row to price.",
+  /* ГДЕ ВВОДИТСЯ — ПЕРВОЙ ФРАЗОЙ. Поле одно, и оно в карточке сценария; эта
+     таблица только показывает и ведёт к нему. Партнёр обязан понять это, не
+     открывая подсказку и не читая документацию. */
+  "ui.svcNote":"Your one-off fee per scenario: connection, setup for the client's processes, staff training. You type each fee in the scenario card in Step 3, right under the scenario you are pricing — this table shows what you typed and adds it up. Click any fee to go to its field. Nothing is filled in for you. NOT QUOTED means exactly that: it stays out of the total and out of the average instead of counting as zero. A deliberate 0 is a real quote and does count.",
+  "ui.svcEmpty":"No scenarios picked yet. Choose them in Step 3 and each one appears here with the fee you typed in its card.",
+  "ui.svcRowGoto":"Go to the fee field for {name}",
   "ui.svcColScenario":"Scenario",
   "ui.svcColSaving":"Client's saving, year",
   "ui.svcColFee":"Your fee, one-off",
@@ -1379,7 +1442,10 @@ en: {
      числа, что и в остальных строках со счётчиком. */
   "ui.svcAllPriced":"Every selected scenario is priced.",
   "ui.svcCardLabel":"Your fee for this scenario",
-  "ui.svcCardHint":"One-off, your price. Blank = not quoted yet.",
+  /* Подсказка у ЕДИНСТВЕННОГО поля цены говорит, что оно единственное: иначе
+     партнёр, увидевший цену ещё и в шаге 4, идёт проверять, не нужно ли ввести
+     её там тоже. */
+  "ui.svcCardHint":"One-off, your price. Blank = not quoted yet. This is the only place a fee is typed; Step 4 lists them all and totals them.",
   "ui.svcJump":"Price them now",
   "ui.svcJumpAria":"Go to the first scenario without a price",
   "ui.sumSvc":"My services (one-off)",
@@ -1499,6 +1565,10 @@ en: {
   "ui.intFilled":"set by the integrator",
   "ui.fotMonth":"Payroll saving, month", "ui.fotYear":"Payroll saving, year",
   "ui.revDefault":"Revenue uplift", "ui.revBase":"Existing-base potential",
+  /* Отдельным словом, а не внутри ui.revDefault: та же строка уходит в состояние
+     отчёта и в сводку, где слово «estimate» уже стоит рядом своим порядком. */
+  "ui.tagEstimate":"estimate",
+  "ui.tagEstHint":"This figure is a projection, not a saving the client can verify. It assumes freed time and new opportunities really turn into sales.",
   "ui.addSeg":"Add another segment", "ui.segN":"Segment {n}",
   /* Первый сегмент — базовый, он и есть сама карточка: удалять его нечем и незачем.
      Кнопка появляется только у добавленных, поэтому подпись всегда про сегмент 2+. */
@@ -1959,14 +2029,19 @@ const ORIGINS = {
   ruOps:   {pill:"org.pill.carried", text:"org.ruOps"},
   /* Наша рыночная оценка. Русские оклады НЕ конвертировались по курсу — числа
      подобраны заново (MIGRATION_NOTES §8, OPEN_QUESTIONS §5). */
-  mkt:     {pill:"org.pill.ours",    text:"org.mkt"},
+  mkt:     {pill:"org.pill.ours",    text:"org.mkt",    check:true},
   /* Про конкретного клиента. Источника нет и быть не может — мы поставили
      заведомо скромный плейсхолдер. */
-  client:  {pill:"org.pill.client",  text:"org.client"},
+  client:  {pill:"org.pill.client",  text:"org.client",  check:true},
   /* Поле не набирается: его заполняет охват от численности из шага 1. */
   cov:     {pill:"org.pill.coverage",text:"org.cov"},
 };
 const orgOf = f => ORIGINS[f.org] || null;
+/* check:true — «our estimate» и «ask the client»: партнёр обязан что-то сделать с
+   этим числом. Остальные типы («carried over», «from coverage») называют
+   происхождение, по которому действовать не нужно, и остаются без рамки.
+   Цвет здесь про СРОЧНОСТЬ, а класс происхождения по-прежнему написан словом. */
+const estCls = org => "est est-btn" + (org && org.check ? " est--check" : "");
 
 const MAX_MIN = C.DAY_HOURS * 60;
 const LIMITS = {
@@ -2448,7 +2523,7 @@ function buildCompany(){
   const g = document.getElementById("co-grid");
   g.innerHTML = COMPANY.map(c=>`
     <div class="field" data-field="co-${c.k}">
-      <label for="co-${c.k}">${t("co."+c.k)}${orgOf(c) ? `<button type="button" class="est est-btn"
+      <label for="co-${c.k}">${t("co."+c.k)}${orgOf(c) ? `<button type="button" class="${estCls(orgOf(c))}"
              data-info="org-co-${c.k}" aria-label="${t("org.title")}">${t(orgOf(c).pill)}</button>` : ""}</label>
       <div class="in-wrap">
         <input class="b24x-input comp-in" id="co-${c.k}" data-comp="${c.k}"
@@ -2534,7 +2609,7 @@ function fieldHtml(sc, f, vals, segIdx){
          открывается та же панель, что у «как это считается», и печатает полную
          строку происхождения. Так партнёр в переговорной видит тип с одного
          взгляда, а точную формулировку достаёт одним нажатием. */""}
-    <label>${t(`sc.${sc.id}.f.${f.k}`)}${org ? `<button type="button" class="est est-btn"
+    <label>${t(`sc.${sc.id}.f.${f.k}`)}${org ? `<button type="button" class="${estCls(org)}"
       data-info="org-${sc.id}-${f.k}" aria-label="${t("org.title")}">${t(org.pill)}</button>` : ""}</label>
     <div class="in-wrap" data-suf="${f.suf}">
       ${/* ГРАНИЦЫ ОБЪЯВЛЕНЫ НА САМОМ ПОЛЕ. type остаётся text: type="number" отнял бы
@@ -2626,8 +2701,9 @@ function scHtml(sc){
                там, где партнёр уже поднял тариф, — и он терял бы из вида, что
                сценарий к тарифу привязан. -->
           ${sc.agent?`<span class="tag tag--plan" title="${t("ui.agentReqHint")}">${t("ui.agentReq",{plan:AGENT_MIN_PLAN})}</span>`:""}
-          ${sc.effect.includes("rev")?`<span class="tag tag--lime">${t(sc.revLabel||"ui.revDefault")}</span>`:""}
-          ${sc.link?`<a class="tag" href="${sc.link}" target="_blank" rel="noopener">${t("ui.more")}</a>`:""}
+          ${sc.effect.includes("rev")?`<span class="tag tag--est" title="${t("ui.tagEstHint")}"
+            >${t(sc.revLabel||"ui.revDefault")} · ${t("ui.tagEstimate")}</span>`:""}
+          ${sc.link?`<a class="tag-link" href="${sc.link}" target="_blank" rel="noopener">${t("ui.more")} \u2192</a>`:""}
         </div>
       </div>
     </div>
@@ -2655,7 +2731,9 @@ function scHtml(sc){
       ${sc.cov?`
       <div class="cov-row">
         <div class="field" style="max-width:260px">
-          <label for="cov-${sc.id}">${t("ui.coverage")}<button type="button" class="est est-btn"
+          <!-- Охват — наша оценка и самое чувствительное число модели, поэтому
+               рамка: это ровно тот тип, который требует действия. -->
+          <label for="cov-${sc.id}">${t("ui.coverage")}<button type="button" class="est est-btn est--check"
             data-info="org-cov-${sc.id}" aria-label="${t("org.title")}">${t("org.pill.ours")}</button></label>
           <div class="in-wrap">
             <input class="b24x-input cov-in" id="cov-${sc.id}" data-cov="${sc.id}"
@@ -3251,15 +3329,14 @@ function buildServices(){
         <span role="cell" class="svc-num">
           <b class="svc-lab">${t("ui.svcColSaving")}</b>
           <span id="svcsave-${sc.id}"></span></span>
+        <!-- ЦЕНА ЗДЕСЬ ТОЛЬКО ЧИТАЕТСЯ, а вводится в карточке сценария (P13).
+             Ячейка — кнопка: она и показывает цену, и ведёт ровно к тому полю,
+             где её меняют. Значение пишет paintServices, чтобы оно обновлялось
+             на каждом нажатии клавиши в карточке. -->
         <span role="cell" class="svc-fee">
           <b class="svc-lab">${t("ui.svcColFee")}</b>
-          <span class="in-wrap">
-            <input class="b24x-input svc-in" id="svct-${sc.id}" data-svc="${sc.id}"
-                   type="text" inputmode="decimal" placeholder="${t("ui.notQuoted")}"
-                   aria-label="${t("ui.svcColFee")} — ${t(`sc.${sc.id}.title`)}"
-                   value="${svcCost(sc) === null ? "" : groupFmt(String(svcCost(sc)))}">
-            <span class="suf">${sufText("money")}</span>
-          </span>
+          <button type="button" class="svc-cell" id="svcfee-${sc.id}" data-svc-goto="${sc.id}"
+                  aria-label="${t("ui.svcRowGoto",{name:t(`sc.${sc.id}.title`)})}"></button>
         </span>
       </div>`).join("")}
       <div class="svc-tr svc-tr--total" role="row">
@@ -3278,6 +3355,15 @@ function paintServices(model){
     /* У сценариев без эффекта на ФОТ (только выручка) экономии ФОТ нет вообще —
        «$0» читался бы как «ничего не даёт». Прочерк честнее. */
     if(cell) cell.textContent = it.sc.effect.includes("fot") ? fmtMoney(it.fot * 12) : "—";
+    /* Цена — из состояния, а не из поля: поле теперь одно, и оно в карточке.
+       Пустая цена показывается словами «not quoted yet», а не прочерком: прочерк
+       читался бы как «услуга бесплатна», а это не квота вовсе. */
+    const fee = document.getElementById("svcfee-" + it.sc.id);
+    if(fee){
+      const c = svcCost(it.sc);
+      fee.textContent = c === null ? t("ui.notQuoted") : fmtMoney(c);
+      fee.classList.toggle("svc-cell--empty", c === null);
+    }
   });
   const svc = model.svc;
   const sum = document.getElementById("svc-sum");
@@ -3286,24 +3372,31 @@ function paintServices(model){
   if(cnt) cnt.textContent = t("ui.svcQuotedOf", {quoted: svc.quoted, n: model.items.length});
 }
 
-/* Ссылка «not priced yet» ведёт сюда: первое пустое поле шага 4 получает фокус.
-   Раньше сообщение было тупиковым — говорило о проблеме и не показывало, где она. */
-function jumpToUnpriced(){
-  const first = scenarios.find(sc=> state[sc.id].selected && svcCost(sc) === null);
-  if(!first) return;
-  const inp = document.getElementById("svct-" + first.id);
-  const row = document.getElementById("svcrow-" + first.id);
+/* ПЕРЕХОД К ПОЛЮ ЦЕНЫ. Поле одно — в карточке сценария (P13), поэтому и ссылка
+   «not priced yet», и ячейка шага 4 ведут туда же. Раньше обе вели в таблицу
+   шага 4, и партнёр правил цену в одном месте, а видел её в двух.
+   Карточка выбранного сценария всегда раскрыта (выбор и раскрытие — одно и то же
+   действие), так что поле после перехода видно без дополнительных кликов. */
+function jumpToFee(id){
+  const inp = document.getElementById("svc-" + id);
   if(!inp) return;
+  const strip = inp.closest(".svc-strip");
   inp.scrollIntoView({block:"center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
   inp.focus({preventScroll:true});
-  if(row){
-    row.classList.remove("svc-flash");
-    void row.offsetWidth;             /* перезапуск анимации при повторном клике */
-    row.classList.add("svc-flash");
+  if(strip){
+    strip.classList.remove("svc-flash");
+    void strip.offsetWidth;           /* перезапуск анимации при повторном клике */
+    strip.classList.add("svc-flash");
   }
 }
+function jumpToUnpriced(){
+  const first = scenarios.find(sc=> state[sc.id].selected && svcCost(sc) === null);
+  if(first) jumpToFee(first.id);
+}
 document.addEventListener("click", e=>{
-  if(e.target.closest("[data-svc-jump]")) jumpToUnpriced();
+  if(e.target.closest("[data-svc-jump]")) return jumpToUnpriced();
+  const cell = e.target.closest("[data-svc-goto]");
+  if(cell) jumpToFee(+cell.dataset.svcGoto);
 });
 
 function paintTotals(model){
@@ -5912,15 +6005,9 @@ document.addEventListener("input", e=>{
   if(!el.classList || !el.classList.contains("svc-in")) return;
   if(el.value.trim() === ""){ svcSave(el.dataset.svc, ""); }
   else { svcSave(el.dataset.svc, onNumInput(el)); }
-  /* У одного сценария теперь ДВА поля: в карточке и в таблице шага 4. Второе
-     обновляем из состояния, но никогда то, в котором сейчас курсор, — иначе
-     каретка прыгает и набор рассыпается. */
-  const id = el.dataset.svc;
-  document.querySelectorAll(`.svc-in[data-svc="${id}"]`).forEach(twin=>{
-    if(twin === el) return;
-    const raw = svcLoad()[id];
-    twin.value = (raw === "" || raw === undefined || raw === null) ? "" : groupFmt(String(raw));
-  });
+  /* Синхронизация близнецов удалена вместе со вторым полем (P13): у сценария
+     одно поле цены, в карточке. Ячейка шага 4 только читается и обновляется
+     через paintServices внутри refreshTotals — на каждом нажатии клавиши. */
   refreshTotals();   // NOT recompute() — see refreshTotals()
 });
 
