@@ -147,6 +147,11 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 .field label{font-size:13px; font-weight:600; color:var(--b24-text)}
 .field .hint{font-size:12px; color:var(--b24-text)}
 .in-wrap{position:relative; display:flex; align-items:center}
+/* АТРИБУТ hidden ПРОТИВ display:flex. Правило выше перебивало hidden, и поле со
+   ссылкой на расчёт (P8) висело пустой рамкой ДО нажатия кнопки — и в полном
+   режиме, и в быстром. Дефект с P8, замечен на снимке быстрого режима.
+   В этом файле [hidden] уже так и латают покомпонентно (.warn, .ov, .hdr .switch). */
+.in-wrap[hidden]{display:none}
 .in-wrap input{width:100%}
 /* unit suffix: --b24-text, not --b24-text-mute. At 12.5px the mute tone is
    3.88:1 on white, below WCAG AA, and brand-spec §1 permits it only from 18px
@@ -177,6 +182,33 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 /* Полоса пресетов. Кнопки в один ряд, переносятся на узком экране; «очистить»
    отделён отступом — он про обратное действие и не должен читаться как ещё один
    профиль. */
+/* ==========================================================================
+   БЫСТРЫЙ РЕЖИМ (P7). Режим — это состояние страницы, а не отдельный документ:
+   body[data-mode="quick"] прячет все шаги и показывает один экран. Правило одно
+   на все секции, а не список: появится новая секция — она спрячется сама, и
+   быстрый режим не начнёт молча показывать партнёрские поля. */
+body[data-mode="quick"] main > section:not(#quick){display:none}
+body[data-mode="quick"] .navbar{display:none}
+/* Плашки шапки перечисляют возможности линейки (Vibecode, MCP-сервер) — это
+   разговор партнёра о продукте. На клиентском экране четырёх вопросов они
+   отвлекают от единственного вопроса, на который он пришёл за ответом. */
+body[data-mode="quick"] #hero-pills{display:none}
+body:not([data-mode="quick"]) #quick{display:none}
+.b24x-q-card{padding:var(--b24-s7)}
+.b24x-q-fields{display:grid; gap:var(--b24-s5);
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+/* Три цифры — одна строка на широком экране, столбик на узком. Кегль крупный:
+   это единственный результат экрана, и он должен читаться с расстояния. */
+.b24x-q-out{display:grid; gap:var(--b24-s5); margin:var(--b24-s7) 0 var(--b24-s5);
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  padding:var(--b24-s6) 0; border-top:1px solid var(--b24-line);
+  border-bottom:1px solid var(--b24-line)}
+.b24x-q-fig{display:flex; flex-direction:column; gap:6px}
+.b24x-q-n{font:700 34px/1.05 var(--b24-font-display); color:var(--b24p-deep);
+  font-variant-numeric:tabular-nums}
+.b24x-q-l{font-size:13px; color:var(--b24-text)}
+.b24x-q-cta{display:flex; flex-wrap:wrap; gap:var(--b24-s3); align-items:center;
+  margin-top:var(--b24-s6)}
 .b24x-preset-card{margin-bottom:var(--b24-s6)}
 .b24x-preset-row{display:flex; flex-wrap:wrap; gap:var(--b24-s2); margin-top:var(--b24-s3)}
 .b24x-preset-row .b24x-preset-clear{margin-left:auto}
@@ -585,8 +617,8 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
 
 <div class="hero" id="top">
   <div class="wrap">
-    <h1 data-i18n="ui.heroTitle"></h1>
-    <p data-i18n="ui.heroSub"></p>
+    <h1 id="hero-t" data-i18n="ui.heroTitle"></h1>
+    <p id="hero-s" data-i18n="ui.heroSub"></p>
     <div class="hero-pills" id="hero-pills"></div>
   </div>
 </div>
@@ -596,6 +628,70 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
   <div class="warn" id="warn-de" hidden>
     <img src="assets/icons/alert.svg" alt=""><span data-i18n="ui.deStub"></span>
   </div>
+
+  <!-- ====================================================================
+       БЫСТРЫЙ РЕЖИМ (P7). ОДИН ФАЙЛ, ОДИН РАСЧЁТ, ДРУГОЙ ВХОД.
+       Почему не отдельная страница: расчёт, одиннадцать сценариев, прайс, i18n и
+       профили отраслей живут в этом файле, и работать он обязан из file://.
+       Второй файл пришлось бы либо кормить общим кодом (сборка, которой у нас нет
+       и которая ломает «один самодостаточный файл»), либо продублировать модель —
+       а второй расчётный путь мы уже проходили и чинили. Поэтому это ЭКРАН в той
+       же странице: те же company/state/тарифы, тот же recompute().
+       Вход — хеш #quick. Он не пересекается со ссылкой на расчёт: та начинается с
+       s<цифры>., и restoreFromHash на #quick молчит.
+       ==================================================================== -->
+  <section id="quick" hidden>
+    <div class="card b24x-q-card">
+      <div class="b24x-q-fields">
+        <div class="field" data-field="co-empCount">
+          <label for="q-emp" data-i18n="ui.qEmp"></label>
+          <div class="in-wrap">
+            <input class="b24x-input q-in" id="q-emp" data-q="empCount" type="text" inputmode="decimal">
+            <span class="suf" id="q-emp-suf"></span>
+          </div>
+          <span class="err"></span>
+        </div>
+        <div class="field" data-field="co-empSal">
+          <label for="q-sal" data-i18n="ui.qSal"></label>
+          <div class="in-wrap">
+            <input class="b24x-input q-in" id="q-sal" data-q="empSal" type="text" inputmode="decimal">
+            <span class="suf" id="q-sal-suf"></span>
+          </div>
+          <span class="err"></span>
+        </div>
+        <div class="field">
+          <label for="q-ind" data-i18n="ui.qInd"></label>
+          <select class="b24x-input" id="q-ind"></select>
+        </div>
+        <div class="field">
+          <label for="q-plan" data-i18n="ui.qPlan"></label>
+          <select class="b24x-input" id="q-plan"></select>
+        </div>
+      </div>
+
+      <div class="b24x-q-out" id="q-out">
+        <div class="b24x-q-fig"><span class="b24x-q-n" id="q-fot">—</span>
+          <span class="b24x-q-l" data-i18n="ui.qFot"></span></div>
+        <div class="b24x-q-fig"><span class="b24x-q-n" id="q-hours">—</span>
+          <span class="b24x-q-l" data-i18n="ui.qHours"></span></div>
+        <div class="b24x-q-fig"><span class="b24x-q-n" id="q-fte">—</span>
+          <span class="b24x-q-l" data-i18n="ui.qFte"></span></div>
+      </div>
+      <p class="note-line" id="q-counted"></p>
+      <p class="hint" id="q-cost"></p>
+      <p class="hint" id="q-assume" data-i18n="ui.qAssume"></p>
+
+      <div class="b24x-q-cta">
+        <button type="button" class="btn-primary" id="q-cta" data-i18n="ui.qCta"></button>
+        <button type="button" class="b24x-btn-ghost" id="q-full" data-i18n="ui.qFull"></button>
+      </div>
+      <p class="hint" style="margin:var(--b24-s3) 0 0" data-i18n="ui.qCtaHint"></p>
+      <div class="in-wrap" id="q-link-box" hidden style="margin-top:var(--b24-s3)">
+        <input class="b24x-input" id="q-link-out" type="text" readonly>
+      </div>
+      <p class="hint" id="q-link-msg" style="margin:var(--b24-s2) 0 0" hidden></p>
+    </div>
+  </section>
 
   <!-- company -->
   <section id="company">
@@ -821,6 +917,11 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
         </div>
         <div class="b24x-save-actions">
           <button type="button" class="b24x-btn-ghost" id="copy-link" data-i18n="ui.copyLink"></button>
+          <!-- ССЫЛКА НА КЛИЕНТСКИЙ ЭКРАН (P7). Быстрый режим бесполезен, если
+               партнёр не может его дать в руки: это адрес для рассылки и для
+               партнёрского сайта. Ничего из текущего расчёта в него не уезжает —
+               клиент начинает со своих четырёх ответов. -->
+          <button type="button" class="b24x-btn-ghost" id="copy-quick" data-i18n="ui.copyQuick"></button>
           <button type="button" class="b24x-btn-ghost" id="dl-state" data-i18n="ui.dlState"></button>
           <label class="b24x-file b24x-file--btn">
             <input type="file" id="load-state" accept="application/json,.json">
@@ -1214,6 +1315,37 @@ en: {
      клиента и не можем ему ничего советовать. Поэтому «отправная точка для
      разговора», а не «вам подходит»; и сразу сказано, что состав меняется и что
      введённые числа не теряются — иначе первый клик страшно делать. */
+  /* ---- БЫСТРЫЙ РЕЖИМ (P7). Читатель здесь — КЛИЕНТ БЕЗ ПАРТНЁРА РЯДОМ, и это
+     определяет каждую формулировку: объяснять допущения некому, значит они стоят
+     на экране словами; спорить о «оптимистично» некому, значит режим один и он
+     самый осторожный. ---- */
+  "ui.qHeroTitle":"What AI in Bitrix24 could be worth to your business",
+  "ui.qHeroSub":"Four questions, a first estimate on the deliberately cautious side. It is a starting point for a conversation with a Bitrix24 partner, not a quote.",
+  "ui.qEmp":"People on the payroll",
+  "ui.qSal":"Average monthly salary, gross",
+  "ui.qInd":"What the business mostly does",
+  "ui.qIndPick":"Choose one —",
+  "ui.qPlan":"Bitrix24 plan today",
+  "ui.qFot":"Payroll cost freed, a year",
+  "ui.qHours":"Working hours freed, a year",
+  "ui.qFte":"Same time as full-time people",
+  "ui.qWaiting":"Pick what the business mostly does and the figures appear.",
+  "ui.qNeedNumbers":"Fill in the headcount and the average salary — both above zero — and the figures appear.",
+  "ui.qBad":"One of the numbers above is outside what this calculator can work with — see the note under the field. The figures come back as soon as it is fixed.",
+  "ui.qCounted":"Counted {n} scenarios: {names}.",
+  "ui.qCost":"On the cost side: {plan} comes to {sub} a year. Setting it up is quoted by your partner and is not in this figure.",
+  /* ЧТО МЫ ЗА КЛИЕНТА ПРЕДПОЛОЖИЛИ — ЦЕЛИКОМ И НА ЭКРАНЕ. Четыре вопроса не могут
+     заменить тридцать полей, поэтому остальное взято из дефолтов, и каждое такое
+     допущение занижает результат, а не завышает: это единственное направление
+     ошибки, которое можно оставить в цифре, показанной без партнёра. */
+  "ui.qAssume":"What we assumed, so you can judge the figure: only {conservative} of the named time actually goes (the lowest setting this calculator has); one salary for every role, though a head of sales usually earns more; at most 5 sales managers and 1 head of sales, and never more people than you told us about; and our own default volumes for each scenario — calls a day, documents a week, and so on. Every one of these makes the figure smaller rather than bigger. A partner replaces them with your real numbers.",
+  "ui.qCta":"Discuss this with a partner",
+  "ui.qCtaHint":"The button makes a link that carries the numbers you entered. Send it to your Bitrix24 partner — they open the same calculation and finish it with you: your real volumes, their setup price, the plan.",
+  "ui.qLinkReady":"Link ready — {n} characters. Send it to your partner.",
+  "ui.qFull":"Open the full calculator",
+  "ui.copyQuick":"Link to the client-facing quick version",
+  "ui.copyQuickMsg":"Client-facing link ready. It opens the four-question version — no figures of yours travel with it.",
+  "ui.qFullHint":"Everything above stays as you entered it.",
   "ui.presetH":"Not sure where to start?",
   "ui.presetNote":"These are starting points for a conversation, not recommendations — we do not know this client, and nothing here is chosen for you. A profile ticks three or four scenarios; add to it, untick what does not apply, or clear it and pick your own. Your typed figures stay even if you untick a scenario, so a wrong click costs one click back.",
   "ui.presetClear":"Clear all",
@@ -3203,18 +3335,24 @@ function computeModel(){
    .field и причина в .err. Отдельная функция, потому что эти поля живут в шаге 1 и
    перерисовываются другим кодом. */
 function paintGlobalErrors(errs){
-  document.querySelectorAll('#company .field[data-field]').forEach(f=>{
+  /* Поля шага 1 и поля быстрого режима красит ОДНА функция: значения у них общие
+     (тот же company), значит и проверка границ, и объяснение обязаны быть теми же.
+     querySelectorAll, а не querySelector: у одного ключа теперь два поля — в шаге 1
+     и в быстром экране, — и покрасить надо оба, какое бы сейчас ни было видно. */
+  const SCOPE = '#company .field[data-field], #quick .field[data-field]';
+  document.querySelectorAll(SCOPE).forEach(f=>{
     f.classList.remove("invalid");
     const e = f.querySelector(".err"); if(e) e.textContent = "";
     const i = f.querySelector("input"); if(i) i.removeAttribute("aria-invalid");
   });
   if(!errs) return;
   Object.entries(errs).forEach(([k, msg])=>{
-    const f = document.querySelector(`#company .field[data-field="${k}"]`);
-    if(!f) return;
-    f.classList.add("invalid");
-    const e = f.querySelector(".err"); if(e) e.textContent = t(msg.k, msg.p);
-    const i = f.querySelector("input"); if(i) i.setAttribute("aria-invalid","true");
+    document.querySelectorAll(
+      `#company .field[data-field="${k}"], #quick .field[data-field="${k}"]`).forEach(f=>{
+      f.classList.add("invalid");
+      const e = f.querySelector(".err"); if(e) e.textContent = t(msg.k, msg.p);
+      const i = f.querySelector("input"); if(i) i.setAttribute("aria-invalid","true");
+    });
   });
 }
 
@@ -3409,6 +3547,7 @@ function paintTotals(model){
      ОБА пути — и полный recompute(), и быстрый refreshTotals() при наборе цены.
      В refreshTotals цифры шага 4 оставались пустыми до первого пересчёта. */
   paintServices(model);
+  paintQuick(model);       /* быстрый режим красится тем же хабом, что и сводка */
   lastModel = model;
   lastOverlap = model.overlap;
   renderSummary(model);
@@ -6055,6 +6194,7 @@ function applyStatic(){
   document.querySelectorAll("[data-i18n]").forEach(el=>{
     el.innerHTML = t(el.dataset.i18n, copyVars());
   });
+  paintHero();      /* режим важнее общего перевода — см. paintHero() */
   document.getElementById("warn-de").hidden = (LANG !== "de");
   /* EN + USD scope: switchers stay in the DOM and keep working, just hidden. */
   document.querySelector('[data-i18n="ui.lang"]').hidden = !SHOW_LANG_SWITCH;
@@ -6095,6 +6235,15 @@ function fillPlanSelects(){
        стоит ВНЕ групп: это не тир и в шкалу мест не попадает. */
     const list = essentialsList();
     cur.innerHTML =
+      grouped(list, r => r.seats ? `${r.plan} — ${t("ui.seatsUpTo", {n: fmtInt(r.seats)})}` : r.plan, essPlan)
+      + `<option value="${NO_B24}"${essPlan===NO_B24?" selected":""}>${t("ui.planNone")}</option>`;
+  }
+  /* Быстрый режим берёт ТОТ ЖЕ список из того же источника. Отдельного списка
+     тарифов для клиента не существует и существовать не должно. */
+  const q = document.getElementById("q-plan");
+  if(q){
+    const list = essentialsList();
+    q.innerHTML =
       grouped(list, r => r.seats ? `${r.plan} — ${t("ui.seatsUpTo", {n: fmtInt(r.seats)})}` : r.plan, essPlan)
       + `<option value="${NO_B24}"${essPlan===NO_B24?" selected":""}>${t("ui.planNone")}</option>`;
   }
@@ -6475,8 +6624,11 @@ document.querySelectorAll("#sw-cur button").forEach(b=>{
     rerenderAll();
   });
 });
-document.getElementById("ess-sel").addEventListener("change", e=>{
-  essPlan = e.target.value;
+/* ВЫБОР ТЕКУЩЕГО ТАРИФА — ОДНА ФУНКЦИЯ НА ОБА СЕЛЕКТОРА (полный режим и быстрый).
+   Второй обработчик с той же логикой означал бы второй путь к essPlan: расходятся
+   такие пары не сразу, а на следующей правке. */
+function setEssPlan(v){
+  essPlan = v;
   /* Пока цель не выбрана руками, она идёт за текущим тарифом. У «нет Битрикс24»
      пары в прайсе нет — тогда остаётся та цель, которая уже выбрана. */
   if(tgtAuto){
@@ -6485,7 +6637,8 @@ document.getElementById("ess-sel").addEventListener("change", e=>{
   }
   fillPlanSelects();
   recompute();
-});
+}
+document.getElementById("ess-sel").addEventListener("change", e=> setEssPlan(e.target.value));
 document.getElementById("tgt-sel").addEventListener("change", e=>{
   tgtPlanName = e.target.value;
   tgtAuto = false;                 /* явный выбор партнёра важнее соответствия 1:1 */
@@ -6559,12 +6712,17 @@ document.getElementById("dl-state").addEventListener("click", downloadState);
    реализации ведут себя ровно так же, как при ручном выборе. Проверять отдельно
    нечего, потому что отдельного механизма нет.
    Значения полей не трогаются вовсе: см. вывод у PRESETS. */
+/* Подпись профиля — одна функция: её берут и кнопки шага 3, и селектор отрасли
+   быстрого режима. Профили у них одни и те же (PRESETS), и расходиться подписи
+   не имеют права. */
+const presetLabel = pr => t("ui.preset" + pr.id.charAt(0).toUpperCase() + pr.id.slice(1));
+
 function buildPresets(){
   const row = document.getElementById("preset-row");
   if(!row) return;
   row.innerHTML = PRESETS.map(p=>
     `<button type="button" class="b24x-btn-ghost" data-preset="${p.id}">${
-      t("ui.preset" + p.id.charAt(0).toUpperCase() + p.id.slice(1))}</button>`).join("")
+      presetLabel(p)}</button>`).join("")
     + `<button type="button" class="b24x-btn-ghost b24x-preset-clear" data-preset="__clear"
         >${t("ui.presetClear")}</button>`;
 }
@@ -6598,6 +6756,204 @@ document.getElementById("preset-row").addEventListener("click", e=>{
   const names = scenarios.filter(sc=> p.ids.includes(sc.id))
     .map(sc=> t(`sc.${sc.id}.title`)).join("; ");
   presetMsg("ui.presetPicked", {names});
+});
+
+/* ==========================================================================
+   БЫСТРЫЙ РЕЖИМ (P7) — ВТОРОЙ ВХОД, А НЕ ВТОРОЙ КАЛЬКУЛЯТОР.
+   Ниже нет ни одной формулы. Всё, что здесь происходит: четыре ответа клиента
+   раскладываются в те же company / state / essPlan, что заполняет партнёр руками,
+   после чего зовётся тот же recompute(). Три цифры на экране читаются из готовой
+   модели теми же форматерами, что и сводка полного режима.
+
+   ЧЕГО ЗДЕСЬ НЕТ И ПОЧЕМУ:
+     переключателя режима реализации — цифру видит клиент без партнёра, и объяснить,
+       что такое «оптимистично», некому. Жёстко REALISATION_DEF, то есть самый
+       осторожный из трёх;
+     партнёрских полей — ни цены услуг, ни контактов, ни разрыва с Essentials в
+       процентах: это вход для клиента, а не рабочее место партнёра;
+     кнопки отчёта — см. решение по отчёту в README и REVIEW.
+
+   ЧЕТЫРЕ ОТВЕТА ПРОТИВ ТРИДЦАТИ ПОЛЕЙ: остальное берётся из дефолтов, и каждое
+   такое допущение занижает результат (одна зарплата на все роли при том, что у
+   руководителя она выше; пять менеджеров при любой численности; консервативный
+   коэффициент). Направление ошибки выбрано намеренно: завышенная цифра, показанная
+   без партнёра, — это потерянная сделка, а не оптимизм. Всё это напечатано на
+   экране словами, а не спрятано в подсказку: спросить некого. */
+let quickInd = null;          /* id профиля отрасли; null = клиент ещё не выбрал */
+
+function buildQuick(){
+  const ind = document.getElementById("q-ind");
+  if(!ind) return;
+  ind.innerHTML = `<option value="">${t("ui.qIndPick")}</option>`
+    + PRESETS.map(pr=>`<option value="${pr.id}"${pr.id===quickInd?" selected":""}>${
+        presetLabel(pr)}</option>`).join("");
+  /* Границы и единицы — те же, что у полей шага 1: значения-то одни и те же. */
+  [["q-emp","empCount","ppl"],["q-sal","empSal","money"]].forEach(([id,k,suf])=>{
+    const inp = document.getElementById(id);
+    if(!inp) return;
+    inp.value = groupFmt(String(company[k]));
+    inp.setAttribute("role","spinbutton");
+    inp.setAttribute("aria-valuemin", COMPANY_LIM[k].min);
+    inp.setAttribute("aria-valuemax", COMPANY_LIM[k].max);
+    inp.dataset.min = COMPANY_LIM[k].min;
+    inp.dataset.max = COMPANY_LIM[k].max;
+    const sfx = document.getElementById(id + "-suf");
+    if(sfx) sfx.textContent = sufText(suf);
+  });
+  fillPlanSelects();
+}
+
+/* ЕДИНСТВЕННОЕ МЕСТО, где ответы быстрого режима превращаются в состояние модели. */
+function quickApply(){
+  const emp = document.getElementById("q-emp"), sal = document.getElementById("q-sal");
+  company.empCount = parseNum(emp.value);
+  /* ОДНА ЗАРПЛАТА НА ВСЕ РОЛИ. Клиент дал одно число — большего мы не знаем, а
+     выводить оклад руководителя из среднего по коэффициенту значило бы завести
+     число без родословной (P6). У руководителя оклад обычно выше, поэтому
+     подстановка среднего занижает сценарий 4, и это сказано на экране. */
+  company.empSal = company.mgrSal = company.ropSal = parseNum(sal.value);
+  /* РОЛЕЙ НЕ БОЛЬШЕ, ЧЕМ ЛЮДЕЙ. Менеджеров и руководителя мы не спрашиваем —
+     берём дефолты. Но дефолт «5 менеджеров и 1 руководитель» на компании из трёх
+     человек означает шесть сотрудников, которых нет: замерено — при нуле
+     сотрудников экран показывал $41 171 из ролей, которых не существует. Клиент
+     сидит без партнёра, объяснить это некому, поэтому предполагаемые роли
+     зажимаются численностью.
+     Ни одного нового числа при этом не вводится: сами дефолты берутся из COMPANY,
+     а правило только запрещает им превышать введённое. И это по-прежнему занижение,
+     а не завышение: доли от численности мы НЕ выводим — «10% менеджеров» было бы
+     догадкой без родословной, и на пятистах сотрудниках она бы завысила счёт. */
+  const defOf = k => (COMPANY.find(c=>c.k === k) || {}).def || 0;
+  company.mgrCount = Math.min(defOf("mgrCount"), company.empCount);
+  company.ropCount = Math.min(defOf("ropCount"), Math.max(0, company.empCount - company.mgrCount));
+  Object.keys(AUTOFILL).forEach(applyCompany);
+  scenarios.forEach(applyCoverage);
+  realisationId = REALISATION_DEF;      /* жёстко консервативный, без переключателя */
+  const pr = PRESETS.find(x=>x.id === quickInd);
+  setSelection(pr ? pr.ids : []);       /* тот же путь, что у профилей шага 3 */
+}
+
+function paintQuick(model){
+  const out = document.getElementById("q-fot");
+  if(!out) return;
+  const cap = model.capacity;
+  /* НЕГОДНЫЙ ВВОД В БЫСТРОМ РЕЖИМЕ ГАСИТ ЦИФРЫ, а не показывает результат от
+     зажатого значения. В полном режиме такую же роль играет отказ собрать отчёт:
+     там рядом партнёр, который видит красное поле и понимает, что произошло.
+     Здесь читатель один, и цифра, посчитанная не от того, что он ввёл, — это
+     ровно та ошибка, которую он унесёт с собой. Причина уже написана под полем
+     тем же кодом, что и в шаге 1 (paintGlobalErrors). */
+  const badInput = !!globalErrors();
+  /* НОЛЬ — ЭТО НЕ ОТВЕТ. Границы поля разрешают ноль (в полном режиме партнёр
+     ставит его по ходу правки), но экран для клиента на нуле сотрудников всё равно
+     показывал $12 675: часть сценариев считает абсолютный месячный объём и от
+     численности не зависит вовсе. Компании из нуля человек не бывает, а цифру,
+     за которой ничего не стоит, клиент унесёт с собой. То же с окладом: при нуле
+     выходило «$0 сэкономлено и 2 365 часов освобождено» — читается как поломка. */
+  const answered = company.empCount >= 1 && company.empSal >= 1;
+  const ready = !!quickInd && model.any && !badInput && answered;
+  document.getElementById("q-fot").textContent   = ready ? fmtMoney(model.totals.fotYear) : NO_VALUE;
+  document.getElementById("q-hours").textContent = ready ? fmtHours(cap.hoursYear) : NO_VALUE;
+  document.getElementById("q-fte").textContent   = ready ? fmtFte(cap.fte) : NO_VALUE;
+  const counted = document.getElementById("q-counted");
+  counted.textContent = ready
+    ? t("ui.qCounted", {n: fmtInt(model.items.length),
+        names: model.items.map(it=> t(`sc.${it.sc.id}.title`)).join("; ")})
+    : (badInput ? t("ui.qBad") : (answered ? t("ui.qWaiting") : t("ui.qNeedNumbers")));
+  /* СТОРОНА ЗАТРАТ НАЗЫВАЕТСЯ ВСЛУХ, но чистого результата здесь нет: внедрение не
+     оценено, и «чистая экономия» без него была бы завышена ровно на цену услуг. */
+  const cost = document.getElementById("q-cost");
+  cost.textContent = ready
+    ? t("ui.qCost", {plan: model.plan.vibe.plan, sub: fmtMoney(model.totals.subscriptionYear)})
+    : "";
+  cost.hidden = !ready;
+  document.getElementById("q-assume").hidden = !ready;
+}
+
+/* Заголовок «шапки» зависит от режима, а applyStatic() перечитывает все data-i18n
+   при смене языка и вернул бы партнёрский текст на клиентский экран. Поэтому
+   заголовок красится отдельной функцией, и её зовёт как режим, так и applyStatic. */
+function paintHero(){
+  const q = document.body.dataset.mode === "quick";
+  const ht = document.getElementById("hero-t"), hs = document.getElementById("hero-s");
+  if(ht) ht.textContent = t(q ? "ui.qHeroTitle" : "ui.heroTitle");
+  if(hs) hs.textContent = t(q ? "ui.qHeroSub"  : "ui.heroSub");
+}
+
+function enterQuick(){
+  document.body.dataset.mode = "quick";
+  /* Атрибут hidden снимается только здесь: до входа в режим секция скрыта и без
+     CSS — на случай, если скрипт не дошёл до этой строки. */
+  document.getElementById("quick").hidden = false;
+  paintHero();
+  /* Входим ЧИСТО: выбор сценариев снимается, коэффициент — консервативный.
+     Иначе экран показал бы цифру по набору, которого клиент не выбирал. */
+  quickInd = null;
+  realisationId = REALISATION_DEF;
+  buildQuick();
+  setSelection([]);
+}
+function leaveQuick(){
+  document.body.dataset.mode = "full";
+  document.getElementById("quick").hidden = true;
+  paintHero();
+  /* Хеш убираем, иначе перезагрузка вернула бы клиентский экран поверх работы
+     партнёра. replaceState, а не location.hash: без записи в историю. */
+  if(/^#quick$/.test(location.hash))
+    history.replaceState(null, "", location.href.split("#")[0]);
+  buildCompany();      /* поля шага 1 показывают то, что пришло из быстрого входа */
+  recompute();
+}
+
+document.getElementById("q-ind").addEventListener("change", e=>{
+  quickInd = e.target.value || null;
+  quickApply();
+});
+document.getElementById("q-plan").addEventListener("change", e=> setEssPlan(e.target.value));
+document.querySelectorAll(".q-in").forEach(inp=>{
+  inp.addEventListener("input", ()=>{
+    onNumInput(inp);       /* разбор и разрядные пробелы — те же, что в шаге 1 */
+    quickApply();
+  });
+});
+document.getElementById("q-full").addEventListener("click", leaveQuick);
+/* Партнёр берёт адрес клиентского экрана здесь. Состояние в него НЕ упаковывается:
+   быстрый режим — это вход клиента со своими ответами, а не пересылка расчёта. */
+document.getElementById("copy-quick").addEventListener("click", async ()=>{
+  const url = location.href.split("#")[0] + "#quick";
+  const box = document.getElementById("link-box");
+  const out = document.getElementById("link-out");
+  const msg = document.getElementById("link-msg");
+  out.value = url; box.hidden = false;
+  let copied = false;
+  try {
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(url); copied = true;
+    }
+  } catch(e){ copied = false; }
+  if(!copied){ out.focus(); out.select(); }
+  msg.hidden = false;
+  msg.textContent = t("ui.copyQuickMsg");
+});
+/* «ОБСУДИТЬ С ПАРТНЁРОМ» — ЭТО ССЫЛКА НА РАСЧЁТ ИЗ P8, без единой новой строки
+   формата. buildLink берёт адрес без хеша, поэтому у партнёра открывается ПОЛНЫЙ
+   режим с состоянием клиента. withPartner:false: партнёрских данных здесь нет. */
+document.getElementById("q-cta").addEventListener("click", async ()=>{
+  const box = document.getElementById("q-link-box");
+  const out = document.getElementById("q-link-out");
+  const msg = document.getElementById("q-link-msg");
+  let url;
+  try { url = await buildLink({withPartner:false}); }
+  catch(e){ msg.hidden = false; msg.textContent = t("ui.linkBad", {why: e.message}); return; }
+  out.value = url; box.hidden = false;
+  let copied = false;
+  try {
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(url); copied = true;
+    }
+  } catch(e){ copied = false; }
+  if(!copied){ out.focus(); out.select(); }
+  msg.hidden = false;
+  msg.textContent = t(copied ? "ui.linkCopied" : "ui.qLinkReady", {n: fmtInt(url.length)});
 });
 
 /* ---- ССЫЛКА НА РАСЧЁТ: копирование ---- */
@@ -6690,7 +7046,13 @@ recompute();
 /* ССЫЛКА, ВСТАВЛЕННАЯ В АДРЕСНУЮ СТРОКУ УЖЕ ОТКРЫТОЙ СТРАНИЦЫ, перезагрузки не
    вызывает — меняется только хеш. Слушаем и восстанавливаем; на обычные якоря
    restoreFromHash не реагирует и молчит. */
-window.addEventListener("hashchange", ()=> restoreFromHash().catch(()=>{}));
+/* ВХОД В БЫСТРОЙ РЕЖИМ — ПО #quick, до восстановления состояния из ссылки: обе
+   ветки читают хеш, но пересечься не могут (ссылка на расчёт начинается с s1.). */
+if(/^#quick$/.test(location.hash)) enterQuick();
+window.addEventListener("hashchange", ()=>{
+  if(/^#quick$/.test(location.hash)) return enterQuick();
+  restoreFromHash().catch(()=>{});
+});
 restoreFromHash().catch(e=>{
   const msg = document.getElementById("load-msg");
   if(msg){ msg.hidden = false; msg.classList.add("logo-err");
