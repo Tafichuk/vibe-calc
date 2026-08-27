@@ -111,13 +111,6 @@ section{scroll-margin-top:76px}
 .hero h1{font:800 clamp(30px,4.2vw,50px)/1.12 var(--b24-font-display); margin:0 0 var(--b24-s4);
   letter-spacing:-.01em; max-width:26ch}
 .hero p{margin:0; color:var(--b24-on-navy-soft); font-size:17px; max-width:70ch}
-/* one row of equal pills instead of a ragged 2 + 1 wrap */
-.hero-pills{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:var(--b24-s2); margin-top:var(--b24-s6)}
-.pill{display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.24); color:var(--b24-on-navy);
-  border-radius:var(--b24-r-pill); padding:7px 14px; font-size:13.5px; font-weight:500}
-.pill img{width:16px; height:16px}
 
 /* ---- sections ---- */
 section{padding:var(--b24-s12) 0}
@@ -189,10 +182,6 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
    быстрый режим не начнёт молча показывать партнёрские поля. */
 body[data-mode="quick"] main > section:not(#quick){display:none}
 body[data-mode="quick"] .navbar{display:none}
-/* Плашки шапки перечисляют возможности линейки (Vibecode, MCP-сервер) — это
-   разговор партнёра о продукте. На клиентском экране четырёх вопросов они
-   отвлекают от единственного вопроса, на который он пришёл за ответом. */
-body[data-mode="quick"] #hero-pills{display:none}
 body:not([data-mode="quick"]) #quick{display:none}
 .b24x-q-card{padding:var(--b24-s7)}
 .b24x-q-fields{display:grid; gap:var(--b24-s5);
@@ -619,7 +608,6 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
   <div class="wrap">
     <h1 id="hero-t" data-i18n="ui.heroTitle"></h1>
     <p id="hero-s" data-i18n="ui.heroSub"></p>
-    <div class="hero-pills" id="hero-pills"></div>
   </div>
 </div>
 
@@ -1765,9 +1753,6 @@ en: {
   "ai.forStandard":"No cap on the number of AI requests, plus priority in the processing queue under load",
 
   // ---- pillars ----
-  "pil.1":"Vibecode — build your own AI-powered business apps",
-  "pil.2":"AI scaled by plan, unlimited from Standard up",
-  "pil.3":"MCP server — connect outside AI agents to Bitrix24",
 
   /* ---- scenarios ---- */
   "sc.1.title":"Call transcription and automatic deal-card fill",
@@ -6201,8 +6186,6 @@ function applyStatic(){
   document.getElementById("sw-lang").hidden = !SHOW_LANG_SWITCH;
   document.querySelector('[data-i18n="ui.cur"]').hidden = !SHOW_CUR_SWITCH;
   document.getElementById("sw-cur").hidden = !SHOW_CUR_SWITCH;
-  document.getElementById("hero-pills").innerHTML = ["pil.1","pil.2","pil.3"]
-    .map(k=>`<span class="pill"><img src="assets/icons/check-white.svg" alt="">${t(k)}</span>`).join("");
   document.getElementById("ai-list").innerHTML = ["ai.essentials","ai.basic","ai.standard"]
     .map(k=>`<li><img src="assets/icons/badge-check.svg" alt="">${t(k)}</li>`).join("");
   document.getElementById("foot-dates").textContent =
