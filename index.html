@@ -169,6 +169,13 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
 /* Чек-лист диалога печати: та же подсказка по кеглю, но с рамкой и полужирными
    значениями — он читается как памятка, а не как пояснение. Красный не используется:
    он занят валидацией. */
+/* Полоса пресетов. Кнопки в один ряд, переносятся на узком экране; «очистить»
+   отделён отступом — он про обратное действие и не должен читаться как ещё один
+   профиль. */
+.b24x-preset-card{margin-bottom:var(--b24-s6)}
+.b24x-preset-row{display:flex; flex-wrap:wrap; gap:var(--b24-s2); margin-top:var(--b24-s3)}
+.b24x-preset-row .b24x-preset-clear{margin-left:auto}
+@media (max-width:640px){ .b24x-preset-row .b24x-preset-clear{margin-left:0} }
 .b24x-print-check{border:1px solid var(--b24-line); border-radius:var(--b24-r-inner);
   padding:10px 12px; background:var(--b24-card)}
 .b24x-print-check b{color:var(--b24-deep); font-weight:700}
@@ -599,6 +606,15 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
     <div class="sec-h" data-i18n="ui.step3"></div>
     <h2 data-i18n="ui.scenariosH"></h2>
     <p class="note-line" data-i18n="ui.scenariosNote"></p>
+    <!-- ПРЕСЕТЫ. Видны всегда, не только на пустом экране: профиль можно
+         переключить посреди разговора, а ошибочное нажатие стоит одного клика —
+         введённые числа снятие галочки переживают. -->
+    <div class="card b24x-preset-card">
+      <span class="b24x-save-h" data-i18n="ui.presetH"></span>
+      <div class="b24x-preset-row" id="preset-row"></div>
+      <p class="hint" style="margin:var(--b24-s3) 0 0" data-i18n="ui.presetNote"></p>
+      <p class="hint" id="preset-msg" style="margin:var(--b24-s2) 0 0" hidden></p>
+    </div>
     <div id="groups"></div>
   </section>
 
@@ -1129,6 +1145,22 @@ en: {
   "ui.companyNote":"These values fill the matching fields in every scenario below. Edit a field inside a scenario and it stops following this block. Your own figure is never overwritten.",
   "ui.scenariosH":"Choose the scenarios",
   "ui.scenariosNote":"Each scenario is costed on its own. Pick only what the client will really use. A short honest list convinces more than a long one.",
+  // ---- пресеты по профилю клиента (P11) ----
+  /* ФОРМУЛИРОВКА НЕ ДОЛЖНА ЧИТАТЬСЯ КАК РЕКОМЕНДАЦИЯ ВЕНДОРА. Мы не знаем этого
+     клиента и не можем ему ничего советовать. Поэтому «отправная точка для
+     разговора», а не «вам подходит»; и сразу сказано, что состав меняется и что
+     введённые числа не теряются — иначе первый клик страшно делать. */
+  "ui.presetH":"Not sure where to start?",
+  "ui.presetNote":"These are starting points for a conversation, not recommendations — we do not know this client, and nothing here is chosen for you. A profile ticks three or four scenarios; add to it, untick what does not apply, or clear it and pick your own. Your typed figures stay even if you untick a scenario, so a wrong click costs one click back.",
+  "ui.presetClear":"Clear all",
+  "ui.presetSales":"Sales with heavy call volume",
+  "ui.presetServices":"Professional services",
+  "ui.presetBookings":"Bookings and front desk",
+  "ui.presetOperations":"Production and operations",
+  /* Что именно отметил профиль — печатается после нажатия. Не «мы выбрали для вас»,
+     а перечень: партнёр обязан увидеть состав и решить сам. */
+  "ui.presetPicked":"{names} — ticked. Change anything you like.",
+  "ui.presetCleared":"All scenarios unticked. Your figures are kept.",
   "ui.summaryH":"Combined effect",
   "ui.trH":"Recommended plan",
   "ui.trNote":"Two choices. On the left, what the client pays today: an Essentials plan, or nothing if they have no Bitrix24 yet. On the right, the plan you recommend. It starts matched to the current plan, and you can point it at any plan in the Vibe+ line — including a bigger one.",
@@ -1967,6 +1999,62 @@ const SUF = {ppl:"suf.ppl", clients:"suf.clients", min:"suf.min", share:"suf.sha
              calls:"suf.calls", ops:"suf.ops", enq:"suf.enq",
              lookups:"suf.lookups", bookings:"suf.bookings", docs:"suf.docs",
              meetings:"suf.meetings"};
+
+/* =============================================================================
+   ПРЕСЕТЫ ПО ПРОФИЛЮ КЛИЕНТА — P11.
+   Пустой стартовый экран — принцип верный (партнёр обязан выбрать каждый сценарий
+   сознательно, это первая защита от двойного счёта), но первое впечатление тяжёлое:
+   одиннадцать карточек и ни одной подсказки, с чего начать.
+
+   ПРЕСЕТ ТОЛЬКО ОТМЕЧАЕТ СЦЕНАРИИ. Ни одного числа он не подставляет, и это
+   решение, а не экономия работы. У каждого дефолта в этом инструменте теперь есть
+   происхождение — плашка у поля говорит, перенос это, наша оценка или цифра
+   клиента (P6). Числа, подставленные пресетом, были бы ЕЩЁ ОДНИМ слоем без
+   родословной: «откуда 10 минут?» — «из профиля „производство“» — «а он откуда?».
+   Отвечать было бы нечем. Дефолты полей и доли охвата уже подобраны и обоснованы
+   каждый по отдельности; профиль клиента их не уточняет, он выбирает СОСТАВ.
+
+   ЧТО В СОСТАВЫ НЕ ВХОДИТ И ПОЧЕМУ:
+     сценарий 7 (Vibecode, CoWork, чат) — самая большая и самая недоказуемая строка
+       набора: 68% его суммы дают зашитые 10% прироста эффективности на всех
+       охваченных, которых партнёр не видит и изменить не может. Плюс заметки
+       сценариев 10 и 11 прямо предупреждают о двойном счёте именно с ним. Ставить
+       его отправной точкой значит начинать разговор с самого спорного места.
+     сценарий 5 (повторные продажи) — работает только на выручку, а прогноз выручки
+       выключен по умолчанию. В пресете он дал бы карточку с прочерком на первом же
+       экране: формально честно, а читается как поломка.
+
+   ПРОФИЛИ ОБЯЗАНЫ РАЗЛИЧАТЬСЯ. Первый вариант «производства» был 3+9+10+6 — три
+   сценария из четырёх те же, что в «услугах». Два профиля, отличающиеся одной
+   строкой, не помогают выбрать, а создают ложную развилку: партнёр гадает, что
+   изменится, а не видит разницы. Пересобрано: производству остаётся то, чем оно
+   отличается — работа со Битрикс24 из чата (у цеха и выездных нет рабочего места
+   с интерфейсом), генерация документов (спецификации, акты, отгрузка) и база
+   знаний (регламенты и допуски). Ушли follow-up по внутренним встречам и личный
+   ассистент — это работа за столом, ядро «услуг». Пересечения после правки:
+   услуги/производство — 2 сценария, бронирование/производство — 1.
+
+   ДОЛЯ ФОТ ПО КАЖДОМУ ПРЕСЕТУ, замерено на дефолтах во всех трёх режимах:
+     продажи        2.55 / 4.15 / 5.42 %
+     услуги         2.46 / 4.00 / 5.23 %
+     бронирование   1.04 / 1.68 / 2.20 %
+     производство   2.27 / 3.70 / 4.83 %
+   Мягкий порог 15%, жёсткий 25% — ни один пресет к ним не подходит. Для сравнения:
+   щедрый состав со сценарием 7 даёт 8.91% в оптимистичном, все одиннадцать —
+   13.19%. То есть повторить историю с 54% ФОТ пресет уже не может, и не потому,
+   что составы аккуратные, а потому что охват и режим реализации это закрыли
+   структурно.
+
+   ОШИБОЧНОЕ НАЖАТИЕ СТОИТ ОДНОГО КЛИКА. Пресет меняет только отметки; введённые
+   числа снятие галочки переживают — проверено: введённые 9 документов остаются 9
+   после снятия и возврата. Поэтому пресеты видны всегда, а не только на пустом
+   экране: партнёр вправе переключить профиль посреди разговора. */
+const PRESETS = [
+  {id:"sales",      ids:[1, 4, 9, 11]},
+  {id:"services",   ids:[3, 6, 10, 11]},
+  {id:"bookings",   ids:[12, 2, 10]},
+  {id:"operations", ids:[9, 3, 10]},
+];
 
 const scenarios = [
 /* AI-АГЕНТЫ ДОСТУПНЫ НЕ НА ВСЕХ ТАРИФАХ — ПРИЗНАК agent:true.
@@ -6235,7 +6323,7 @@ function applyPartnerLogo(){
 }
 
 function rerenderAll(){
-  applyStatic(); paintRealisation(); buildCompany(); buildPartner(); buildScenarios(); buildServices(); recompute();
+  applyStatic(); paintRealisation(); buildPresets(); buildCompany(); buildPartner(); buildScenarios(); buildServices(); recompute();
 }
 
 document.querySelectorAll("#sw-lang button").forEach(b=>{
@@ -6340,6 +6428,54 @@ document.getElementById("sw-real").addEventListener("click", e=>{
 });
 document.getElementById("dl-state").addEventListener("click", downloadState);
 
+/* ---- ПРЕСЕТЫ ПО ПРОФИЛЮ КЛИЕНТА (P11) ----
+   Пресет ДЕЙСТВУЕТ ЧЕРЕЗ ТЕ ЖЕ ГАЛОЧКИ, что и рука партнёра: снимает всё и ставит
+   отметки списком. Никакого второго пути выбора сценария в модели не появляется —
+   значит охваты, автозаполнение, пометки про агентов, предохранители и режим
+   реализации ведут себя ровно так же, как при ручном выборе. Проверять отдельно
+   нечего, потому что отдельного механизма нет.
+   Значения полей не трогаются вовсе: см. вывод у PRESETS. */
+function buildPresets(){
+  const row = document.getElementById("preset-row");
+  if(!row) return;
+  row.innerHTML = PRESETS.map(p=>
+    `<button type="button" class="b24x-btn-ghost" data-preset="${p.id}">${
+      t("ui.preset" + p.id.charAt(0).toUpperCase() + p.id.slice(1))}</button>`).join("")
+    + `<button type="button" class="b24x-btn-ghost b24x-preset-clear" data-preset="__clear"
+        >${t("ui.presetClear")}</button>`;
+}
+function presetMsg(key, params){
+  const el = document.getElementById("preset-msg");
+  if(!el) return;
+  el.textContent = t(key, params); el.hidden = false;
+}
+function setSelection(ids){
+  /* Снимаем всё и ставим нужное ТЕМ ЖЕ путём, каким это делает человек: через
+     состояние выбора и полную перерисовку. Значения полей остаются на месте —
+     сценарий, снятый и возвращённый, приходит со своими числами. */
+  scenarios.forEach(sc=> state[sc.id].selected = ids.includes(sc.id));
+  buildScenarios();
+  buildServices();
+  recompute();
+}
+document.getElementById("preset-row").addEventListener("click", e=>{
+  const b = e.target.closest("[data-preset]");
+  if(!b) return;
+  if(b.dataset.preset === "__clear"){
+    setSelection([]);
+    presetMsg("ui.presetCleared");
+    return;
+  }
+  const p = PRESETS.find(x=>x.id === b.dataset.preset);
+  if(!p) return;
+  setSelection(p.ids);
+  /* Печатаем СОСТАВ, а не «мы подобрали»: партнёр обязан увидеть, что именно
+     отмечено, и решить сам. Порядок — экранный, как в списке сценариев. */
+  const names = scenarios.filter(sc=> p.ids.includes(sc.id))
+    .map(sc=> t(`sc.${sc.id}.title`)).join("; ");
+  presetMsg("ui.presetPicked", {names});
+});
+
 /* ---- ССЫЛКА НА РАСЧЁТ: копирование ---- */
 document.getElementById("copy-link").addEventListener("click", async ()=>{
   const msg = document.getElementById("link-msg");
@@ -6409,6 +6545,7 @@ document.getElementById("days").value = String(C.DAYS_MONTH);
 document.getElementById("show-rev").checked = SHOW_REVENUE;
 applyStatic();
 paintRealisation();
+buildPresets();
 buildCompany();
 buildPartner();
 Object.keys(AUTOFILL).forEach(applyCompany);
