@@ -166,6 +166,12 @@ h2{font:700 clamp(20px,2.4vw,28px)/1.2 var(--b24-font-display); margin:0 0 var(-
    нажимается. Красный не используется: он занят валидацией. */
 /* Поле состава работ — на всю ширину ряда: одна строка в узкой клетке приглашает
    написать три слова, а нужен абзац. */
+/* Чек-лист диалога печати: та же подсказка по кеглю, но с рамкой и полужирными
+   значениями — он читается как памятка, а не как пояснение. Красный не используется:
+   он занят валидацией. */
+.b24x-print-check{border:1px solid var(--b24-line); border-radius:var(--b24-r-inner);
+  padding:10px 12px; background:var(--b24-card)}
+.b24x-print-check b{color:var(--b24-deep); font-weight:700}
 .b24x-scope-field{grid-column:1/-1}
 .b24x-scope-field textarea{width:100%; resize:vertical; min-height:76px;
   font:inherit; line-height:1.45; padding:10px 12px}
@@ -700,7 +706,20 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
       <div class="b24x-pdf-row">
         <button type="button" class="btn-primary" id="pdf-client" data-i18n="ui.pdfClient"></button>
       </div>
-      <p class="hint" style="margin:var(--b24-s3) 0 0" data-i18n="ui.pdfHint"></p>
+      <!-- ЧЕК-ЛИСТ ДИАЛОГА ПЕЧАТИ — У САМОЙ КНОПКИ (P15). Не в подсказке «i» и не в
+           инструкции: там его не прочитают, потому что читают их до, а нужен он в
+           момент нажатия. Одна строка, три пункта, разделены точками — глазами
+           сканируется за секунду.
+           ЗАМЕР, КОТОРЫЙ ОПРЕДЕЛИЛ ФОРМУЛИРОВКУ. Разбор просил написать «снимите
+           Headers and footers», потому что Chrome ставит в колонтитулы адрес и дату.
+           Прогон показал, что для НАШЕГО документа он их не ставит: кит объявляет
+           @page { margin: 0 }, и Chromium в этом случае колонтитулы не рисует вовсе
+           — PDF с включённой и выключенной галочкой побайтово одинаковы, проверено и
+           при навязанных полях тоже. Поэтому пункт остался, но третьим и как
+           страховка: измерены Chromium и Gecko, WebKit измерить было нечем. -->
+      <p class="hint b24x-print-check" style="margin:var(--b24-s3) 0 0"
+         data-i18n="ui.pdfChecklist"></p>
+      <p class="hint" style="margin:var(--b24-s2) 0 0" data-i18n="ui.pdfHint"></p>
       <div id="pdf-err" class="warn" hidden style="margin-top:var(--b24-s4)">
         <img src="assets/icons/alert.svg" alt=""><span id="pdf-err-text"></span>
       </div>
@@ -1187,6 +1206,7 @@ en: {
   /* Строка под таблицей входных данных в отчёте. Одна, а не по числу на каждое
      поле: страница и без того плотная, а клиенту нужно знать ДВЕ вещи — какие
      цифры его собственные и что вендорских бенчмарков здесь нет вовсе. */
+  "org.reportLegendNone":"Where these figures come from: none of them is vendor benchmark data. They are our starting assumptions — carried over from the earlier version of this calculator or estimated by us. Replace any of them with your own figures where you have them.",
   "org.reportLegend":"Where these figures come from: none of them is vendor benchmark data. {client} of them are facts about your company and are marked {mark} — please confirm or replace those. The rest are our starting assumptions, carried over from the earlier version of this calculator or estimated by us.",
   "ui.step5":"Step 5", "ui.step6":"Step 6", "ui.step7":"Step 7", "ui.step8":"Step 8",
 
@@ -1362,7 +1382,10 @@ en: {
   "ui.reportH":"Report",
   "ui.reportNote":"One document, straight from this page: the report you give to the client. It carries no per-scenario fees. The cost of your services is in it as one total line, because the net saving would look too high without it. Nothing to install.",
   "ui.pdfClient":"Report for the client — PDF",
-  "ui.pdfHint":"The button lays the report out as A4 pages and opens your browser's print dialog. Pick \u201cSave as PDF\u201d as the destination. That dialog is the only way a web page can write a PDF to your disk. It also keeps the text real text: you can select it and search it, and it prints in the Bitrix24 font instead of as a picture.",
+  /* Три пункта, по порядку появления в диалоге Chrome. Первый обязателен, второй
+     оставляет вёрстку нашей, третий — страховка на браузеры, которые мы не мерили. */
+  "ui.pdfChecklist":"In the print dialog: Destination → <b>Save as PDF</b> · Margins → <b>Default</b> · Headers and footers → <b>off</b>",
+  "ui.pdfHint":"The button lays the report out as A4 pages and opens your browser's print dialog — that dialog is the only way a web page can write a PDF to your disk. It also keeps the text real text: you can select it and search it, and it prints in the Bitrix24 font instead of as a picture. The pages declare their own size and zero margins, so Chrome does not add a URL or a date to the corners even with headers and footers switched on — we measured that. Switching them off anyway costs nothing and covers browsers we could not measure.",
   "ui.pdfBuilding":"Laying out the report…",
   "ui.pdfRefused":"The report was not built: it would have carried internal, partner-only content ({what}). This is a bug, so please report it. Do not work around it. There is one report and it goes to the client.",
   "ui.pdfNoScenarios":"Pick at least one scenario in Step 3. There is nothing to put in a report yet.",
@@ -1644,6 +1667,23 @@ const copyVars = () => ({
    NUMBER AND MONEY FORMATTING — locale driven, never hardcoded
    ========================================================================== */
 const localeOf = () => (LANG === "de" ? "de-DE" : "en-US");
+/* ДАТА ИЗ КОНФИГА — В ЧЕЛОВЕЧЕСКИЙ ВИД НА ВЫВОДЕ. В config/pricing.json дата лежит
+   как «2026-08-17», и там она и остаётся: конфиг — официальная выгрузка, руками не
+   правится. Форматируем в момент печати.
+   РАЗБИРАЕМ ПО ЧАСТЯМ, А НЕ new Date(строка): «2026-08-17» браузер читает как
+   полночь UTC, и в любой западной зоне с отрицательным смещением дата съезжала бы
+   на 16-е. Собираем локальную дату из чисел. */
+const fmtDate = iso => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
+  if(!m) return String(iso || "");
+  /* МЕСЯЦ СОКРАЩЁННЫЙ, И ЭТО ЗАМЕР, А НЕ ВКУС. С полным названием строка в подвале
+     («Prices as of August 17, 2026») на 62-символьном имени партнёра делала подвал
+     трёхстрочным, и лист «How to read these numbers» уходил на 1.2px за полосу
+     набора — поймала check-geometry. «Aug 17, 2026» человеческая ровно так же и
+     короче на три знака. */
+  return new Date(+m[1], +m[2] - 1, +m[3])
+    .toLocaleDateString(localeOf(), {day:"numeric", month:"short", year:"numeric"});
+};
 /* ОКРУГЛЕНИЕ ЧЕРЕЗ ЦЕНТЫ, А НЕ СРАЗУ ДО ЦЕЛОГО.
    Сценарий 11 давал ровно $65,487.50 в год, а показывал $65,487. Причина не в
    модели: month * 12 в двоичной арифметике даёт 65487.49999999999, и округление
@@ -3863,7 +3903,14 @@ function reportState(){
       m.items.forEach(it => it.sc.fields.forEach(f=>{
         if(f.org === "client" && (!f.revOnly || SHOW_REVENUE)) seen.add(it.sc.id + ":" + f.k);
       }));
-      return seen.size ? t("org.reportLegend", {client: fmtInt(seen.size), mark: "\u2022"}) : null;
+      /* УТВЕРЖДЕНИЕ О БЕНЧМАРКАХ ПЕЧАТАЕТСЯ ВСЕГДА, отметки — по наличию. Это две
+         разные вещи, и раньше они были связаны одним условием: при наборе сценариев
+         без полей «спросить клиента» (например, демо с выключенной выручкой) клиент
+         не видел даже того, что вендорских данных в расчёте нет вовсе. А это как раз
+         то, что ему нужно знать независимо от того, есть ли его собственные цифры. */
+      return seen.size
+        ? t("org.reportLegend", {client: fmtInt(seen.size), mark: "\u2022"})
+        : t("org.reportLegendNone");
     })(),
     /* ОШИБКИ ПОЛЕЙ ВНЕ СЦЕНАРИЕВ едут отдельным списком и тоже обязаны
        останавливать сборку. Их нельзя списать на один сценарий: численность и
@@ -3943,7 +3990,10 @@ function reportState(){
       diffPerMonth: PP.diff.perMonth,
       to: map.to,
       toAnnualPerMonth: vibe.annual, toMonthly: vibe.monthly, toAnnualTotal: vibe.annualTotal,
-      effectiveFrom: PRICING.effectiveFrom, grandfatheredUntil: PRICING.grandfatheredUntil,
+      /* Даты едут в отчёт УЖЕ отформатированными: отчёт величин не выводит и дат не
+         форматирует — иначе формат разъехался бы между экраном и документом. */
+      effectiveFrom: fmtDate(PRICING.effectiveFrom),
+      grandfatheredUntil: fmtDate(PRICING.grandfatheredUntil),
     },
     /* AI-СТУПЕНЬ ВЫБРАННОГО ТАРИФА, А НЕ ЛЕСТНИЦА ЦЕЛИКОМ.
        Раньше сюда уезжали все три ступени, и блок «What <тариф> adds» перечислял
@@ -4618,14 +4668,6 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
 /* Отметка у цифр клиента. Тот же приём, что у пометки сценариев на AI-агентах:
    надстрочный знак плюс объяснение под таблицей. */
 const CLIENT_MARK = '<sup class="b24x-gate-mark">\u2022</sup>';
-const clientFieldCount = () => {
-  const seen = new Set();
-  (S.items || []).forEach(it => {
-    (it.fields || []).forEach(f => { if (f.client) seen.add(it.id + ":" + f.label); });
-    (it.segments || []).forEach(fs => fs.forEach(f => { if (f.client) seen.add(it.id + ":" + f.label); }));
-  });
-  return seen.size;
-};
 /* ================================================== ЛИСТ ДОПУЩЕНИЙ (P16) =====
    ЭТО НЕ НОВЫЙ ЛИСТ, А ПЕРЕСТРОЕННЫЙ СТАРЫЙ, и это главное решение задачи.
    Страница «The numbers we entered» уже перечисляла КАЖДОЕ введённое значение по
@@ -5123,6 +5165,30 @@ ${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags
   .b24x-foot-prices{display:block; font-family:var(--b24-font-body); font-weight:600;
                     font-size:9.5px; color:var(--b24-text-mute); margin-top:2px;
                     text-align:right}
+
+  /* ЛИСТ НЕ РВЁТСЯ НА ПЕЧАТИ, И ЗАГОЛОВОК НЕ ОТРЫВАЕТСЯ ОТ СВОЕГО БЛОКА (P15).
+     Кит объявляет .page { break-after: page }, то есть КОНЕЦ листа. Но не
+     запрещает разрыв ВНУТРИ листа: если содержимое окажется хоть на пиксель выше
+     печатной области — из-за другой метрики шрифта в чужом движке, — лист
+     разъедется на две печатных страницы, и его подвал с локапом уедет на пустую.
+     Замер Chromium против Gecko дал расхождение 1px на 1123, то есть сейчас этого
+     не происходит; правило стоит как страховка на движки, которые мы измерить не
+     смогли (WebKit требует включить Remote Automation вручную).
+     Живёт в отчёте, а не в brand-ext.css: в документ подключён только кит, и отчёт
+     обязан быть самодостаточным. Кит при этом не редактируется — он только вход
+     сборки.
+     Заголовкам и шапкам таблиц запрещён разрыв ПОСЛЕ них: если движок всё же начнёт
+     переносить, заголовок уйдёт вместе со своими строками, а не останется вдовой. */
+  @media print {
+    .page { break-inside: avoid; page-break-inside: avoid; }
+    h1, .b24-h1, .b24-display, .b24-label, thead, thead tr, thead th {
+      break-after: avoid; page-break-after: avoid;
+      break-inside: avoid; page-break-inside: avoid;
+    }
+    tr, .b24-table-wrap, .b24-card, .b24-dashed, .b24-quote {
+      break-inside: avoid; page-break-inside: avoid;
+    }
+  }
 
   /* ЛИСТ ДОПУЩЕНИЙ. Три колонки: величина, значение, происхождение. Колонка
      происхождения самая узкая — это метка, а не текст, — и не переносится по
@@ -5630,7 +5696,7 @@ function applyStatic(){
   document.getElementById("ai-list").innerHTML = ["ai.essentials","ai.basic","ai.standard"]
     .map(k=>`<li><img src="assets/icons/badge-check.svg" alt="">${t(k)}</li>`).join("");
   document.getElementById("foot-dates").textContent =
-    t("ui.effectiveFrom", {date:PRICING.effectiveFrom, grand:PRICING.grandfatheredUntil});
+    t("ui.effectiveFrom", {date:fmtDate(PRICING.effectiveFrom), grand:fmtDate(PRICING.grandfatheredUntil)});
   fillPlanSelects();
 }
 

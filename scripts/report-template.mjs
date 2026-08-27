@@ -641,14 +641,6 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
 /* Отметка у цифр клиента. Тот же приём, что у пометки сценариев на AI-агентах:
    надстрочный знак плюс объяснение под таблицей. */
 const CLIENT_MARK = '<sup class="b24x-gate-mark">\u2022</sup>';
-const clientFieldCount = () => {
-  const seen = new Set();
-  (S.items || []).forEach(it => {
-    (it.fields || []).forEach(f => { if (f.client) seen.add(it.id + ":" + f.label); });
-    (it.segments || []).forEach(fs => fs.forEach(f => { if (f.client) seen.add(it.id + ":" + f.label); }));
-  });
-  return seen.size;
-};
 /* ================================================== ЛИСТ ДОПУЩЕНИЙ (P16) =====
    ЭТО НЕ НОВЫЙ ЛИСТ, А ПЕРЕСТРОЕННЫЙ СТАРЫЙ, и это главное решение задачи.
    Страница «The numbers we entered» уже перечисляла КАЖДОЕ введённое значение по
@@ -1146,6 +1138,30 @@ ${assets.baseHref ? `<base href="${assets.baseHref}">\n` : ""}${assets.styleTags
   .b24x-foot-prices{display:block; font-family:var(--b24-font-body); font-weight:600;
                     font-size:9.5px; color:var(--b24-text-mute); margin-top:2px;
                     text-align:right}
+
+  /* ЛИСТ НЕ РВЁТСЯ НА ПЕЧАТИ, И ЗАГОЛОВОК НЕ ОТРЫВАЕТСЯ ОТ СВОЕГО БЛОКА (P15).
+     Кит объявляет .page { break-after: page }, то есть КОНЕЦ листа. Но не
+     запрещает разрыв ВНУТРИ листа: если содержимое окажется хоть на пиксель выше
+     печатной области — из-за другой метрики шрифта в чужом движке, — лист
+     разъедется на две печатных страницы, и его подвал с локапом уедет на пустую.
+     Замер Chromium против Gecko дал расхождение 1px на 1123, то есть сейчас этого
+     не происходит; правило стоит как страховка на движки, которые мы измерить не
+     смогли (WebKit требует включить Remote Automation вручную).
+     Живёт в отчёте, а не в brand-ext.css: в документ подключён только кит, и отчёт
+     обязан быть самодостаточным. Кит при этом не редактируется — он только вход
+     сборки.
+     Заголовкам и шапкам таблиц запрещён разрыв ПОСЛЕ них: если движок всё же начнёт
+     переносить, заголовок уйдёт вместе со своими строками, а не останется вдовой. */
+  @media print {
+    .page { break-inside: avoid; page-break-inside: avoid; }
+    h1, .b24-h1, .b24-display, .b24-label, thead, thead tr, thead th {
+      break-after: avoid; page-break-after: avoid;
+      break-inside: avoid; page-break-inside: avoid;
+    }
+    tr, .b24-table-wrap, .b24-card, .b24-dashed, .b24-quote {
+      break-inside: avoid; page-break-inside: avoid;
+    }
+  }
 
   /* ЛИСТ ДОПУЩЕНИЙ. Три колонки: величина, значение, происхождение. Колонка
      происхождения самая узкая — это метка, а не текст, — и не переносится по

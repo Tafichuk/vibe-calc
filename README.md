@@ -120,6 +120,12 @@ reads first, so the tool asks you to finish the pricing instead of guessing.
 consciously, so the client never sees a total nobody picked. An honest short list is more
 persuasive than a long one.
 
+**Saving the PDF.** The button opens your browser's print dialog — that is the only way a
+web page can write a PDF to disk. Set Destination to **Save as PDF**, leave Margins on
+**Default**, and switch **Headers and footers off**. The pages declare their own size and
+zero margins, so Chrome does not add a URL or a date to the corners even with that setting
+on — we measured it — but switching it off costs nothing and covers other browsers.
+
 **Every default says where it comes from.** The pill next to a field name gives you the type
 at a glance — *carried over*, *our estimate*, *ask the client*, *from coverage* — and clicking
 it prints the full sentence. Use it when the client asks where a number came from, because

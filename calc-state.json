@@ -114,7 +114,7 @@
       "origin": "our estimate"
     }
   ],
-  "orgLegend": null,
+  "orgLegend": "Where these figures come from: none of them is vendor benchmark data. They are our starting assumptions — carried over from the earlier version of this calculator or estimated by us. Replace any of them with your own figures where you have them.",
   "inputErrors": [],
   "company": {
     "empCount": 50,
@@ -434,8 +434,8 @@
     "toAnnualPerMonth": 144,
     "toMonthly": 199,
     "toAnnualTotal": 1728,
-    "effectiveFrom": "2026-08-17",
-    "grandfatheredUntil": "2026-11-17"
+    "effectiveFrom": "Aug 17, 2026",
+    "grandfatheredUntil": "Nov 17, 2026"
   },
   "aiForPlan": "No cap on the number of AI requests, plus priority in the processing queue under load",
   "restore": {
