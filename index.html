@@ -1281,6 +1281,76 @@ const PRICING = {
          {plan:"Alaio Enterprise-10000 Vibe+",monthly:15999,annual:11499,annualTotal:137988},
          ],
   },
+  /* ЧТО ИМЕННО ДОБАВЛЯЕТ VIBE+ — ОФИЦИАЛЬНАЯ РАЗНИЦА, А НЕ НАШ ПЕРЕСКАЗ.
+     Источник: страница сравнения тарифов bitrix24.com, снято из DOM 01.09.2026.
+     У страницы ДЕВЯТЬ колонок: Free плюс пара Essential/Vibe+ у каждого из
+     Basic / Standard / Professional / Enterprise. Построчный дифф всех 880 строк
+     дал РОВНО 11 расхождений — они здесь, по тирам, названиями со страницы.
+     Раньше на этом месте у отчёта стояли три наши строки из партнёрского гида,
+     одинаковые для любого тарифа; разницы между Basic Vibe+ и Enterprise Vibe+
+     они не показывали вовсе.
+     Опечатку страницы («Vibeсode» с кириллической «с») не переносим, пишем
+     латиницей. «Increased Rest API performance» пишем REST — как в её же второй
+     строке про REST API.
+     Строку «Unlimited AI requests» (со Standard Vibe+) здесь НЕ повторяем: её
+     печатает AI-ступень (aiForPlan), и она же покрывает Basic Vibe+, где у
+     страницы AI-строки нет вообще.
+     Enterprise у страницы ОДИН, на 250 мест. Его числа принадлежат этому тиру, и
+     для старших Enterprise-тиров ent_other опускает всё, чему нужен эталон
+     Essential, которого мы не видим: молчание лучше числа из другого тира.
+     Сверяется с config/pricing.json скриптом check-prices. */
+  vibeDelta: {
+    basic: [
+           "MCP Hub — connect external services to AI in your Bitrix24",
+           "MCP server — connect external AI systems to your Bitrix24",
+           "Vibecode platform",
+           "Bot platform",
+           "External AI agent Hermes Agent",
+           "Unlimited REST API (Essential: 2)",
+           "Unlimited Market apps (Essential: 2)",
+         ],
+    std: [
+           "MCP Hub — connect external services to AI in your Bitrix24",
+           "MCP server — connect external AI systems to your Bitrix24",
+           "Vibecode platform",
+           "Bot platform",
+           "External AI agent Hermes Agent",
+           "Unlimited REST API (Essential: 4)",
+           "Unlimited Market apps (Essential: 4)",
+           "6 admins instead of 5",
+         ],
+    pro: [
+           "MCP Hub — connect external services to AI in your Bitrix24",
+           "MCP server — connect external AI systems to your Bitrix24",
+           "Vibecode platform",
+           "Bot platform",
+           "External AI agent Hermes Agent",
+           "Unlimited REST API (Essential: 7)",
+           "Unlimited Market apps (Essential: 7)",
+           "12 admins instead of 10",
+         ],
+    ent_250: [
+           "MCP Hub — connect external services to AI in your Bitrix24",
+           "MCP server — connect external AI systems to your Bitrix24",
+           "Vibecode platform",
+           "Bot platform",
+           "External AI agent Hermes Agent",
+           "Unlimited REST API (Essential: 10)",
+           "Unlimited Market apps (Essential: 10)",
+           "30 admins instead of 25",
+           "350,000 emails a month instead of 250,000",
+           "Increased REST API performance",
+         ],
+    ent_other: [
+           "MCP Hub — connect external services to AI in your Bitrix24",
+           "MCP server — connect external AI systems to your Bitrix24",
+           "Vibecode platform",
+           "Bot platform",
+           "External AI agent Hermes Agent",
+           "Unlimited REST API and Bitrix24 Market",
+           "Increased REST API performance",
+         ],
+  },
 };
 
 /* =============================================================================
@@ -1347,11 +1417,17 @@ en: {
   "ui.presetCleared":"All scenarios unticked. Your figures are kept.",
   "ui.summaryH":"Combined effect",
   "ui.trH":"Recommended plan",
-  "ui.trNote":"Two choices. On the left, what the client pays today: an Essentials plan, or nothing if they have no Bitrix24 yet. On the right, the plan you recommend. It starts matched to the current plan, and you can point it at any plan in the Vibe+ line — including a bigger one.",
-  "ui.targetPlan":"Target Vibe+ plan",
+  /* ОДНА ЛИНЕЙКА, ДВА ВАРИАНТА ТАРИФА — а не переход между линейками. Официальная
+     страница сравнения показывает у каждого тарифа переключатель «Essential |
+     Vibe+», и обе колонки пары несут ОДНО имя тарифа и ОДНО число мест. Клиент,
+     открывший её сам, увидит именно это, поэтому слова «переход» и «миграция» из
+     подачи убраны: он включает вариант на своём тарифе. Промо-цена и её механика
+     не тронуты — они из прайса, а не со страницы сравнения. */
+  "ui.trNote":"Two columns. On the left, the plan the client is on today — its Essential variant, or nothing if they have no Bitrix24 yet. On the right, the same plan with Vibe+ switched on: the plan name and the number of users do not change, the AI additions do. The official comparison pairs the two variants one to one, so the right side starts matched to the left; point it at a bigger plan if the client is outgrowing this one.",
+  "ui.targetPlan":"Vibe+ variant to quote",
   "ui.planNone":"No Bitrix24 yet",
   "ui.seatsUpTo":"up to {n} users",
-  "ui.tgtAuto":"Chosen for you. Pick another one to quote a bigger plan.",
+  "ui.tgtAuto":"Matched to the plan on the left — the official comparison pairs the variants one to one, same seats. Pick another to quote a bigger plan.",
   "ui.tgtManual":"Chosen by you.",
   "ui.tgtReset":"back to the plan we chose",
   "ui.grpMatched":"Up to 2,000 users",
@@ -1362,7 +1438,7 @@ en: {
      пятнадцать тиров Essentials, и показывать эти строки стало нечему. */
   "ui.diffNotMatched":"These percentages come from the matching plan pairs in the price list, not from the pair you picked.",
   "ui.pairNoteNone":"The client pays nothing today, so the whole plan price is new spend. That is what the figures above add up to.",
-  "ui.currentPlan":"Client's current plan",
+  "ui.currentPlan":"Client's plan today",
   /* AI-АГЕНТЫ И ТАРИФ. Пометка постоянная, предупреждение — только при
      расхождении. Слово «gap» в этих строках не употребляется: они попадают в
      отчёт, а auditClient его там запрещает. */
@@ -1738,8 +1814,8 @@ en: {
      другой — формально это разные вещи (объём против наличия функции), но
      читается противоречиво. Теперь в каждой строке прямо сказано, что речь о
      ЧИСЛЕ запросов. */
-  "ai.essentials":"Essentials — a daily cap on the number of AI requests per user, the same on every Essentials plan.",
-  "ai.basic":"Alaio Basic Vibe+ — ten times as many AI requests as the Essentials cap.",
+  "ai.essentials":"Essential variant — a daily cap on the number of AI requests per user, the same on every plan.",
+  "ai.basic":"Alaio Basic Vibe+ — ten times as many AI requests as the Essential cap.",
   "ai.standard":"Alaio Standard Vibe+ and above — no cap on the number of AI requests, plus priority in the processing queue under load.",
   /* Те же три ступени, но БЕЗ имени тарифа в начале: эти строки идут пунктом в
      списке «What <тариф> adds», где тариф уже назван заголовком. На экране в
@@ -1749,7 +1825,7 @@ en: {
      Формулировка Basic намеренно говорит «the Essentials line», а не «your
      current plan»: у клиента Битрикс24 может не быть вообще, и тогда сравнивать
      не с чем — Essentials здесь ориентир по линейке, а не его сегодняшний тариф. */
-  "ai.forBasic":"Ten times as many AI requests as the Essentials line",
+  "ai.forBasic":"Ten times as many AI requests as the Essential variant of the same plan",
   "ai.forStandard":"No cap on the number of AI requests, plus priority in the processing queue under load",
 
   // ---- pillars ----
@@ -3637,6 +3713,20 @@ function essentialsList(){
    ситуации ошибается в другую сторону: покажет предупреждение там, где его
    могло не быть. Из двух ошибок вторая дешевле и заметнее. Незнакомое имя
    дополнительно кричит в консоль, чтобы список не устарел тихо. */
+/* ОФИЦИАЛЬНАЯ РАЗНИЦА ПО ВЫБРАННОМУ ТАРИФУ. Одна функция на весь калькулятор:
+   отчёт получает готовый список строкой состояния, как и AI-ступень.
+   Enterprise у страницы сравнения ровно один — на 250 мест. Поэтому его числа
+   отдаём только тиру Enterprise-250; старшим тирам уходит ent_other, где нет ни
+   одной строки, требующей эталона Essential, которого страница не публикует. */
+function vibeDeltaFor(planName){
+  const D = PRICING.vibeDelta;
+  if(/Basic/.test(planName))        return D.basic;
+  if(/Standard/.test(planName))     return D.std;
+  if(/Professional/.test(planName)) return D.pro;
+  if(/Enterprise/.test(planName))   return /Enterprise-250/.test(planName) ? D.ent_250 : D.ent_other;
+  return D.basic;   /* неизвестное имя: самый скромный набор, а не самый щедрый */
+}
+
 const AGENT_MIN_PLAN = "Alaio Professional Vibe+";
 const AGENT_PLAN_RE  = /^Alaio (?:Professional|Enterprise-\d+) Vibe\+$/;
 const AGENT_PLAN_NO  = /^Alaio (?:Basic|Standard) Vibe\+$/;
@@ -3657,7 +3747,15 @@ function agentGatedItems(items, tgt){
 let tgtPlanName = null;    /* null = ещё не разрешено, ставится при первом рендере */
 let tgtAuto = true;        /* true = следует за текущим тарифом 1:1 */
 
-/* Цели соответствия один-к-одному, по ним же выдаётся промо-цена. */
+/* СООТВЕТСТВИЕ ОДИН-К-ОДНОМУ ПОДТВЕРЖДЕНО ОФИЦИАЛЬНО (01.09.2026). Раньше это была
+   наша реконструкция по карте промо-цен: карта давала пары, и мы принимали их за
+   соответствие тарифов. Страница сравнения тарифов теперь пары ДЕКЛАРИРУЕТ сама —
+   у каждого тарифа переключатель «Essential | Vibe+», колонки в DOM так и стоят
+   парами (BASIC/BASIC_VIBE, STD/STD_VIBE, PRO100/PRO100_VIBE, ENT/ENT_VIBE), и
+   число мест внутри пары одинаково (5 / 50 / 100 / 250). То есть это не переход
+   между линейками, а включение варианта на том же тарифе, и подача в шаге 6
+   говорит теперь именно так (ui.trNote).
+   Промо-цена по-прежнему берётся из прайса, а не со страницы: там цен нет вовсе. */
 const mapFor = plan => PRICING.migration.find(x => x.from === plan) || null;
 
 /* Единственное место, где решается, что показывать в паре и можно ли считать
@@ -4344,6 +4442,11 @@ function reportState(){
        alaio_standard_and_above — безлимит и приоритет в очереди. Поэтому и здесь
        ровно одно сравнение с именем тарифа, а не догадка по порядку в массиве. */
     aiForPlan: tgtPlanName === "Alaio Basic Vibe+" ? t("ai.forBasic") : t("ai.forStandard"),
+    /* ЧТО ДОБАВЛЯЕТ ВЫБРАННЫЙ ТАРИФ — официальные строки диффа со страницы
+       сравнения, по тиру (PRICING.vibeDelta). Отчёт их только печатает: решение,
+       какой набор относится к этому тарифу, принимается здесь, рядом с именем
+       тарифа, а не в шаблоне разметки. */
+    planDelta: vibeDeltaFor(tgtPlanName),
     /* ВОССТАНОВЛЕНИЕ РАСЧЁТА. items[].fields — это подписи для отчёта
        («20 calls», «$4,000»), из них ввод обратно не собрать. Поэтому сырые
        значения едут отдельным блоком: только он делает файл настоящим
@@ -4881,7 +4984,7 @@ const headline = () => {
        что стоит в самом прайсе: два ряда, AI есть в одном. Дальше по документу
        название повторяется без пояснений: расшифровка нужна однажды. -->
   <p class="b24-small" style="margin-top:var(--b24-s3)">
-    Alaio Vibe+ is the Bitrix24 plan line that includes the AI features; Essentials is the line without them.</p>
+    Vibe+ is the variant of a Bitrix24 plan that includes the AI features; Essential is the same plan without them, for the same number of users.</p>
   ${footer()}
 </section>`;
 
@@ -5269,17 +5372,22 @@ const planPage = () => {
   <h1 class="b24-h1">What ${esc(P.to)} adds${num(2)}</h1>
   <ul class="b24-checklist">
     ${aiLine()}
-    <!-- ОСТАЛЬНЫЕ ТРИ ПУНКТА — СВОЙСТВА ВСЕЙ ЛИНЕЙКИ VIBE+, НЕ ОТДЕЛЬНЫХ ТАРИФОВ.
-         config/pricing.json, lineup.vibe_plus: «Adds Vibecode, MCP server, higher
-         AI allowance, unlimited REST API + Market» — сказано про линейку целиком.
-         vibe_plus_pillars перечисляет Vibecode и MCP тоже без привязки к тарифу, а
-         vibe_plus_headline_limits даёт rest_api и bitrix24_market как unlimited без
-         разбивки. Различий между тарифами в источнике НЕТ, поэтому эти три пункта
-         печатаются для любой цели. Если различия появятся — их место здесь, рядом
-         с AI-строкой, которая уже выбирается по тарифу. -->
-    <li class="is-yes">Vibecode — build your own AI-powered business apps</li>
-    <li class="is-yes">MCP server — connect outside AI agents to Bitrix24</li>
-    <li class="is-yes">Unlimited REST API and Bitrix24 Market</li>
+    <!-- ОСТАЛЬНЫЕ ПУНКТЫ — ОФИЦИАЛЬНАЯ РАЗНИЦА ЭТОГО ТАРИФА, а не пересказ линейки.
+         Раньше здесь стояли три наши строки из партнёрского гида, одинаковые для
+         любой цели: разницы между Basic Vibe+ и Enterprise Vibe+ они не показывали
+         вовсе, хотя она есть — админы, письма, производительность REST.
+         Теперь состояние приносит готовый список (planDelta), собранный из
+         PRICING.vibeDelta: построчный дифф страницы сравнения тарифов, 11 строк из
+         880, названиями со страницы. Решение «какой набор относится к этому
+         тарифу» принимается в index.html рядом с именем тарифа — здесь только
+         печать, как и у AI-ступени.
+         Запасной путь для состояний старого формата (planDelta нет) — прежние три
+         строки: потерять содержимое молча хуже, чем напечатать менее точное. -->
+    ${(Array.isArray(S.planDelta) && S.planDelta.length
+        ? S.planDelta
+        : ["Vibecode platform", "MCP server — connect external AI systems to your Bitrix24",
+           "Unlimited REST API and Bitrix24 Market"]
+      ).map(x => `<li class="is-yes">${esc(x)}</li>`).join("\n    ")}
   </ul>
 
   <div class="b24-dashed" style="margin-top:var(--b24-s6)">

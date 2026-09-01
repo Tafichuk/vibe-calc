@@ -6,8 +6,10 @@
     "existing_clients_grandfathered_until": "end of current period or ~2026-11-17, whichever is later"
   },
   "lineup": {
-    "essentials": "Former Basic/Standard/Professional/Enterprise, renamed. Capped Market apps, REST API, AI.",
-    "vibe_plus": "New premium tier. Adds Vibecode, MCP server, higher AI allowance, unlimited REST API + Market."
+    "_shape": "ONE lineup, TWO VARIANTS PER PLAN - confirmed against the official comparison page 2026-09-01, which shows a per-plan selector 'Essential | Vibe+' and defaults to Vibe+. Not two separate lineups: the paired columns carry the SAME plan name and the SAME seat count (5 / 50 / 100 / 250), and only 11 of 880 rows differ. Client-facing wording must match that: the client switches the variant of the plan they are on, they do not migrate between lines.",
+    "_pairing": "The 1:1 pairing (Basic -> Basic Vibe+, and so on) is confirmed by the official plan comparison: it pairs the columns itself and the seat count is identical inside each pair.",
+    "essentials": "Named 'Essential' (singular) on the public page - the variant of each plan WITHOUT the AI additions. Capped Market apps, REST API, AI.",
+    "vibe_plus": "Named 'Vibe+' on the public page - the variant of the SAME plan WITH the AI additions. The exact difference, per tier, is in vibe_plus_delta_by_tier."
   },
   "essentials_prices": {
     "USD": [
@@ -932,8 +934,10 @@
     "_note": "USD replaced with the official export from Anton; verified against the previous data with zero discrepancies. Other currencies still come from the earlier VIBE_prices sheet and have no Essentials counterpart."
   },
   "vibe_plus_headline_limits": {
-    "_note": "Top-of-range ceiling figures used in client-facing materials. Guide warns per-tier increments do not yet reconcile - confirm via Partner Portal before quoting.",
-    "storage": "up to 4 TB",
+    "_note": "Top-of-range ceiling figures. FOUR OF SIX ARE NOW CONFIRMED against the official plan comparison (see _source_verified): emails, admins, rest_api and bitrix24_market all match the Enterprise Vibe+ column read from the page. Storage was corrected DOWN from the guide's 'up to 4 TB' to 3 TB, because the page shows 3 TB in the Enterprise column for BOTH variants and a client can open that page in a minute. The guide's warning that per-tier increments do not reconcile still applies to any tier above Enterprise 250, which the public page does not publish - confirm those via Partner Portal before quoting.",
+    "_source_verified": "https://www.bitrix24.com/prices/compare_cloud_plans.php, DOM read 2026-09-01",
+    "storage": "up to 3 TB",
+    "storage_was": "guide said 'up to 4 TB'; page says 3 TB on Enterprise for both Essential and Vibe+ - page wins, see _note",
     "emails_per_month": "up to 350000",
     "admins": "up to 30",
     "rest_api": "unlimited",
@@ -942,8 +946,64 @@
   "vibe_plus_pillars": [
     "Vibecode - build custom AI-powered business apps without traditional development",
     "AI scaled by tier - 10x on Basic, unlimited from Standard up + queue priority",
-    "MCP server - connect Claude / ChatGPT / custom agents directly into Bitrix24"
+    "MCP server — connect Claude / ChatGPT / custom agents directly into Bitrix24"
   ],
+  "vibe_plus_delta_by_tier": {
+    "_source": "https://www.bitrix24.com/prices/compare_cloud_plans.php - official plan comparison, read from the DOM 2026-09-01. The page carries NINE columns: Free, plus an Essential/Vibe+ pair for each of Basic, Standard, Professional and Enterprise. A row-by-row diff of all 880 rows found EXACTLY 11 that differ between Essential and Vibe+ at any tier. The lists below are those rows, per tier, named as the page names them. This replaced our own three-line summary of the lineup, which was written from the partner guide and had no per-tier detail.",
+    "_naming": "Row names follow the page, with two deliberate deviations. The page writes 'Vibeсode platform' with a CYRILLIC 's' - spelled in Latin letters here. And its 'Increased Rest API performance' is written 'REST' to match the page's own other REST row.",
+    "_ai_row": "The official row 'Unlimited AI requests' (Standard Vibe+ and up) is NOT repeated in these lists: it is printed by the AI rung, which comes from ai_allowance_by_tier and also covers Basic Vibe+, where the page has no AI row at all.",
+    "_enterprise": "The page publishes ONE Enterprise column, at 250 seats. Its figures (25 -> 30 admins, 250k -> 350k emails, 10 -> unlimited REST/Market) belong to that tier only. For Enterprise tiers above 250 seats the page has no column, so ent_other omits every row that would need an Essential counterpart figure we cannot see. Silence beats a number carried over from a different tier.",
+    "basic": [
+      "MCP Hub — connect external services to AI in your Bitrix24",
+      "MCP server — connect external AI systems to your Bitrix24",
+      "Vibecode platform",
+      "Bot platform",
+      "External AI agent Hermes Agent",
+      "Unlimited REST API (Essential: 2)",
+      "Unlimited Market apps (Essential: 2)"
+    ],
+    "std": [
+      "MCP Hub — connect external services to AI in your Bitrix24",
+      "MCP server — connect external AI systems to your Bitrix24",
+      "Vibecode platform",
+      "Bot platform",
+      "External AI agent Hermes Agent",
+      "Unlimited REST API (Essential: 4)",
+      "Unlimited Market apps (Essential: 4)",
+      "6 admins instead of 5"
+    ],
+    "pro": [
+      "MCP Hub — connect external services to AI in your Bitrix24",
+      "MCP server — connect external AI systems to your Bitrix24",
+      "Vibecode platform",
+      "Bot platform",
+      "External AI agent Hermes Agent",
+      "Unlimited REST API (Essential: 7)",
+      "Unlimited Market apps (Essential: 7)",
+      "12 admins instead of 10"
+    ],
+    "ent_250": [
+      "MCP Hub — connect external services to AI in your Bitrix24",
+      "MCP server — connect external AI systems to your Bitrix24",
+      "Vibecode platform",
+      "Bot platform",
+      "External AI agent Hermes Agent",
+      "Unlimited REST API (Essential: 10)",
+      "Unlimited Market apps (Essential: 10)",
+      "30 admins instead of 25",
+      "350,000 emails a month instead of 250,000",
+      "Increased REST API performance"
+    ],
+    "ent_other": [
+      "MCP Hub — connect external services to AI in your Bitrix24",
+      "MCP server — connect external AI systems to your Bitrix24",
+      "Vibecode platform",
+      "Bot platform",
+      "External AI agent Hermes Agent",
+      "Unlimited REST API and Bitrix24 Market",
+      "Increased REST API performance"
+    ]
+  },
   "ai_allowance_by_tier": {
     "_critical": "AI is positioned BY TIER, NOT BY NUMBERS. No per-request quotas published. Calculator must recommend a tier qualitatively - it cannot compute 'you need N AI requests therefore plan X'.",
     "essentials": "Per-user daily allowance, identical across all Essentials tiers. Covers call transcription, CRM field fill, AI tasks, chat summaries.",

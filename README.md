@@ -1,7 +1,7 @@
 # AI Value Calculator for Bitrix24
 
 A calculator you fill in **together with your client** to show what AI in Bitrix24 is
-actually worth to their business, and what moving from Essentials to Alaio Vibe+ costs.
+actually worth to their business, and what switching their plan to the Vibe+ variant costs.
 It ends in a PDF report you can leave with them.
 
 Built for Bitrix24 partners in western markets. English, USD.
@@ -17,7 +17,7 @@ calculator works out the payroll saving AI produces — then puts the cost of ge
 next to it.
 
 - **11 scenarios** in four groups: CRM, AI agents, general, Vibecode and CoPilot.
-- **Essentials → Alaio Vibe+** side by side, with the difference in money: per user per
+- **Essential and Vibe+ variants of the same plan** side by side, with the difference in money: per user per
   month, per user per year, and across the whole seat count.
 - **Two PDF reports** — one for the client, one for you.
 - **No backend, no build, no tracking.** One HTML file that runs offline.
@@ -262,7 +262,7 @@ If you add a figure to a report, display the model's value; don't re-derive it.
 The scenario set and the calculation approach come from the original Russian-language
 calculator by [BelMihMed](https://github.com/BelMihMed/calc-serv). This is a western
 edition: coverage, the credibility guard, day-driver tagging and the two-mode report
-were added on top, and the pricing model was rebuilt for the Essentials → Vibe+ move.
+were added on top, and the pricing model was rebuilt around the Essential / Vibe+ variants.
 
 Code is MIT. **Bitrix24 names, logos and visual identity are not covered by it** and
 remain the property of their owner — they are included so partner-facing output looks

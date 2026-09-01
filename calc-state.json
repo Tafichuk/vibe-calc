@@ -438,6 +438,16 @@
     "grandfatheredUntil": "Nov 17, 2026"
   },
   "aiForPlan": "No cap on the number of AI requests, plus priority in the processing queue under load",
+  "planDelta": [
+    "MCP Hub — connect external services to AI in your Bitrix24",
+    "MCP server — connect external AI systems to your Bitrix24",
+    "Vibecode platform",
+    "Bot platform",
+    "External AI agent Hermes Agent",
+    "Unlimited REST API (Essential: 4)",
+    "Unlimited Market apps (Essential: 4)",
+    "6 admins instead of 5"
+  ],
   "restore": {
     "version": 1,
     "burdenPct": 30,

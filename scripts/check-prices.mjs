@@ -146,6 +146,44 @@ for (const cur of ["USD", "EUR"]) {
   });
 }
 
+/* Официальная разница Vibe+ против Essential — ТАКОЙ ЖЕ ИСТОЧНИК ЗАПИСИ, КАК ЦЕНЫ.
+   Она уезжает в клиентский документ построчно, поэтому расхождение между конфигом и
+   встроенной копией здесь не косметика: партнёр пообещает то, чего в таблице нет.
+   Сверяются и состав тиров, и порядок строк, и сами строки дословно. */
+const wantDelta = cfg.vibe_plus_delta_by_tier || {};
+const gotDelta = embedded.vibeDelta || {};
+const deltaTiers = Object.keys(wantDelta).filter(k => !k.startsWith("_"));
+if (!deltaTiers.length) {
+  problems.push({ field: "vibe_plus_delta_by_tier", config: "missing in config", index_html: "n/a" });
+} else {
+  const gotTiers = Object.keys(gotDelta);
+  if (deltaTiers.join(",") !== gotTiers.join(",")) {
+    problems.push({ field: "vibeDelta tiers", config: deltaTiers.join(","), index_html: gotTiers.join(",") });
+  } else {
+    deltaTiers.forEach(tier => {
+      const w = wantDelta[tier], g = gotDelta[tier] || [];
+      if (!Array.isArray(w)) { problems.push({ field: `vibeDelta.${tier}`, config: "not an array", index_html: typeof g }); return; }
+      if (w.length !== g.length) {
+        problems.push({ field: `vibeDelta.${tier}.length`, config: w.length, index_html: g.length }); return;
+      }
+      w.forEach((line, i) => cmp(`vibeDelta.${tier}[${i}]`, line, g[i]));
+    });
+  }
+  /* Опечатка со страницы не должна доехать до клиента ни в одной из двух копий:
+     кириллическая «с» в «Vibecode» выглядит как латинская и молча пройдёт глазами. */
+  const CYR = /[\u0400-\u04FF]/;
+  [["config", wantDelta], ["index.html", gotDelta]].forEach(([where, obj]) => {
+    Object.entries(obj).forEach(([k, arr]) => {
+      if (k.startsWith("_") || !Array.isArray(arr)) return;
+      arr.forEach((line, i) => {
+        if (CYR.test(line))
+          problems.push({ field: `vibeDelta.${k}[${i}] (${where}): Cyrillic letter inside a Latin name`,
+                          config: "Latin letters only", index_html: line });
+      });
+    });
+  });
+}
+
 /* ---------- report ---------- */
 if (asJson) {
   console.log(JSON.stringify({ ok: problems.length === 0, problems }, null, 2));
@@ -173,3 +211,4 @@ console.log(`  Essentials USD   ${(embedded.essentials?.USD || []).length} tiers
 console.log(`  Essentials EUR   null (source has no EUR Essentials — not invented)`);
 console.log(`  Vibe+ tiers      ${tiers} carried (config has ${expected.vibe.USD.length})`);
 console.log(`  migration pairs  ${(embedded.migration || []).length}`);
+console.log(`  Vibe+ delta      ${deltaTiers.length} tier sets, ${deltaTiers.reduce((n, k) => n + (wantDelta[k] || []).length, 0)} official rows from the comparison page`);

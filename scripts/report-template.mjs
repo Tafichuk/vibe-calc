@@ -513,7 +513,7 @@ const headline = () => {
        что стоит в самом прайсе: два ряда, AI есть в одном. Дальше по документу
        название повторяется без пояснений: расшифровка нужна однажды. -->
   <p class="b24-small" style="margin-top:var(--b24-s3)">
-    Alaio Vibe+ is the Bitrix24 plan line that includes the AI features; Essentials is the line without them.</p>
+    Vibe+ is the variant of a Bitrix24 plan that includes the AI features; Essential is the same plan without them, for the same number of users.</p>
   ${footer()}
 </section>`;
 
@@ -901,17 +901,22 @@ const planPage = () => {
   <h1 class="b24-h1">What ${esc(P.to)} adds${num(2)}</h1>
   <ul class="b24-checklist">
     ${aiLine()}
-    <!-- ОСТАЛЬНЫЕ ТРИ ПУНКТА — СВОЙСТВА ВСЕЙ ЛИНЕЙКИ VIBE+, НЕ ОТДЕЛЬНЫХ ТАРИФОВ.
-         config/pricing.json, lineup.vibe_plus: «Adds Vibecode, MCP server, higher
-         AI allowance, unlimited REST API + Market» — сказано про линейку целиком.
-         vibe_plus_pillars перечисляет Vibecode и MCP тоже без привязки к тарифу, а
-         vibe_plus_headline_limits даёт rest_api и bitrix24_market как unlimited без
-         разбивки. Различий между тарифами в источнике НЕТ, поэтому эти три пункта
-         печатаются для любой цели. Если различия появятся — их место здесь, рядом
-         с AI-строкой, которая уже выбирается по тарифу. -->
-    <li class="is-yes">Vibecode — build your own AI-powered business apps</li>
-    <li class="is-yes">MCP server — connect outside AI agents to Bitrix24</li>
-    <li class="is-yes">Unlimited REST API and Bitrix24 Market</li>
+    <!-- ОСТАЛЬНЫЕ ПУНКТЫ — ОФИЦИАЛЬНАЯ РАЗНИЦА ЭТОГО ТАРИФА, а не пересказ линейки.
+         Раньше здесь стояли три наши строки из партнёрского гида, одинаковые для
+         любой цели: разницы между Basic Vibe+ и Enterprise Vibe+ они не показывали
+         вовсе, хотя она есть — админы, письма, производительность REST.
+         Теперь состояние приносит готовый список (planDelta), собранный из
+         PRICING.vibeDelta: построчный дифф страницы сравнения тарифов, 11 строк из
+         880, названиями со страницы. Решение «какой набор относится к этому
+         тарифу» принимается в index.html рядом с именем тарифа — здесь только
+         печать, как и у AI-ступени.
+         Запасной путь для состояний старого формата (planDelta нет) — прежние три
+         строки: потерять содержимое молча хуже, чем напечатать менее точное. -->
+    ${(Array.isArray(S.planDelta) && S.planDelta.length
+        ? S.planDelta
+        : ["Vibecode platform", "MCP server — connect external AI systems to your Bitrix24",
+           "Unlimited REST API and Bitrix24 Market"]
+      ).map(x => `<li class="is-yes">${esc(x)}</li>`).join("\n    ")}
   </ul>
 
   <div class="b24-dashed" style="margin-top:var(--b24-s6)">
