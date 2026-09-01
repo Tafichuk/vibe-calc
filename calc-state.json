@@ -74,12 +74,12 @@
       10
     ],
     "titles": [
-      "Running Bitrix24 from chat",
+      "Manage Bitrix24 from CoPilot Agent chat",
       "Knowledge-base agent"
     ],
     "fotMonth": 5265,
     "fotYear": 63180,
-    "rowNote": "Needs Alaio Professional Vibe+ or higher. The recommended plan does not include AI agents."
+    "rowNote": "Needs Alaio Professional Vibe+ or higher. The recommended plan is below it."
   },
   "invalid": [],
   "assumptions": [
@@ -127,7 +127,7 @@
   "items": [
     {
       "id": 1,
-      "title": "Call transcription and automatic deal-card fill",
+      "title": "CoPilot call transcripts and automatic deal-card fill",
       "role": "Sales manager",
       "driver": "daily",
       "coverage": 100,
@@ -140,6 +140,7 @@
       "hasFot": true,
       "hasRev": true,
       "needsAgent": false,
+      "needsPlan": false,
       "fields": [
         {
           "label": "Number of managers",
@@ -170,7 +171,7 @@
     },
     {
       "id": 9,
-      "title": "Running Bitrix24 from chat",
+      "title": "Manage Bitrix24 from CoPilot Agent chat",
       "role": "All staff",
       "driver": "daily",
       "coverage": 20,
@@ -183,6 +184,7 @@
       "hasFot": true,
       "hasRev": false,
       "needsAgent": true,
+      "needsPlan": true,
       "fields": [
         {
           "label": "Employees who will work this way",
@@ -226,6 +228,7 @@
       "hasFot": true,
       "hasRev": false,
       "needsAgent": true,
+      "needsPlan": true,
       "fields": [
         {
           "label": "Employees using the knowledge base",
@@ -262,7 +265,7 @@
     },
     {
       "id": 3,
-      "title": "Document generation",
+      "title": "Documents from templates, written by CoPilot",
       "role": "Any employee",
       "driver": "daily",
       "coverage": 12,
@@ -275,6 +278,7 @@
       "hasFot": true,
       "hasRev": false,
       "needsAgent": false,
+      "needsPlan": false,
       "fields": [
         {
           "label": "Employees preparing documents",
@@ -305,7 +309,7 @@
     },
     {
       "id": 7,
-      "title": "Vibecode, CoWork and CoPilot chat",
+      "title": "Vibecode and CoPilot chat",
       "role": "All staff",
       "driver": "share",
       "coverage": 30,
@@ -318,6 +322,7 @@
       "hasFot": true,
       "hasRev": false,
       "needsAgent": false,
+      "needsPlan": false,
       "fields": [
         {
           "label": "Employees this covers",

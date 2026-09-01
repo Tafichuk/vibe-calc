@@ -1449,12 +1449,20 @@ en: {
   "ui.invalidH":"{n} selected scenarios are not counted: their numbers do not add up",
   "ui.invalidBody":"Fix the field marked in red in the scenario. Until then it stays out of every total on this page and out of the report — the report will not build at all.",
   "ui.agentReq":"Needs {plan}",
+  "ui.proReqHint":"The official plan comparison lists this feature three times and disagrees with itself: two of the three rows say Professional and up, one says Basic and up. Until the source settles, we take the strict reading — a client who buys a lower plan and does not get the feature will blame your report, not the table.",
   "ui.agentReqHint":"This scenario runs on an AI agent. AI agents are included from Alaio Professional Vibe+ up. They are not available on Alaio Basic Vibe+ or Alaio Standard Vibe+.",
   /* Число согласуем: «1 ... need» читается как опечатка, а инструментом
      пользуются не носители — им такие мелочи мешают сильнее. */
-  "ui.agentWarnH1":"One selected scenario needs an AI agent, and {plan} does not include one",
-  "ui.agentWarnH":"{n} selected scenarios need an AI agent, and {plan} does not include one",
-  "ui.agentWarnBody":"AI agents are included from {min} up. {fot} of the payroll saving a year comes from these scenarios. You can still quote {plan} — nothing is blocked — but the client will not get these scenarios on it. Raise the plan, or present them as a second phase and say so.",
+  "ui.agentWarnH1":"One selected scenario needs {min}, and {plan} is below it",
+  "ui.agentWarnH":"{n} selected scenarios need {min}, and {plan} is below it",
+  /* ПРИЧИНА БОЛЬШЕ НЕ В ОБЩЕМ ТЕКСТЕ. Причин две — AI-агент и строгое чтение
+     противоречивой строки, — и общая фраза «нужен агент» для второй была бы
+     выдумкой. Причина каждого сценария стоит на его плашке в карточке. */
+  /* СЦЕНАРИЙ БЕЗ ЭФФЕКТА НА ФОТ. Повторные продажи работают на выручку, и общая
+     фраза давала «$0 of the payroll saving comes from these scenarios» — формально
+     верно, читается как поломка. Отдельная формулировка, когда доля ФОТ нулевая. */
+  "ui.agentWarnBodyNoFot":"These scenarios add nothing to the payroll saving on their own — they work on revenue — but each of them is listed from {min} up. You can still quote {plan}, and nothing else in the calculation changes; the client simply will not get them on it.",
+  "ui.agentWarnBody":"{fot} of the payroll saving a year comes from these scenarios, and each of them is listed from {min} up. You can still quote {plan} — nothing is blocked — but the client will not get these scenarios on it. Raise the plan, or present them as a second phase and say so.",
   "ui.agentWarnFix":"Raise the plan to {min}",
   /* Пустые контакты партнёра — предупреждение, не запрет. */
   "ui.ptWarnH":"Your details are empty — the report will go out unsigned",
@@ -1463,7 +1471,7 @@ en: {
   "ui.ptWarnContact":"a way to reach you (email, phone or website)",
   "ui.pdfRefusedInvalid":"The report was not built: {what} selected scenario(s) have an input error and are left out of every total. Fix the field marked in red — a report that quietly drops a scenario you showed the client is worse than no report.",
   "ui.pdfRefusedGate":"The report was not built: it shows saving from scenarios that need an AI agent, and it does not say the recommended plan has none ({what}). This is a bug — please report it. Do not work around it: a client must not buy a plan on which the promise does not hold.",
-  "ui.agentReportNote":"Needs {plan} or higher. The recommended plan does not include AI agents.",
+  "ui.agentReportNote":"Needs {plan} or higher. The recommended plan is below it.",
   "ui.eurMissing":"Essentials prices are published in USD only. Switch to USD for the full comparison.",
   "ui.diffH":"What this costs",
   /* ЦЕНА — ЗА ТАРИФ ЦЕЛИКОМ, НЕ ЗА ПОЛЬЗОВАТЕЛЯ.
@@ -1831,7 +1839,7 @@ en: {
   // ---- pillars ----
 
   /* ---- scenarios ---- */
-  "sc.1.title":"Call transcription and automatic deal-card fill",
+  "sc.1.title":"CoPilot call transcripts and automatic deal-card fill",
   "sc.1.sub":"CoPilot transcribes the call and fills the deal card by itself. The manager no longer replays recordings or types fields by hand.",
   "sc.1.role":"Sales manager",
   "sc.1.f.mgr":"Number of managers", "sc.1.f.sal":"Manager salary (gross)",
@@ -1841,7 +1849,7 @@ en: {
   "info.1":"Minutes a day that used to go on the work AFTER a call — replaying it and filling the card by hand (calls x minutes). The call itself is not counted. We turn that into hours per month (x {days} working days) and multiply it by the manager's hourly cost.",
   "int.1":"The integrator connects call recognition and binds transcripts to deal cards for the client's telephony and pipelines, defines which card fields fill automatically, and trains the managers. Cost scales with the number of managers to onboard.",
 
-  "sc.4.title":"Call scoring against the sales script (head of sales + speech analytics)",
+  "sc.4.title":"Sales scripts and speech analytics — call scoring",
   "sc.4.sub":"Today the head of sales listens to calls one by one and scores them against the script. CoPilot covers every call and scores it instead.",
   "sc.4.role":"Head of sales",
   "sc.4.f.rop":"Number of heads of sales", "sc.4.f.sal":"Head of sales salary (gross)",
@@ -1849,7 +1857,7 @@ en: {
   "info.4":"We take the full monthly cost of the head of sales (gross salary x (1 + payroll burden)) and multiply it by the share of their time that used to go on listening to calls and scoring them. AI takes that work over.",
   "int.4":"The integrator helps describe the sales script and the scoring criteria the AI will apply, sets up the reporting for the head of sales and teaches the team to act on the scores. Scope depends on the number of heads and script complexity.",
 
-  "sc.5.title":"Repeat sales into the existing base",
+  "sc.5.title":"AI-assisted repeat sales into the existing base",
   "sc.5.sub":"CoPilot works through the existing customer base, finds chances for a repeat sale and hands managers deals to close.",
   "sc.5.role":"Revenue-level effect",
   "sc.5.f.base":"Size of the customer base", "sc.5.f.check":"Average deal value",
@@ -1857,7 +1865,7 @@ en: {
   "info.5":"This is additional revenue, not a saving: size of the base x conversion into a repeat sale in one month x average deal value. The conversion is per month, so the figure is per month too.",
   "int.5":"The integrator sets up base segmentation and repeat-touch sequences for the client's product and sales cycle, defines triggers and offer copy, and connects conversion analytics. A one-off adaptation to the client's base.",
 
-  "sc.9.title":"Running Bitrix24 from chat",
+  "sc.9.title":"Manage Bitrix24 from CoPilot Agent chat",
   "sc.9.sub":"Staff tell a CoPilot Agent in plain words what to do in Bitrix24: deals and leads, tasks, business processes, files and documents, stage changes, analytics. No clicking through menus.",
   "sc.9.role":"All staff",
   "sc.9.note":"Covers routine operations inside Bitrix24. It leaves out filling the card after a call, because that is the call-transcription scenario. The same time is never counted twice.",
@@ -1866,7 +1874,7 @@ en: {
   "info.9":"How many routine Bitrix24 operations an employee does per day, and how many minutes each one saves against doing it by hand. Only the difference counts, not the whole operation. We turn that into hours per month (x {days} working days) and multiply it by the hourly cost.",
   "int.9":"The integrator configures the agent for the client's processes in CRM, tasks, smart processes and Drive, respecting access rights, drafts the common commands and trains the staff. Cost scales with the number of employees to onboard.",
 
-  "sc.2.title":"First-line support agent",
+  "sc.2.title":"First-line support agent in Open Channels",
   "sc.2.sub":"A CoPilot Agent handles incoming customer requests. It answers some of them itself and passes the rest to an operator.",
   "sc.2.role":"Support specialist",
   "sc.2.f.sal":"Specialist salary (gross)",
@@ -1900,7 +1908,7 @@ en: {
   "info.10":"How often a day staff look for answers and how long one search used to take, times the share of questions the AI answers. We turn that into hours per month (x {days} working days) and multiply it by the hourly cost. Only the time of the person asking is counted.",
   "int.10":"The integrator helps collect and structure the knowledge base from the client's policies and manuals, configures the agent, checks answer quality and teaches staff to ask and to extend the base. Scope depends on users and documents.",
 
-  "sc.11.title":"Personal assistant",
+  "sc.11.title":"Personal assistant (My day and daily reports)",
   "sc.11.sub":"Each morning a CoPilot Agent builds the day plan from tasks and calendar, and at the end of the day it writes a summary. For managers it turns dozens of daily team reports into one page.",
   "sc.11.role":"All staff and managers",
   "sc.11.note":"Counts two things: the day plan and daily summary for staff, and the combined report for managers. These are separate blocks of time and they do not overlap. Do not count this twice with the Vibecode scenario.",
@@ -1912,15 +1920,15 @@ en: {
   "int.11":"The integrator configures the morning plan and evening wrap-up around the client's tasks and calendar, and the consolidated team report for managers, then agrees the format and notification schedule. Cost scales with the number of employees.",
   "bd.11.a":"Staff · day plan and wrap-up", "bd.11.b":"Managers · consolidated report",
 
-  "sc.12.title":"Online-booking agent",
-  "sc.12.sub":"A voice CoPilot Agent calls booked customers itself. It confirms the visit, sends a reminder, reacts if the customer is late and writes the result into the card. The receptionist no longer dials by hand.",
+  "sc.12.title":"Booking agent — AI calls",
+  "sc.12.sub":"AI calls reach booked customers by phone without a person dialling. It confirms the visit, sends a reminder, reacts if the customer is late and writes the result into the card. The front desk no longer works through the list by hand.",
   "sc.12.role":"Receptionist / front desk",
   "sc.12.f.visits":"Bookings (visits) per month", "sc.12.f.perRec":"Calls per booking",
   "sc.12.f.time":"Time one call takes by hand, from dialling to writing it down", "sc.12.f.admSal":"Receptionist salary",
   "info.12":"Calls per month (bookings x calls per booking) x minutes one call takes by hand, dialling to writing it down. We turn that into hours and multiply it by the receptionist's hourly cost. This scenario counts the payroll saving only. Revenue from customers who would not have shown up is not included.",
   "int.12":"The integrator connects the voice agent to the client's online booking and telephony, configures confirmation, reminder and no-show flows, defines how the call outcome is stored on the card and tests it against real bookings.",
 
-  "sc.3.title":"Document generation",
+  "sc.3.title":"Documents from templates, written by CoPilot",
   "sc.3.sub":"CoPilot makes documents from templates and writes the text for you: quotes, contracts, letters, manuals, reports.",
   "sc.3.role":"Any employee",
   "sc.3.f.emp":"Employees preparing documents", "sc.3.f.sal":"Average employee salary",
@@ -1928,7 +1936,7 @@ en: {
   "info.3":"Minutes a day spent writing documents by hand (documents x minutes). We turn that into hours per month (x {days} working days) and multiply it by the hourly cost, for everyone who prepares documents.",
   "int.3":"The integrator prepares the document templates (quotes, contracts, letters, invoices) with CRM data merged in, sets the house style and mandatory blocks and trains the staff. Cost scales with the number of employees preparing documents.",
 
-  "sc.6.title":"Follow-up (internal meeting transcription)",
+  "sc.6.title":"CoPilot Follow-Up (internal meetings)",
   "sc.6.sub":"Every internal meeting is transcribed. Meetings get shorter, fewer people need to attend, and nobody has to write the minutes.",
   "sc.6.role":"Staff and assistant",
   "sc.6.f.meet":"Internal meetings per month", "sc.6.f.dur":"Average meeting length",
@@ -1939,7 +1947,7 @@ en: {
   "bd.6.a":"A · meetings shorter by {gain}", "bd.6.b":"B · attendance down by {gain}",
   "bd.6.c":"C · minutes and follow-up (assistant)",
 
-  "sc.7.title":"Vibecode, CoWork and CoPilot chat",
+  "sc.7.title":"Vibecode and CoPilot chat",
   "sc.7.sub":"Staff simplify and automate their own work. Some just chat with the model, others build small apps. Both raise personal output and speed up company processes.",
   "sc.7.role":"All staff",
   "sc.7.f.emp":"Employees this covers", "sc.7.f.share":"Share of self-starters",
@@ -2288,7 +2296,7 @@ const SUF = {ppl:"suf.ppl", clients:"suf.clients", min:"suf.min", share:"suf.sha
    каждый по отдельности; профиль клиента их не уточняет, он выбирает СОСТАВ.
 
    ЧТО В СОСТАВЫ НЕ ВХОДИТ И ПОЧЕМУ:
-     сценарий 7 (Vibecode, CoWork, чат) — самая большая и самая недоказуемая строка
+     сценарий 7 (Vibecode и чат CoPilot) — самая большая и самая недоказуемая строка
        набора: 68% его суммы дают зашитые 10% прироста эффективности на всех
        охваченных, которых партнёр не видит и изменить не может. Плюс заметки
        сценариев 10 и 11 прямо предупреждают о двойном счёте именно с ним. Ставить
@@ -2443,7 +2451,16 @@ const scenarios = [
      ВСЕ ТРИ ПОМЕЧЕНЫ org:"client" — «про конкретного клиента, источника нет и
      быть не может». Раньше пометка «estimate» стояла только у чека, хотя выдуманы
      одинаково все три. */
-  { id:5, group:"crm", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/25766347/",
+  /* ПОРОГ PROFESSIONAL У ПОВТОРНЫХ ПРОДАЖ — НЕ ПОТОМУ ЧТО АГЕНТ, А ПОТОМУ ЧТО
+     ИСТОЧНИК ПРОТИВОРЕЧИТ СЕБЕ. Строка «AI-assisted repeat sales» стоит на
+     официальной странице сравнения ТРИЖДЫ: две копии дают доступность с
+     Professional, третья, в разделе Artificial Intelligence, — с Basic. Пока
+     страница не сойдётся сама с собой, берём строгий вариант: если клиент купит
+     Basic и функции не окажется, отвечать будет отчёт партнёра, а не таблица.
+     Ошибка односторонняя, поэтому и выбор односторонний.
+     Признак ОТДЕЛЬНЫЙ от agent: сценарий не про AI-агента, и говорить клиенту
+     «нужен агент» здесь было бы выдумкой. См. OPEN_QUESTIONS §19. */
+  { id:5, group:"crm", driver:"monthly", minPro:true, link:"https://helpdesk.bitrix24.com/open/25766347/",
     effect:["rev"], revLabel:"ui.revBase", segments:true,
     fields:[
       {k:"base", def:500, suf:"clients", org:"client"},
@@ -2673,7 +2690,7 @@ function svcTotals(){
    headcount x coverage instead of headcount.
    Defaults are deliberately CONSERVATIVE and flagged as estimates in the UI:
      100%  id1 / id4  — role-scoped already (the sales team IS the sales team)
-      30%  id10 knowledge base, id7 Vibecode/CoWork — broad but never universal
+      30%  id10 knowledge base, id7 Vibecode/чат — broad but never universal
       25%  id11 personal assistant — rolled out to a subset
       20%  id9  chat-driven Bitrix24 — an early-adopter habit
       12%  id3  document generation — only the people who actually draft documents
@@ -2898,7 +2915,9 @@ function scHtml(sc){
                цель партнёр открыл в шаге 6. Условная пометка исчезала бы ровно
                там, где партнёр уже поднял тариф, — и он терял бы из вида, что
                сценарий к тарифу привязан. -->
-          ${sc.agent?`<span class="tag tag--plan" title="${t("ui.agentReqHint")}">${t("ui.agentReq",{plan:AGENT_MIN_PLAN})}</span>`:""}
+          ${(sc.agent || sc.minPro)?`<span class="tag tag--plan" title="${
+              t(sc.agent ? "ui.agentReqHint" : "ui.proReqHint")}">${
+              t("ui.agentReq",{plan:AGENT_MIN_PLAN})}</span>`:""}
           ${sc.effect.includes("rev")?`<span class="tag tag--est" title="${t("ui.tagEstHint")}"
             >${t(sc.revLabel||"ui.revDefault")} · ${t("ui.tagEstimate")}</span>`:""}
           ${sc.link?`<a class="tag-link" href="${sc.link}" target="_blank" rel="noopener">${t("ui.more")} \u2192</a>`:""}
@@ -3287,7 +3306,7 @@ function computeModel(){
      всем выбранным сценариям. Здесь только ВЫДЕЛЯЕТСЯ доля итога, которая на
      выбранной цели недоступна, — чтобы её можно было назвать и на экране, и в
      отчёте. Сумма сырая, округление — как везде, один раз на выводе. */
-  const gatedList = agentGatedItems(items, map.to);
+  const gatedList = planGatedItems(items, map.to);
   const gatedFot  = gatedList.reduce((a, it) => a + it.fot, 0);
   const agentGate = {
     planHasAgents: planHasAgents(map.to),
@@ -3739,9 +3758,17 @@ function planHasAgents(name){
 /* Сценарии на агентах, недоступные на выбранной цели. Пустой массив = расхождения
    нет. Порядок — как в списке сценариев, чтобы предупреждение читалось так же,
    как шаг 3. */
-function agentGatedItems(items, tgt){
+/* СЦЕНАРИИ, КОТОРЫМ ВЫБРАННЫЙ ТАРИФ НЕ ПОДХОДИТ. Причин теперь две, порог у обеих
+   один и тот же (Professional Vibe+ и выше):
+     sc.agent  — сценарий держится на AI-агенте, а агенты доступны с Professional
+                 (подтверждение заказчицы, страница его не подтверждает — §17);
+     sc.minPro — страница противоречит сама себе по доступности, и мы берём
+                 строгий вариант (§19).
+   Функция называется по смыслу — «не подходит тариф», а не «нужен агент»:
+   причина у каждого сценария своя и печатается отдельно. */
+function planGatedItems(items, tgt){
   if(planHasAgents(tgt)) return [];
-  return items.filter(it => it.sc.agent);
+  return items.filter(it => it.sc.agent || it.sc.minPro);
 }
 
 let tgtPlanName = null;    /* null = ещё не разрешено, ставится при первом рендере */
@@ -4018,8 +4045,8 @@ function renderAgentWarning(model){
   if(!g || !g.ids.length){ box.hidden = true; return; }
   const plan = planPair().map.to;
   document.getElementById("warn-agents-h").textContent =
-    g.ids.length === 1 ? t("ui.agentWarnH1", {plan})
-                       : t("ui.agentWarnH", {n: g.ids.length, plan});
+    g.ids.length === 1 ? t("ui.agentWarnH1", {plan, min: g.minPlan})
+                       : t("ui.agentWarnH", {n: g.ids.length, plan, min: g.minPlan});
   /* Список — узлами, а не innerHTML: названия приходят из I18N, но собирать
      разметку из строк здесь незачем, а textContent снимает вопрос экранирования
      на будущее, когда появится немецкий перевод. */
@@ -4027,7 +4054,8 @@ function renderAgentWarning(model){
   ul.textContent = "";
   g.titles.forEach(x => { const li = document.createElement("li"); li.textContent = x; ul.appendChild(li); });
   document.getElementById("warn-agents-body").textContent =
-    t("ui.agentWarnBody", {min: g.minPlan, fot: fmtMoney(g.fotYear), plan});
+    t(g.fotYear > 0 ? "ui.agentWarnBody" : "ui.agentWarnBodyNoFot",
+      {min: g.minPlan, fot: fmtMoney(g.fotYear), plan});
   const btn = document.getElementById("warn-agents-fix");
   btn.textContent = t("ui.agentWarnFix", {min: g.minPlan});
   box.hidden = false;
@@ -4192,6 +4220,11 @@ function reportState(){
          от выбранной цели: помечать строку или нет, решает отчёт, сверяясь с
          agentGate.planHasAgents. */
       needsAgent: !!sc.agent,
+      /* Причин не подойти тарифу две (агент и строгое чтение противоречивой
+         строки), а сверка раскрытия должна знать ОБЕ — иначе сборка отчёта
+         решит, что списки разошлись. needsAgent оставлен как был: он значит
+         ровно «держится на AI-агенте» и не должен начать значить другое. */
+      needsPlan: !!(sc.agent || sc.minPro),
       fields: fieldsOf(sc, state[sc.id].values),
       /* СЕГМЕНТЫ ЕДУТ В ОБА ОТЧЁТА. Итог их и раньше учитывал (computeScenario
          суммирует базовый набор и все сегменты), а страница «The numbers we
@@ -4594,7 +4627,13 @@ function buildReport(S, {assets}) {
      Оба списка — зеркала того, что живёт в index.html (agent:true и
      planHasAgents). Чтобы они не разъехались тихо, ниже стоит сверка: когда
      состояние несёт признаки, расхождение определений роняет сборку. */
-  const AGENT_SCENARIO_IDS = new Set([2, 9, 10, 11, 12]);
+  /* Сценарии, которым нужен тариф выше. ДВЕ причины, один порог:
+       2, 9, 10, 11, 12 — держатся на AI-агентах (agent:true в index.html);
+       5 — переведён на порог Professional по строгому чтению противоречивой
+           строки официальной страницы (minPro:true, OPEN_QUESTIONS §19).
+     Список — зеркало index.html, и сверка ниже роняет сборку при расхождении:
+     именно она поймала эту правку, когда пятый добавили только на одной стороне. */
+  const AGENT_SCENARIO_IDS = new Set([2, 5, 9, 10, 11, 12]);
   const AGENT_PLAN_RE = /^Alaio (?:Professional|Enterprise-\d+) Vibe\+$/;
   const planCarriesAgents = AGENT_PLAN_RE.test(String((S.plan || {}).to || ""));
   const agentItems = (S.items || []).filter(it => AGENT_SCENARIO_IDS.has(it.id));
@@ -5351,11 +5390,13 @@ const planPage = () => {
        Ссылка на строки таблицы держится на том же знаке †, что и сноска. -->
   <div class="b24-dashed" style="margin-top:var(--b24-s6); border-color:#A15C00;">
     <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
-      <span class="b24-strong" style="color:#A15C00;">${gated.length === 1 ? "One of these scenarios needs an AI agent." : `${int(gated.length)} of these scenarios need an AI agent.`}</span>
-      AI agents are included from ${esc(gate.minPlan)} up, so they are not available on ${esc(P.to)}:
+      <span class="b24-strong" style="color:#A15C00;">${gated.length === 1 ? "One of these scenarios needs a higher plan." : `${int(gated.length)} of these scenarios need a higher plan.`}</span>
+      They are listed from ${esc(gate.minPlan)} up, so they are not available on ${esc(P.to)}:
       ${gate.titles.map(x => esc(x)).join(", ")}.
-      ${money(gate.fotYear)} of the payroll saving a year comes from them.
-      Two honest ways forward: move to ${esc(gate.minPlan)}, which includes agents, or start with the
+      ${gate.fotYear > 0
+          ? `${money(gate.fotYear)} of the payroll saving a year comes from them.`
+          : `They add nothing to the payroll saving on their own — they work on revenue.`}
+      Two honest ways forward: move to ${esc(gate.minPlan)}, or start with the
       other scenarios and add these in a second step once the plan allows it.
     </p>
   </div>` : ""}
@@ -5739,11 +5780,16 @@ function requiredDisclosures(doc, gate, gated, mark, money, own) {
   if (gate && gate.planHasAgents !== own.planCarriesAgents)
     out.push(`the plan lists disagree: the calculator says agents ${gate.planHasAgents ? "ARE" : "are NOT"} ` +
              `available on this plan, the report says they ${own.planCarriesAgents ? "ARE" : "are NOT"}`);
-  const marked = (own.items || []).filter(it => it.needsAgent === true).map(it => it.id);
-  if (marked.length || (own.items || []).some(it => "needsAgent" in it)) {
+  /* ПРИЧИН НЕ ПОДОЙТИ ТАРИФУ ДВЕ: AI-агент (needsAgent) и строгое чтение
+     противоречивой строки источника (needsPlan включает обе). Сверяем по
+     needsPlan, если состояние его несёт; состояния старого формата знают только
+     needsAgent, и для них проверка остаётся прежней. */
+  const flag = (own.items || []).some(it => "needsPlan" in it) ? "needsPlan" : "needsAgent";
+  const marked = (own.items || []).filter(it => it[flag] === true).map(it => it.id);
+  if (marked.length || (own.items || []).some(it => flag in it)) {
     const mine = (own.items || []).filter(it => own.ids.has(it.id)).map(it => it.id);
     if (marked.slice().sort().join(",") !== mine.slice().sort().join(","))
-      out.push(`the scenario lists disagree: the calculator marks [${marked}] as agent-based, ` +
+      out.push(`the scenario lists disagree: the calculator marks [${marked}] as needing a higher plan, ` +
                `the report knows [${mine}]`);
   }
 

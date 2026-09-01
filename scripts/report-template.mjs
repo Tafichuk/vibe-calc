@@ -123,7 +123,13 @@ export function buildReport(S, {assets}) {
      Оба списка — зеркала того, что живёт в index.html (agent:true и
      planHasAgents). Чтобы они не разъехались тихо, ниже стоит сверка: когда
      состояние несёт признаки, расхождение определений роняет сборку. */
-  const AGENT_SCENARIO_IDS = new Set([2, 9, 10, 11, 12]);
+  /* Сценарии, которым нужен тариф выше. ДВЕ причины, один порог:
+       2, 9, 10, 11, 12 — держатся на AI-агентах (agent:true в index.html);
+       5 — переведён на порог Professional по строгому чтению противоречивой
+           строки официальной страницы (minPro:true, OPEN_QUESTIONS §19).
+     Список — зеркало index.html, и сверка ниже роняет сборку при расхождении:
+     именно она поймала эту правку, когда пятый добавили только на одной стороне. */
+  const AGENT_SCENARIO_IDS = new Set([2, 5, 9, 10, 11, 12]);
   const AGENT_PLAN_RE = /^Alaio (?:Professional|Enterprise-\d+) Vibe\+$/;
   const planCarriesAgents = AGENT_PLAN_RE.test(String((S.plan || {}).to || ""));
   const agentItems = (S.items || []).filter(it => AGENT_SCENARIO_IDS.has(it.id));
@@ -880,11 +886,13 @@ const planPage = () => {
        Ссылка на строки таблицы держится на том же знаке †, что и сноска. -->
   <div class="b24-dashed" style="margin-top:var(--b24-s6); border-color:#A15C00;">
     <p class="b24-p" style="margin:0; font-size:13.5px; color:#A15C00;">
-      <span class="b24-strong" style="color:#A15C00;">${gated.length === 1 ? "One of these scenarios needs an AI agent." : `${int(gated.length)} of these scenarios need an AI agent.`}</span>
-      AI agents are included from ${esc(gate.minPlan)} up, so they are not available on ${esc(P.to)}:
+      <span class="b24-strong" style="color:#A15C00;">${gated.length === 1 ? "One of these scenarios needs a higher plan." : `${int(gated.length)} of these scenarios need a higher plan.`}</span>
+      They are listed from ${esc(gate.minPlan)} up, so they are not available on ${esc(P.to)}:
       ${gate.titles.map(x => esc(x)).join(", ")}.
-      ${money(gate.fotYear)} of the payroll saving a year comes from them.
-      Two honest ways forward: move to ${esc(gate.minPlan)}, which includes agents, or start with the
+      ${gate.fotYear > 0
+          ? `${money(gate.fotYear)} of the payroll saving a year comes from them.`
+          : `They add nothing to the payroll saving on their own — they work on revenue.`}
+      Two honest ways forward: move to ${esc(gate.minPlan)}, or start with the
       other scenarios and add these in a second step once the plan allows it.
     </p>
   </div>` : ""}
@@ -1268,11 +1276,16 @@ function requiredDisclosures(doc, gate, gated, mark, money, own) {
   if (gate && gate.planHasAgents !== own.planCarriesAgents)
     out.push(`the plan lists disagree: the calculator says agents ${gate.planHasAgents ? "ARE" : "are NOT"} ` +
              `available on this plan, the report says they ${own.planCarriesAgents ? "ARE" : "are NOT"}`);
-  const marked = (own.items || []).filter(it => it.needsAgent === true).map(it => it.id);
-  if (marked.length || (own.items || []).some(it => "needsAgent" in it)) {
+  /* ПРИЧИН НЕ ПОДОЙТИ ТАРИФУ ДВЕ: AI-агент (needsAgent) и строгое чтение
+     противоречивой строки источника (needsPlan включает обе). Сверяем по
+     needsPlan, если состояние его несёт; состояния старого формата знают только
+     needsAgent, и для них проверка остаётся прежней. */
+  const flag = (own.items || []).some(it => "needsPlan" in it) ? "needsPlan" : "needsAgent";
+  const marked = (own.items || []).filter(it => it[flag] === true).map(it => it.id);
+  if (marked.length || (own.items || []).some(it => flag in it)) {
     const mine = (own.items || []).filter(it => own.ids.has(it.id)).map(it => it.id);
     if (marked.slice().sort().join(",") !== mine.slice().sort().join(","))
-      out.push(`the scenario lists disagree: the calculator marks [${marked}] as agent-based, ` +
+      out.push(`the scenario lists disagree: the calculator marks [${marked}] as needing a higher plan, ` +
                `the report knows [${mine}]`);
   }
 
