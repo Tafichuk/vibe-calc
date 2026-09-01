@@ -842,6 +842,19 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
       <p class="note-line" style="margin:var(--b24-s2) 0 0" data-i18n="ui.aiNote"></p>
       <ul class="ai-list" id="ai-list"></ul>
     </div>
+
+    <!-- ДЕМО И ЛЬГОТНЫЙ ПЕРИОД — ЗАМЕТКА ПАРТНЁРУ, НЕ ВЕЛИЧИНА МОДЕЛИ.
+         В расчёт не входит и в отчёт не уезжает: шаг 6 в клиентский документ не
+         печатается вовсе. Здесь потому, что это разговор про тариф, и партнёр
+         должен знать обе стороны — и аргумент («можно попробовать бесплатно»), и
+         риск («клиент принял демо за купленное»). Источник публичный, клиент
+         может открыть его сам, поэтому расхождений в разговоре не будет. -->
+    <div class="gap-card">
+      <h3 style="margin:0; font:700 17px var(--b24-font-display); color:var(--b24p-deep)"
+          data-i18n="ui.demoH"></h3>
+      <p class="note-line" style="margin:var(--b24-s2) 0 0" data-i18n="ui.demoNote"></p>
+      <ul class="ai-list" id="demo-list"></ul>
+    </div>
   </section>
 
   <!-- partner summary -->
@@ -1202,8 +1215,21 @@ const realisationPct = () => Math.round(realisation() * 100);
    Essentials has USD only — the export carries no other currency for it.
    ========================================================================== */
 const PRICING = {
+  /* ТРИ ДАТЫ, И ОНИ ПРО РАЗНОЕ — путать их в тексте для клиента нельзя.
+     effectiveFrom — дата ПРАЙС-ЛИСТА, который у нас на руках (официальная
+       выгрузка). Это дата НАШЕГО документа, и в подвале она так и подписана:
+       «Prices as of ...», то есть на какой момент сняты цены.
+     lineupFrom — дата, с которой новая линейка начинает действовать на счетах
+       клиентов. Публичная: helpdesk 26027119, «As of September 1, 2026».
+       Раньше мы печатали «Prices apply from Aug 17» — это была наша склейка двух
+       дат: прайс датирован 17 августа, но ничей счёт в тот день не изменился.
+     grandfatheredUntil — конец переходного периода. Было ~17.11.2026 — НАША
+       АРИФМЕТИКА (три месяца от даты прайса), с тильдой как признанием догадки.
+       Статья повторяет 30 ноября в каждом случае оплаты; структуру нашей фразы
+       («конец оплаченного периода ИЛИ дата, что позже») она подтверждает. */
   effectiveFrom: "2026-08-17",
-  grandfatheredUntil: "2026-11-17",
+  lineupFrom: "2026-09-01",
+  grandfatheredUntil: "2026-11-30",
   essentials: {
     /* ПЯТНАДЦАТЬ ТИРОВ — официальная выгрузка Антона (COM_B24_08_2028.xlsx).
        Раньше здесь было семь, и у четырёх Enterprise-тиров не было месячной
@@ -1739,7 +1765,7 @@ en: {
   "ui.planPriceNote":"Plan prices are for the whole account, not per user. The number in an Enterprise tier (250, 500, 1000 …) is the seat limit the plan includes, and the price already covers it. Nothing here is multiplied by the client's headcount.",
   "ui.monthly":"Monthly", "ui.annualPerMonth":"Annual, per month", "ui.annualTotal":"Annual total",
   "ui.diffMonth":"Difference, per month",
-  "ui.effectiveFrom":"Prices apply from {date}. Existing clients keep their current pricing until the end of their period or {grand}, whichever is later.",
+  "ui.effectiveFrom":"Prices taken from the Bitrix24 price list of {date}. The new plan lineup applies from {lineup}: a plan bought or renewed before that date keeps its previous terms until the end of the paid period or {grand}, whichever is later.",
   "ui.footer":"Prepared with the Bitrix24 Partners AI value calculator. All figures are estimates based on the inputs above and are not an offer.",
   "ui.nothing":"Nothing selected",
   "ui.selected":"{n} of {total} scenarios selected",
@@ -1822,6 +1848,14 @@ en: {
      другой — формально это разные вещи (объём против наличия функции), но
      читается противоречиво. Теперь в каждой строке прямо сказано, что речь о
      ЧИСЛЕ запросов. */
+  /* ДЕМО И ЛЬГОТНЫЙ ПЕРИОД (helpdesk 26027119). Партнёру — обе стороны сразу:
+     аргумент и риск. В расчёт не вводим и клиенту не печатаем. */
+  "ui.demoH":"Free demo and grace period",
+  "ui.demoNote":"Neither is in the calculation and neither is printed for the client. They are here because both come up in the plan conversation, and the client can read the same article you are reading.",
+  "demo.trial":"A free 15-day Vibe+ demo can be switched on without pausing the current plan, and it can be activated only once.",
+  "demo.tier":"The demo runs on Vibe+ Professional/Enterprise. If the client's own plan is a lower tier, whatever they got used to during the demo switches off when it ends — say this before they try it, not after.",
+  "demo.after":"When the demo ends before the transition deadline, only Vibecode stops; REST API, Market apps and the MCP server keep working until the deadline. After the deadline, Essential limits apply straight away.",
+  "demo.grace":"A paid subscription that expires gets a 15-day grace period to renew before the account drops to Free. Renewing inside it keeps the previous terms until the transition deadline.",
   "ai.essentials":"Essential variant — a daily cap on the number of AI requests per user, the same on every plan.",
   "ai.basic":"Alaio Basic Vibe+ — ten times as many AI requests as the Essential cap.",
   "ai.standard":"Alaio Standard Vibe+ and above — no cap on the number of AI requests, plus priority in the processing queue under load.",
@@ -4491,6 +4525,7 @@ function reportState(){
       /* Даты едут в отчёт УЖЕ отформатированными: отчёт величин не выводит и дат не
          форматирует — иначе формат разъехался бы между экраном и документом. */
       effectiveFrom: fmtDate(PRICING.effectiveFrom),
+      lineupFrom: fmtDate(PRICING.lineupFrom),
       grandfatheredUntil: fmtDate(PRICING.grandfatheredUntil),
     },
     /* AI-СТУПЕНЬ ВЫБРАННОГО ТАРИФА, А НЕ ЛЕСТНИЦА ЦЕЛИКОМ.
@@ -5461,7 +5496,16 @@ const planPage = () => {
 
   <div class="b24-dashed" style="margin-top:var(--b24-s6)">
     <p class="b24-p" style="margin:0; font-size:13.5px;">
-      AI is set by plan, not by a request count. No per-request quotas are published, so no numeric AI limits are quoted here. Prices apply from ${esc(P.effectiveFrom)}. Existing clients keep their current pricing until the end of their period or ${esc(P.grandfatheredUntil)}, whichever is later.
+      AI is set by plan, not by a request count. No per-request quotas are published, so no numeric AI limits are quoted here.
+      <!-- ДВЕ РАЗНЫЕ ДАТЫ. Раньше здесь стояло «Prices apply from <дата прайса>» —
+           склейка. Прайс датирован 17 августа, а линейка начала действовать
+           1 сентября (helpdesk 26027119). Клиент может открыть статью и сверить,
+           поэтому дата запуска названа отдельно и своим именем. Если состояние
+           даты запуска не несёт (снято до этой правки) — печатаем прежнюю фразу
+           про прайс и не выдумываем дату, которой в состоянии нет. -->
+      ${P.lineupFrom
+        ? `Prices are taken from the Bitrix24 price list of ${esc(P.effectiveFrom)}. The new plan lineup applies from ${esc(P.lineupFrom)}: a plan bought or renewed before that date keeps its previous terms until the end of the paid period or ${esc(P.grandfatheredUntil)}, whichever is later.`
+        : `Prices are taken from the Bitrix24 price list of ${esc(P.effectiveFrom)}. Existing clients keep their current pricing until the end of their period or ${esc(P.grandfatheredUntil)}, whichever is later.`}
     </p>
   </div>
 
@@ -6370,8 +6414,12 @@ function applyStatic(){
   document.getElementById("sw-cur").hidden = !SHOW_CUR_SWITCH;
   document.getElementById("ai-list").innerHTML = ["ai.essentials","ai.basic","ai.standard"]
     .map(k=>`<li><img src="assets/icons/badge-check.svg" alt="">${t(k)}</li>`).join("");
+  document.getElementById("demo-list").innerHTML = ["demo.trial","demo.tier","demo.after","demo.grace"]
+    .map(k=>`<li><img src="assets/icons/badge-check.svg" alt="">${t(k)}</li>`).join("");
   document.getElementById("foot-dates").textContent =
-    t("ui.effectiveFrom", {date:fmtDate(PRICING.effectiveFrom), grand:fmtDate(PRICING.grandfatheredUntil)});
+    t("ui.effectiveFrom", {date:fmtDate(PRICING.effectiveFrom),
+                           lineup:fmtDate(PRICING.lineupFrom),
+                           grand:fmtDate(PRICING.grandfatheredUntil)});
   fillPlanSelects();
 }
 

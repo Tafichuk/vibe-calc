@@ -438,7 +438,8 @@
     "toMonthly": 199,
     "toAnnualTotal": 1728,
     "effectiveFrom": "Aug 17, 2026",
-    "grandfatheredUntil": "Nov 17, 2026"
+    "lineupFrom": "Sep 1, 2026",
+    "grandfatheredUntil": "Nov 30, 2026"
   },
   "aiForPlan": "No cap on the number of AI requests, plus priority in the processing queue under load",
   "planDelta": [

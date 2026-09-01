@@ -2,13 +2,21 @@
   "_source": "Client-facing prices. Partner-programme economics are deliberately absent — see README. Current prices and partner terms: Bitrix24 Partner Portal.",
   "_effective_from": "2026-08-17",
   "key_dates": {
+    "_two_different_dates": "prices_live and lineup_live are NOT the same event, and client-facing wording must keep them apart. prices_live is the date of the price list WE HOLD. lineup_live is the date the new lineup starts applying to customers accounts, and it comes from a public article the client can open. Saying 'prices apply from Aug 17' was our own conflation: the price list is dated Aug 17, but nobody's account changed that day.",
     "prices_live": "2026-08-17",
-    "existing_clients_grandfathered_until": "end of current period or ~2026-11-17, whichever is later"
+    "_prices_live_source": "COM_B24_08_2028.xlsx, the official price export. Date OF OUR DOCUMENT, printed in the report footer as 'Prices as of ...' - a snapshot date, not a claim about anyone's account.",
+    "lineup_live": "2026-09-01",
+    "_lineup_live_source": "https://helpdesk.bitrix24.com/open/26027119/ - 'New Vibe+ lineup - What Changes for Paid Customers', Emily Walker, updated 2026-09-01: 'As of September 1, 2026, Bitrix24 has a new plan lineup', and elsewhere 'the plans available before September 1, 2026'.",
+    "existing_clients_grandfathered_until": "2026-11-30",
+    "_grandfathered_source": "Same article, which repeats November 30, 2026 in every payment case: monthly and quarterly keep their features until then while they keep renewing; a renewal inside the 15-day grace period is covered until then; an annual plan keeps its terms until its paid period ends even if that is later. WE HAD ~2026-11-17 AND IT WAS OUR OWN ARITHMETIC - three months after the price list date, recorded with a tilde as an admission nobody had confirmed it (DISTRIBUTION.md). The article settles the number; the structure of our sentence - end of period OR the date, whichever is later - it confirms.",
+    "grace_period_days": 15,
+    "_grace_source": "Same article: 'When a paid subscription expires, your account gets a 15-day grace period to renew before it drops to Free.' Partner-facing only - not modelled, not printed for the client."
   },
   "lineup": {
     "_shape": "ONE lineup, TWO VARIANTS PER PLAN - confirmed against the official comparison page 2026-09-01, which shows a per-plan selector 'Essential | Vibe+' and defaults to Vibe+. Not two separate lineups: the paired columns carry the SAME plan name and the SAME seat count (5 / 50 / 100 / 250), and only 11 of 880 rows differ. Client-facing wording must match that: the client switches the variant of the plan they are on, they do not migrate between lines.",
     "_pairing": "The 1:1 pairing (Basic -> Basic Vibe+, and so on) is confirmed by the official plan comparison: it pairs the columns itself and the seat count is identical inside each pair.",
-    "essentials": "Named 'Essential' (singular) on the public page - the variant of each plan WITHOUT the AI additions. Capped Market apps, REST API, AI.",
+    "_naming_disagreement": "TWO PUBLIC SOURCES DISAGREE ON THE NAME. The comparison page's per-plan selector says 'Essential' (singular); the lineup article (helpdesk 26027119) says 'Essentials' (plural) throughout. We follow the COMPARISON PAGE: it is the document a client opens to check a plan, the name sits in the column header they actually look at, and our plan pairing comes from there too. Recorded rather than silently picked - if the plural turns out to be the settled name, one string changes.",
+    "essentials": "Named 'Essential' (singular) on the public comparison page - the variant of each plan WITHOUT the AI additions. Capped Market apps, REST API, AI.",
     "vibe_plus": "Named 'Vibe+' on the public page - the variant of the SAME plan WITH the AI additions. The exact difference, per tier, is in vibe_plus_delta_by_tier."
   },
   "essentials_prices": {
@@ -938,6 +946,7 @@
     "_source_verified": "https://www.bitrix24.com/prices/compare_cloud_plans.php, DOM read 2026-09-01",
     "storage": "up to 3 TB",
     "storage_was": "guide said 'up to 4 TB'; page says 3 TB on Enterprise for both Essential and Vibe+ - page wins, see _note",
+    "_storage_third_source": "A THIRD source speaks and does not settle the number. The lineup article (helpdesk 26027119) says Vibe+ plans 'come with increased storage, email sending, and admin seat limits compared to their Essentials counterparts' - increased, WITH NO FIGURE. The comparison page shows the SAME 3 TB in both Enterprise columns. So two public sources disagree on whether storage differs at all, and neither offers a number above 3 TB. WE KEEP 3 TB: a number beats an adjective, and it is the figure a client can check. Likeliest explanation is that the comparison page is incomplete on this row, not that our figure is wrong. REVISIT WHEN FIGURES APPEAR: a published per-tier storage number for Vibe+ replaces this immediately.",
     "emails_per_month": "up to 350000",
     "admins": "up to 30",
     "rest_api": "unlimited",

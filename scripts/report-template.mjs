@@ -931,7 +931,16 @@ const planPage = () => {
 
   <div class="b24-dashed" style="margin-top:var(--b24-s6)">
     <p class="b24-p" style="margin:0; font-size:13.5px;">
-      AI is set by plan, not by a request count. No per-request quotas are published, so no numeric AI limits are quoted here. Prices apply from ${esc(P.effectiveFrom)}. Existing clients keep their current pricing until the end of their period or ${esc(P.grandfatheredUntil)}, whichever is later.
+      AI is set by plan, not by a request count. No per-request quotas are published, so no numeric AI limits are quoted here.
+      <!-- ДВЕ РАЗНЫЕ ДАТЫ. Раньше здесь стояло «Prices apply from <дата прайса>» —
+           склейка. Прайс датирован 17 августа, а линейка начала действовать
+           1 сентября (helpdesk 26027119). Клиент может открыть статью и сверить,
+           поэтому дата запуска названа отдельно и своим именем. Если состояние
+           даты запуска не несёт (снято до этой правки) — печатаем прежнюю фразу
+           про прайс и не выдумываем дату, которой в состоянии нет. -->
+      ${P.lineupFrom
+        ? `Prices are taken from the Bitrix24 price list of ${esc(P.effectiveFrom)}. The new plan lineup applies from ${esc(P.lineupFrom)}: a plan bought or renewed before that date keeps its previous terms until the end of the paid period or ${esc(P.grandfatheredUntil)}, whichever is later.`
+        : `Prices are taken from the Bitrix24 price list of ${esc(P.effectiveFrom)}. Existing clients keep their current pricing until the end of their period or ${esc(P.grandfatheredUntil)}, whichever is later.`}
     </p>
   </div>
 

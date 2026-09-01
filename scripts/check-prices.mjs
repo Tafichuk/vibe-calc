@@ -58,6 +58,12 @@ if (!Array.isArray(essUSD)) fail(2, "check-prices: config.essentials_prices.USD 
 
 const expected = {
   effectiveFrom: cfg.key_dates?.prices_live,
+  /* ДАТЫ СВЕРЯЮТСЯ НАРАВНЕ С ЦЕНАМИ. Они печатаются клиенту и проверяются им по
+     публичной статье за минуту: дата запуска линейки и конец переходного периода
+     пришли оттуда, дата прайса — из выгрузки. Расхождение между конфигом и
+     встроенной копией здесь — это неверная дата в PDF, а не косметика. */
+  lineupFrom: cfg.key_dates?.lineup_live,
+  grandfatheredUntil: cfg.key_dates?.existing_clients_grandfathered_until,
   /* seats и monthly сверяются наравне с ценой. В официальной выгрузке Антона
      monthly есть у ВСЕХ пятнадцати тиров — раньше у четырёх Enterprise его не было,
      потому что их брали с публичного сайта. Проверка «опубликовано / не опубликовано»
@@ -88,6 +94,16 @@ const cmp = (label, want, got) => {
 };
 
 cmp("effectiveFrom", expected.effectiveFrom, embedded.effectiveFrom);
+cmp("lineupFrom", expected.lineupFrom, embedded.lineupFrom);
+cmp("grandfatheredUntil", expected.grandfatheredUntil, embedded.grandfatheredUntil);
+/* Обе даты обязаны быть настоящими датами, а не прозой: раньше в конфиге лежало
+   «end of current period or ~2026-11-17, whichever is later» — фраза, из которой
+   ничего не сверить и в которой тильда прятала догадку. */
+[["lineupFrom", expected.lineupFrom], ["grandfatheredUntil", expected.grandfatheredUntil]]
+  .forEach(([k, v]) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(v || "")))
+      problems.push({ field: `key_dates -> ${k} (source)`, config: "must be a bare YYYY-MM-DD date", index_html: v });
+  });
 
 // Essentials USD — every published tier, with its seat capacity
 const embEss = embedded.essentials?.USD || [];
@@ -204,7 +220,7 @@ if (problems.length) {
 
 const tiers = (embedded.vibePlus?.USD || []).length;
 console.log(`check-prices: OK — index.html matches config/pricing.json`);
-console.log(`  effective from   ${embedded.effectiveFrom}`);
+console.log(`  effective from   ${embedded.effectiveFrom} (price list) · lineup live ${embedded.lineupFrom} · transition ends ${embedded.grandfatheredUntil}`);
 console.log(`  Essentials USD   ${(embedded.essentials?.USD || []).length} tiers`
           + ` (monthly published for ${expected.essentialsUSD.filter(r=>r.monthly!=null).length},`
           + ` seat tiers ${expected.essentialsUSD.filter(r=>r.seats).map(r=>r.seats).join("/")})`);
