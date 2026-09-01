@@ -70,15 +70,13 @@
     "planHasAgents": false,
     "minPlan": "Alaio Professional Vibe+",
     "ids": [
-      9,
       10
     ],
     "titles": [
-      "Manage Bitrix24 from CoPilot Agent chat",
       "Knowledge-base agent"
     ],
-    "fotMonth": 5265,
-    "fotYear": 63180,
+    "fotMonth": 1365,
+    "fotYear": 16380,
     "rowNote": "Needs Alaio Professional Vibe+ or higher. The recommended plan is below it."
   },
   "invalid": [],
@@ -183,8 +181,8 @@
       "service": 5200,
       "hasFot": true,
       "hasRev": false,
-      "needsAgent": true,
-      "needsPlan": true,
+      "needsAgent": false,
+      "needsPlan": false,
       "fields": [
         {
           "label": "Employees who will work this way",
@@ -384,7 +382,7 @@
     "revGuardPct": null,
     "revGuardPool": null,
     "revGuardProjected": null,
-    "agentGatedFotYear": "$63,180",
+    "agentGatedFotYear": "$16,380",
     "perScenario": [
       {
         "id": 1,

@@ -1901,6 +1901,15 @@ en: {
   "sc.10.title":"Knowledge-base agent",
   "sc.10.sub":"Staff ask a CoPilot Agent in chat and get an instant answer from the policies and manuals you upload. No searching through documents, no interrupting colleagues.",
   "sc.10.role":"All staff",
+  /* ОГОВОРКА ПРО СПОСОБ РЕАЛИЗАЦИИ, А НЕ ПРО ТАРИФ (сценарии 2 и 12).
+     Официальная таблица называет саму функцию доступной с Basic, поэтому пометки
+     «нужен Professional» на этих сценариях больше нет. Но собрать то же самое
+     кастомным AI-агентом можно, и тогда тариф нужен выше, а собирать будет
+     администратор аккаунта — это условие внедрения, и партнёр обязан знать о нём
+     до разговора о цене. Живёт заметкой в карточке: заметки видит партнёр и не
+     видит клиент — в отчёт они не уезжают. */
+  "sc.2.note":"The AI answers themselves are a plan feature: the official comparison lists AI-powered responses in Open Channels from Basic up, in both variants. This scenario is costed on that. If you instead build it as a custom AI agent, the account needs Alaio Professional Vibe+ or higher and only an account administrator can assemble it — say so before you quote the work.",
+  "sc.12.note":"AI calls and Booking are both listed from Basic up in the official comparison, and this scenario is costed on that. A custom AI agent doing the same job is a different route: it needs Alaio Professional Vibe+ or higher and an account administrator to build it. The CoPilot-in-Booking wrapper is still marked \u00absoon\u00bb on the comparison page — that is a release question, not a plan one.",
   "sc.10.note":"We count only the time of the employee who asks. The time of the colleagues who would have been interrupted is a bonus we leave out on purpose. Do not count this twice with the Vibecode scenario.",
   "sc.10.f.emp":"Employees using the knowledge base", "sc.10.f.sal":"Average employee salary",
   "sc.10.f.q":"Knowledge-base lookups per employee per day", "sc.10.f.t":"Time spent looking for one answer today",
@@ -2339,15 +2348,27 @@ const PRESETS = [
 
 const scenarios = [
 /* AI-АГЕНТЫ ДОСТУПНЫ НЕ НА ВСЕХ ТАРИФАХ — ПРИЗНАК agent:true.
-   Заказчик подтвердила: агенты есть на Alaio Professional Vibe+ и на всех
-   Alaio Enterprise-* Vibe+, и их НЕТ на Alaio Basic Vibe+ и Alaio Standard Vibe+.
+   Порог подтверждён ПУБЛИЧНО: helpdesk.bitrix24.com/open/25970567/ («AI Agents in
+   Bitrix24», Emily Walker, 10.06.2026) — «AI agents are available on the
+   Professional and Enterprise plans». Заказчица подтверждала то же и добавила
+   вариант тарифа: Alaio Professional Vibe+ и все Alaio Enterprise-* Vibe+, и НЕТ
+   на Basic/Standard Vibe+. Статья вариант не различает — держимся подтверждения
+   заказчицы, оно строже (OPEN_QUESTIONS §17).
+
+   СОСТАВ МНОЖЕСТВА СОКРАЩЁН С ПЯТИ ДО ДВУХ (01.09.2026). Раньше он выводился из
+   ПОДПИСЕЙ сценариев: где в тексте стоит «CoPilot Agent», там и пометка. Это была
+   догадка по словам, и статья показала, что она неверна: «AI agents» — отдельный
+   раздел продукта с готовыми и кастомными агентами, а не всякое место, где в
+   описании упомянут агент. Сняты сценарии 9, 2 и 12 — по каждому официальная
+   таблица сравнения НАЗЫВАЕТ функцию и даёт ей доступность ниже Professional
+   (см. OPEN_QUESTIONS §20). Остались:
+     10 — «Knowledge base search agent» описан в статье дословно, совпадение
+          пункт в пункт, включая порог;
+     11 — половина про сводку отчётов руководителю подтверждения на Basic не
+          имеет; сценарий не делим, поэтому пометка остаётся на всём.
    Признак стоит явным полем, а не выводится из group:"agents": группа — это
    вёрстка (порядок и заголовки списка), и переставить сценарий между группами
-   можно без всякой связи с доступностью функции. Состав множества выведен из
-   ПОДПИСЕЙ сценариев, а не из группы: «CoPilot Agent» прямо назван в
-   sc.2/9/10/11/12.sub. Остальные шесть держатся на CoPilot внутри инструментов
-   (1, 3, 4, 5), на транскрибации встреч (6) или на Vibecode (7) — про их
-   привязку к тарифам источник ничего не говорит, поэтому они не помечены.
+   можно без всякой связи с доступностью функции.
    Расчёт признак НЕ трогает: он влияет только на пометку, предупреждение и
    раскрытие в отчёте. */
   { id:1, group:"crm", driver:"daily", cov:{src:"mgrCount", target:"mgr", def:100}, link:"https://helpdesk.bitrix24.com/open/25855535/",
@@ -2476,7 +2497,7 @@ const scenarios = [
     hours:()=> 0,
     compute:v=>({fot:0, rev: v.base * v.conv * v.check})},
 
-  { id:9, group:"agents", agent:true, driver:"daily", cov:{src:"empCount", target:"mgr", def:20}, link:"https://helpdesk.bitrix24.com/open/25866707/", note:true,
+  { id:9, group:"agents", driver:"daily", cov:{src:"empCount", target:"mgr", def:20}, link:"https://helpdesk.bitrix24.com/open/25866707/", note:true,
     effect:["fot"],
     fields:[
       {k:"mgr", def:1,    suf:"ppl",   src:"empCount", org:"cov"},
@@ -2514,7 +2535,10 @@ const scenarios = [
      ни на что — стоимость часа берётся из зарплаты, а не из количества людей.
      Ограничения «нельзя высвободить больше часов, чем люди отрабатывают» здесь
      нет и раньше не было; это отдельный вопрос, не заведён. */
-  { id:2, group:"agents", agent:true, driver:"daily", link:null,
+  /* Заметка, а не пометка тарифа: сама функция доступна с Basic, а Professional
+     нужен только тому, кто решит собрать это кастомным агентом. Пометка «нужен
+     тариф» сказала бы неправду про функцию; заметка говорит правду про способ. */
+  { id:2, group:"agents", driver:"daily", link:null, note:true,
     effect:["fot"],
     fields:[
       {k:"sal",  def:3000, suf:"money", org:"mkt"},
@@ -2569,7 +2593,9 @@ const scenarios = [
       return {fot:A+B, rev:0, breakdown:[["bd.11.a",A],["bd.11.b",B]]};
     }},
 
-  { id:12, group:"agents", agent:true, driver:"monthly", link:null,
+  /* Та же оговорка, что у сценария 2: функция с Basic, кастомная реализация —
+     Professional и права администратора. */
+  { id:12, group:"agents", driver:"monthly", link:null, note:true,
     effect:["fot"],
     fields:[
       {k:"visits",def:800,  suf:"bookings", org:"ru"},
@@ -4628,12 +4654,14 @@ function buildReport(S, {assets}) {
      planHasAgents). Чтобы они не разъехались тихо, ниже стоит сверка: когда
      состояние несёт признаки, расхождение определений роняет сборку. */
   /* Сценарии, которым нужен тариф выше. ДВЕ причины, один порог:
-       2, 9, 10, 11, 12 — держатся на AI-агентах (agent:true в index.html);
+       10, 11 — держатся на AI-агентах (agent:true в index.html). Было пять; с
+                9, 2 и 12 пометка снята 01.09.2026 — таблица сравнения называет их
+                функции доступными ниже Professional (OPEN_QUESTIONS §20);
        5 — переведён на порог Professional по строгому чтению противоречивой
            строки официальной страницы (minPro:true, OPEN_QUESTIONS §19).
      Список — зеркало index.html, и сверка ниже роняет сборку при расхождении:
      именно она поймала эту правку, когда пятый добавили только на одной стороне. */
-  const AGENT_SCENARIO_IDS = new Set([2, 5, 9, 10, 11, 12]);
+  const AGENT_SCENARIO_IDS = new Set([5, 10, 11]);
   const AGENT_PLAN_RE = /^Alaio (?:Professional|Enterprise-\d+) Vibe\+$/;
   const planCarriesAgents = AGENT_PLAN_RE.test(String((S.plan || {}).to || ""));
   const agentItems = (S.items || []).filter(it => AGENT_SCENARIO_IDS.has(it.id));

@@ -124,12 +124,14 @@ export function buildReport(S, {assets}) {
      planHasAgents). Чтобы они не разъехались тихо, ниже стоит сверка: когда
      состояние несёт признаки, расхождение определений роняет сборку. */
   /* Сценарии, которым нужен тариф выше. ДВЕ причины, один порог:
-       2, 9, 10, 11, 12 — держатся на AI-агентах (agent:true в index.html);
+       10, 11 — держатся на AI-агентах (agent:true в index.html). Было пять; с
+                9, 2 и 12 пометка снята 01.09.2026 — таблица сравнения называет их
+                функции доступными ниже Professional (OPEN_QUESTIONS §20);
        5 — переведён на порог Professional по строгому чтению противоречивой
            строки официальной страницы (minPro:true, OPEN_QUESTIONS §19).
      Список — зеркало index.html, и сверка ниже роняет сборку при расхождении:
      именно она поймала эту правку, когда пятый добавили только на одной стороне. */
-  const AGENT_SCENARIO_IDS = new Set([2, 5, 9, 10, 11, 12]);
+  const AGENT_SCENARIO_IDS = new Set([5, 10, 11]);
   const AGENT_PLAN_RE = /^Alaio (?:Professional|Enterprise-\d+) Vibe\+$/;
   const planCarriesAgents = AGENT_PLAN_RE.test(String((S.plan || {}).to || ""));
   const agentItems = (S.items || []).filter(it => AGENT_SCENARIO_IDS.has(it.id));
