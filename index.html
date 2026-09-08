@@ -469,6 +469,42 @@ body:not([data-mode="quick"]) #quick{display:none}
 .warn-list{margin:var(--b24-s2) 0 0; padding-left:18px; font-weight:500}
 .warn-list li{margin:2px 0}
 
+/* ---- ПРЕДВСТРЕЧНАЯ АНКЕТА ----
+   Текст письма — ОБЫЧНОЕ ПОЛЕ, из которого партнёр копирует. .b24x-input даёт
+   ему рамку и фокус-кольцо кита, но высота там 48px под однострочные поля: у
+   textarea её надо отпустить, иначе письмо в двадцать строк уезжает в скролл
+   высотой в одну. Моноширинный набор намеренный: партнёр глазами проверяет
+   нумерацию вопросов, а в пропорциональном она разъезжается по строкам. */
+.br-text{display:block; width:100%; height:auto; min-height:340px;
+  padding:var(--b24-s4); font:13px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  resize:vertical; white-space:pre; overflow-wrap:normal; overflow-x:auto}
+/* Полоса прокрутки вбок здесь — признак того, что перенос в briefText сломался:
+   письмо несёт свои переносы в 78 знаков и в это поле влезает целиком. Оставлено
+   overflow-x:auto, а не hidden, именно поэтому: сломается — будет видно, а не
+   обрежется молча. */
+.br-in{display:block; width:100%; height:auto; min-height:260px;
+  padding:var(--b24-s4); font:13px/1.6 var(--b24-font-body); resize:vertical}
+.br-sub{max-width:520px}
+.br-back{margin-top:var(--b24-s8); border-top:1px solid var(--b24-line);
+  padding-top:var(--b24-s6)}
+.br-back h3{margin:0 0 var(--b24-s2); font:700 16px/1.3 var(--b24-font-display)}
+/* Разбор ответа. Строка = вопрос, что прочитано, куда уедет. Табличная сетка, а
+   не список: партнёр сверяет три колонки по вертикали, а не читает прозу. */
+.br-rev{margin-top:var(--b24-s5); display:grid; grid-template-columns:auto 1fr auto;
+  gap:var(--b24-s2) var(--b24-s4); align-items:baseline; font-size:13.5px}
+.br-rev .n{font-weight:700; color:var(--b24-text-mute); font-variant-numeric:tabular-nums}
+.br-rev .v{font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
+/* Прочитанное и непрочитанное различаются НЕ ТОЛЬКО ЦВЕТОМ: у пропущенной строки
+   значение печатается словом («not answered»), поэтому цвет здесь усиливает
+   текст, а не заменяет его. */
+.br-rev .v--none{color:var(--b24-text-mute); font-weight:600}
+.br-rev .v--many{color:var(--b24x-warning-ink)}
+.br-rev--dim .q{color:var(--b24-text-mute)}
+@media (max-width:560px){
+  .br-rev{grid-template-columns:auto 1fr; }
+  .br-rev .v{grid-column:2; }
+}
+
 /* ---- sticky nav bar ---- */
 .navbar{position:sticky; bottom:0; z-index:30; background:var(--b24-grad-partner-navy);
   color:var(--b24-on-navy); box-shadow:0 -8px 24px rgba(0,78,124,.24)}
@@ -764,6 +800,66 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
       <p class="hint" id="preset-msg" style="margin:var(--b24-s2) 0 0" hidden></p>
     </div>
     <div id="groups"></div>
+  </section>
+
+  <!-- ====================================================================
+       ПРЕДВСТРЕЧНАЯ АНКЕТА. НЕ ШАГ, А ПАУЗА МЕЖДУ ШАГАМИ.
+       Партнёр отправляет это клиенту ДО встречи, когда отчёта ещё нет и быть не
+       может: отчёт подписан партнёром, собирается из готового расчёта и является
+       клиентским документом ИТОГА. Здесь нужен вход, а не итог, — поэтому
+       результат экрана это простой текст письма, который партнёр копирует в свою
+       почту, а не лист отчёта и не файл-вложение (заполнять PDF клиент не станет,
+       а ответить на письмо ответом в строку — станет).
+       Стоит после шага 3, потому что состав анкеты зависит от выбранных
+       сценариев; подписан не номером шага, а моментом: пронумеровать её значило
+       бы сдвинуть номера пяти следующих шагов и сказать, что расчёт без анкеты не
+       собирается, — а он собирается, на плейсхолдерах.
+       ==================================================================== -->
+  <section id="brief">
+    <div class="sec-h" data-i18n="ui.brWhen"></div>
+    <h2 data-i18n="ui.brH"></h2>
+    <p class="note-line" data-i18n="ui.brNote"></p>
+    <div class="card">
+      <p class="hint" id="br-empty" data-i18n="ui.brEmpty" hidden></p>
+      <div id="br-body" hidden>
+        <p class="hint" id="br-count"></p>
+        <div class="field br-sub">
+          <label for="br-subj" data-i18n="ui.brSubj"></label>
+          <div class="in-wrap">
+            <input class="b24x-input" id="br-subj" type="text" readonly>
+          </div>
+        </div>
+        <div class="field" style="margin-top:var(--b24-s4)">
+          <label for="br-out" data-i18n="ui.brBody"></label>
+          <textarea class="b24x-input br-text" id="br-out" readonly spellcheck="false"></textarea>
+        </div>
+        <div class="b24x-q-cta">
+          <button type="button" class="btn-primary" id="br-copy" data-i18n="ui.brCopy"></button>
+        </div>
+        <p class="hint" id="br-copy-msg" style="margin:var(--b24-s2) 0 0" hidden></p>
+
+        <!-- ЗАРПЛАТЫ В АНКЕТУ НЕ ИДУТ — решение заказчика, и полоса объясняет
+             партнёру, что делать вместо этого. Янтарь здесь по правилу системы
+             пометок: «число не проверено и ждёт партнёра» — ровно эти поля и
+             помечены в шаге 1 как «our estimate». -->
+        <div class="warn" style="margin:var(--b24-s6) 0 0">
+          <img src="assets/icons/alert.svg" alt="">
+          <span><b data-i18n="ui.brSalH"></b><br><span data-i18n="ui.brSalBody"></span></span>
+        </div>
+
+        <div class="br-back">
+          <h3 data-i18n="ui.brBackH"></h3>
+          <p class="hint" data-i18n="ui.brBackNote"></p>
+          <textarea class="b24x-input br-in" id="br-in" spellcheck="false"></textarea>
+          <div class="b24x-q-cta">
+            <button type="button" class="b24x-btn-ghost" id="br-read" data-i18n="ui.brRead"></button>
+            <button type="button" class="btn-primary" id="br-fill" data-i18n="ui.brFill" hidden></button>
+          </div>
+          <p class="hint" id="br-msg" style="margin:var(--b24-s3) 0 0" hidden></p>
+          <div class="br-rev" id="br-rev" hidden></div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- partner services: own step, because a price field buried at the bottom of a
@@ -1540,6 +1636,7 @@ en: {
   "org.ruCall":"Carried over from the Russian version, where the field asked for the whole handling time of a call and the default was 10 minutes. We renamed the field to the work that actually disappears — the minutes after the call — and halved the default, because 20 calls x 10 minutes came to 3 hours 20 minutes of post-call admin a day, 42% of a working day. Five minutes is still our estimate, not a measurement.",
   "org.ruOps":"Carried over from the Russian version, where the default was 30 operations a day. We halved it: thirty is an active user of the system, and this scenario is claimed for all staff. Fifteen is still our estimate, not a measurement.",
   "org.mkt":"Our estimate of a market rate for this region. It is NOT a conversion of the Russian figure — the Russian defaults were in roubles and the numbers here were picked fresh (MIGRATION_NOTES, OPEN_QUESTIONS §5). Replace it with the client's actual payroll: they know it, we do not.",
+  "org.clientRu":"This is a fact about this client's business \u2014 the number of them, how often it happens, how long their own people take over it \u2014 so the client knows it and we cannot. The figure sitting here is neither a benchmark nor our estimate: it was carried over from the Russian calculator unchanged, and nothing stands behind it for this market. It is in the pre-meeting questionnaire; replace it with the client's answer.",
   "org.client":"This is a fact about this client, so no source exists and none can. We put in a deliberately modest placeholder so an untouched calculator does not flatter the result. Set it together with the client — and if they do not know it either, that is worth saying rather than guessing.",
   /* ОХВАТ. Формулировка называет и происхождение, и то, что это самое
      чувствительное число модели: она двигает итог линейно, и подтверждённых
@@ -2003,6 +2100,95 @@ en: {
      одном экране. Цифру убрали, а не подогнали: подгонка выдала бы за расчёт
      то, что расчётом не является. Заодно сказано, что этот эффект в суммах
      выше не учтён, — иначе читается как «плюс ещё столько же». */
+  /* =========================================================================
+     ПРЕДВСТРЕЧНАЯ АНКЕТА.
+     ВОПРОСЫ НАПИСАНЫ НА ЯЗЫКЕ КЛИЕНТА, А НЕ НА ЯЗЫКЕ КАЛЬКУЛЯТОРА. Подписи полей
+     в шагах 1 и 3 называют величину модели («Coverage», «Size of the customer
+     base», «Conversion into a repeat sale, per month»); клиент этих слов не
+     употребляет и на «конверсию в повторную продажу» либо ответит наугад, либо не
+     ответит вовсе. Поэтому у каждого поля анкеты СВОЙ текст, спрашивающий про то
+     же число словами про его бизнес, — а подпись поля остаётся рядом в разборе
+     ответа, чтобы партнёр видел, куда уедет цифра.
+     В ВОПРОСАХ НЕТ НИ ОДНОЙ ЦИФРЫ, И ЭТО НЕ СТИЛЬ, А ТРЕБОВАНИЕ РАЗБОРА: ответ
+     клиента читается как «единственное число в строке вопроса», поэтому «out of
+     100» или «per 1 employee» в формулировке стали бы ответом. Держит
+     check-brief.mjs — он падает на цифре в любом из этих ключей.
+     ========================================================================= */
+  "brief.q.co-empCount":"How many people work at the company in total, counting part-time and contract staff?",
+  "brief.q.co-mgrCount":"How many of them sell \u2014 the people who talk to customers and close deals?",
+  "brief.q.co-ropCount":"How many people run the sales team rather than sell themselves?",
+  "brief.q.1-plan":"What sales target does one of those salespeople carry in a month?",
+  "brief.q.5-base":"How many customers have bought from you at least once and could realistically buy again?",
+  "brief.q.5-check":"What does a typical order or contract come to?",
+  "brief.q.5-conv":"In a typical month, what share of those past customers come back and buy something else? A rough percentage is fine.",
+  /* ДЕСЯТЬ ВОПРОСОВ НИЖЕ — ПОЛЯ, КОТОРЫЕ БЫЛИ ПОМЕЧЕНЫ ПЕРЕНОСОМ ИЗ РУССКОЙ
+     ВЕРСИИ, А ОКАЗАЛИСЬ ФАКТАМИ О КОМПАНИИ КЛИЕНТА. Признак, по которому их
+     отобрали: клиент это ЗНАЕТ — либо мерит (звонки, обращения, записи), либо сам
+     назначает (сколько раз перезвонить по записи, сколько длится совещание).
+     Остались переносом те, где число говорит не про клиента, а про то, как
+     работает функция: минуты после звонка, время на один поиск ответа, доля
+     обращений, которые закроет ИИ, доля высвобожденного времени, ставшая
+     продажами. Клиент такого не измеряет, и спрашивать его об этом значило бы
+     выдать нашу оценку за его ответ. Разбор — в docs/OPEN_QUESTIONS.md. */
+  "brief.q.1-calls":"How many calls does one of your salespeople make or take on a normal day?",
+  "brief.q.4-share":"Roughly what share of the working week does whoever runs your sales team spend listening back to recorded calls and grading them? If nobody does this, say so and I will leave it out.",
+  "brief.q.2-total":"How many customer requests does your support team get on a normal day, across all the channels together?",
+  "brief.q.2-time":"How long does one of those requests take a support person to deal with, start to finish, on average? Your helpdesk reports usually carry this figure.",
+  "brief.q.12-visits":"How many appointments or visits do you book in a month?",
+  "brief.q.12-perRec":"How many times does someone phone the customer about a single booking \u2014 confirming it, reminding them the day before, and so on?",
+  "brief.q.3-docs":"How many documents or written offers does one of the people who prepare them turn out on a normal day?",
+  "brief.q.6-meet":"How many internal meetings does the company hold in a month, the recurring ones and the ad-hoc ones together?",
+  "brief.q.6-dur":"How long does one of those meetings usually run?",
+  "brief.q.6-part":"How many people usually sit in one of them?",
+  "brief.q.11-mgr":"How many people have a team reporting to them and read updates on how that team is doing?",
+  /* Единица идёт в скобках после вопроса: без неё «what does a typical order come
+     to» получает ответ в другой валюте или в штуках. Знак валюты подставляется,
+     а не набирается: он зависит от переключателя. */
+  "brief.u.ppl":"number of people",
+  "brief.u.clients":"number of customers",
+  "brief.u.money":"in {cur}",
+  "brief.u.share":"percent",
+  "brief.u.min":"minutes",
+  "brief.u.calls":"number of calls",
+  "brief.u.enq":"number of requests",
+  "brief.u.bookings":"number of bookings",
+  "brief.u.docs":"number of documents",
+  "brief.u.meetings":"number of meetings",
+  "brief.subject":"A few numbers before our meeting",
+  "brief.hello":"Hello,",
+  "brief.intro":"Before we meet I would like to build the figures on your own numbers instead of on industry averages. {n} short questions below. Round numbers are fine, and \u201cI don\u2019t know\u201d is a useful answer too \u2014 it tells me where to be careful.",
+  "brief.answerTag":"Answer:",
+  "brief.outro":"Put a number after each \u201cAnswer:\u201d and send it back, and I will bring a calculation built on your figures rather than on placeholders. Nothing here goes anywhere outside our conversation.",
+
+  "ui.brWhen":"Before the meeting",
+  "ui.brH":"Ask the client for their numbers",
+  "ui.brNote":"The calculation starts on deliberately modest placeholders, and every field marked \u201cask the client\u201d is one of them. This screen turns exactly those fields \u2014 for the scenarios you picked in Step 3, and no others \u2014 into a short email you send before you meet. Salary is not asked; see the note below. When the reply comes back, paste it in at the bottom and the answers go into the fields.",
+  "ui.brEmpty":"No scenarios picked yet. Choose them in Step 3 \u2014 or press an industry profile there, which picks a set in one click \u2014 and the questions for that set appear here.",
+  "ui.brCount1":"One question, from the fields marked \u201cask the client\u201d in this set. Headcount is always asked: the credibility guard measures the saving against the company\u2019s whole payroll, so every calculation stands on it.",
+  "ui.brCount":"{n} questions, from the fields marked \u201cask the client\u201d in this set. Headcount is always asked: the credibility guard measures the saving against the company\u2019s whole payroll, so every calculation stands on it.",
+  "ui.brSubj":"Subject line",
+  "ui.brBody":"Email text \u2014 copy this into your own mail",
+  "ui.brCopy":"Copy the email text",
+  "ui.brCopyMsg":"Copied. Paste it into your mail client \u2014 your own greeting and signature come from there, this text carries neither.",
+  "ui.brCopyManual":"The browser would not let the page reach the clipboard (that is normal for a file opened from disk). The text is selected \u2014 press Ctrl+C, or Cmd+C on a Mac.",
+  /* ЗАРПЛАТЫ. Источника у нас НЕТ, и полоса говорит именно это. Назвать здесь
+     конкретную базу («по нашим бенчмаркам») было бы выдумкой: подтверждённый
+     источник в этом инструменте есть только у прайса и у порога AI-агентов. */
+  "ui.brSalH":"Salary is not in the questionnaire, and neither is the payroll burden.",
+  "ui.brSalBody":"Both are the client\u2019s most sensitive figures, and a first meeting is the wrong place to ask for them. Take a public average for the country, the industry and the role instead, and put it in Step 1 yourself. This tool ships no salary source \u2014 there is none to ship: the defaults are our own estimate of a market rate, which is why they are marked \u201cour estimate\u201d and not \u201cbenchmark\u201d. Use whatever public figure you can name to the client (a national statistics office, a published salary survey, a job-board aggregate), write down which one you used, and say so on the call. The same goes for the payroll burden in Step 1: the default is a neutral round number, not this client\u2019s rate.",
+  "ui.brBackH":"The reply came back",
+  "ui.brBackNote":"Paste the client\u2019s reply here \u2014 the whole email is fine, quoted text and all. Nothing is filled in until you have looked at what was read and pressed the second button.",
+  "ui.brRead":"Read the reply",
+  "ui.brFill":"Fill these in",
+  "ui.brNothing":"No answers found. The reply has to keep either the question numbers or the \u201cAnswer:\u201d lines for this to read it \u2014 if the client wrote prose instead, type the figures into Step 1 and the scenario cards by hand.",
+  "ui.brStale":"The reply answers question {n}, and this questionnaire has {have}. The selection changed since you sent it, so the numbers no longer line up with the questions. Nothing was filled in. Put the scenarios back the way they were when you sent it, or enter the figures by hand.",
+  "ui.brRead1":"Read {ok} of {n} answers. Check them against the field each one lands in, then press \u201cFill these in\u201d.",
+  "ui.brRead11":"Read the one answer. Check it against the field it lands in, then press \u201cFill these in\u201d.",
+  "ui.brFilled":"{n} fields filled in. They are now the client\u2019s figures, not placeholders, and the calculation above has already moved.",
+  "ui.brFilled1":"One field filled in. It is now the client\u2019s figure, not a placeholder, and the calculation above has already moved.",
+  "ui.brNone":"not answered",
+  "ui.brMany":"several numbers \u2014 enter by hand",
+
   "qual.7":"Once the active employees are up and running, company processes usually speed up as well. That knock-on effect is not counted in any of the figures above.",
 },
 /* German: structure ready, strings pending. Missing keys fall back to English
@@ -2281,7 +2467,16 @@ const ORIGINS = {
   mkt:     {pill:"org.pill.ours",    text:"org.mkt",    check:true},
   /* Про конкретного клиента. Источника нет и быть не может — мы поставили
      заведомо скромный плейсхолдер. */
-  client:  {pill:"org.pill.client",  text:"org.client",  check:true},
+  client:  {pill:"org.pill.client",  text:"org.client",  check:true, ask:true},
+  /* ТОЖЕ ФАКТ О КЛИЕНТЕ, НО ЧИСЛО ЗДЕСЬ НЕ НАШ ПЛЕЙСХОЛДЕР, А ПЕРЕНОС ИЗ РУССКОЙ
+     ВЕРСИИ. Пометка та же — партнёр обязан спросить, — а объяснение другое: у
+     «client» сказано «мы поставили заведомо скромное число», и про перенос это
+     было бы неправдой. Отдельный ключ по тому же правилу, по которому разделены
+     ru / ruCall / ruOps: пометка одна, причина у каждого своя.
+     ПРИЗНАК ask, А НЕ СРАВНЕНИЕ org === "client", решает состав анкеты и отметку
+     цифр клиента в отчёте — иначе десять переведённых полей попали бы в анкету, а
+     в отчёте остались бы неотмеченными. */
+  clientRu:{pill:"org.pill.client",  text:"org.clientRu", check:true, ask:true},
   /* Поле не набирается: его заполняет охват от численности из шага 1. */
   cov:     {pill:"org.pill.coverage",text:"org.cov"},
 };
@@ -2410,7 +2605,7 @@ const scenarios = [
     fields:[
       {k:"mgr",  def:1,     suf:"ppl", org:"cov"},
       {k:"sal",  def:4000,  suf:"money", org:"mkt"},
-      {k:"calls",def:20,    suf:"calls", org:"ru"},
+      {k:"calls",def:20,    suf:"calls", org:"clientRu"},
       /* ВРЕМЯ ПОСЛЕ ЗВОНКА: 10 -> 5 МИНУТ, И ВОТ ПОЧЕМУ.
          Само число не менялось с первой версии, а вот вопрос, на который оно
          отвечает, изменился. Пока поле называлось «Handling time per call», десять
@@ -2464,7 +2659,7 @@ const scenarios = [
     fields:[
       {k:"rop",  def:1,    suf:"ppl", org:"cov"},
       {k:"sal",  def:6500, suf:"money", org:"mkt"},
-      {k:"share",def:0.10, suf:"share", org:"ru"},
+      {k:"share",def:0.10, suf:"share", org:"clientRu"},
     ],
     /* ЧАСОВ В ФОРМУЛЕ НЕТ — она берёт долю месячной стоимости. Но полная месячная
        стоимость это и есть contractHours() оплаченных часов, поэтому доля стоимости
@@ -2576,9 +2771,9 @@ const scenarios = [
     effect:["fot"],
     fields:[
       {k:"sal",  def:3000, suf:"money", org:"mkt"},
-      {k:"total",def:40,   suf:"enq", org:"ru"},
+      {k:"total",def:40,   suf:"enq", org:"clientRu"},
       {k:"ai",   def:30,   suf:"enq", org:"ru"},
-      {k:"time", def:7,    suf:"min", org:"ru"},
+      {k:"time", def:7,    suf:"min", org:"clientRu"},
     ],
     validate:v=> v.ai > v.total ? {ai:"sc.2.err.ai"} : null,
     /* min(ai, total) — та же страховка, что в деньгах: часы не имеют права
@@ -2632,11 +2827,11 @@ const scenarios = [
   { id:12, group:"agents", driver:"monthly", link:null, note:true,
     effect:["fot"],
     fields:[
-      {k:"visits",def:800,  suf:"bookings", org:"ru"},
+      {k:"visits",def:800,  suf:"bookings", org:"clientRu"},
       /* «Звонков на запись» — это НЕ звонки в день, хотя единица та же. Потолок
          сотня: у одной записи не бывает больше сотни звонков. Уточнение объявлено
          у поля — так же, как объявляются пул выручки и часы. */
-      {k:"perRec",def:2,    suf:"calls", lim:{max:100}, org:"ru"},
+      {k:"perRec",def:2,    suf:"calls", lim:{max:100}, org:"clientRu"},
       {k:"time",  def:3,    suf:"min", org:"ru"},
       {k:"admSal",def:2600, suf:"money", org:"mkt"},
     ],
@@ -2651,7 +2846,7 @@ const scenarios = [
     fields:[
       {k:"emp", def:5,    suf:"ppl",   src:"empCount", org:"cov"},
       {k:"sal", def:4000, suf:"money", src:"empSal", org:"mkt"},
-      {k:"docs",def:5,    suf:"docs", org:"ru"},
+      {k:"docs",def:5,    suf:"docs", org:"clientRu"},
       {k:"time",def:20,   suf:"min", org:"ru"},
     ],
     hours:v=> v.docs * v.time * daysMonth / 60 * v.emp,
@@ -2663,9 +2858,9 @@ const scenarios = [
   { id:6, group:"other", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/25345201/",
     effect:["fot"],
     fields:[
-      {k:"meet",def:8,    suf:"meetings", org:"ru"},
-      {k:"dur", def:60,   suf:"min", org:"ru"},
-      {k:"part",def:6,    suf:"ppl", org:"ru"},
+      {k:"meet",def:8,    suf:"meetings", org:"clientRu"},
+      {k:"dur", def:60,   suf:"min", org:"clientRu"},
+      {k:"part",def:6,    suf:"ppl", org:"clientRu"},
       {k:"psal",def:4000, suf:"money", org:"mkt"},
       {k:"asal",def:3000, suf:"money", org:"mkt"},
     ],
@@ -3570,6 +3765,10 @@ function recompute(){
   });
 
   paintTotals(model);
+  /* Состав анкеты зависит от выбора сценариев, от переключателя выручки и от
+     того, какие роли просит набор, — то есть меняется ровно тогда, когда идёт
+     пересчёт. Своего события у неё нет и не нужно. */
+  paintBrief();
 }
 
 /* Totals only — never touches the scenario cards. Used by the partner service-cost
@@ -4237,7 +4436,7 @@ function reportState(){
                  заменяет) и что вендорских бенчмарков здесь нет вовсе. Тип
                  происхождения каждого из сорока восьми полей ему не нужен —
                  он нужен ПАРТНЁРУ, и живёт на экране. */
-              client: f.org === "client",
+              client: !!(orgOf(f) && orgOf(f).ask),
               /* ТИП ПРОИСХОЖДЕНИЯ СТРОКОЙ. Лист допущений (P16) печатает его
                  столбцом: финансист, которого не было на встрече, обязан видеть не
                  только что мы ввели, но и на чём это стоит. Полная формулировка
@@ -4433,7 +4632,7 @@ function reportState(){
     orgLegend: (() => {
       const seen = new Set();
       m.items.forEach(it => it.sc.fields.forEach(f=>{
-        if(f.org === "client" && (!f.revOnly || SHOW_REVENUE)) seen.add(it.sc.id + ":" + f.k);
+        if(orgOf(f) && orgOf(f).ask && (!f.revOnly || SHOW_REVENUE)) seen.add(it.sc.id + ":" + f.k);
       }));
       /* УТВЕРЖДЕНИЕ О БЕНЧМАРКАХ ПЕЧАТАЕТСЯ ВСЕГДА, отметки — по наличию. Это две
          разные вещи, и раньше они были связаны одним условием: при наборе сценариев
@@ -6969,6 +7168,327 @@ document.getElementById("preset-row").addEventListener("click", e=>{
   const names = scenarios.filter(sc=> p.ids.includes(sc.id))
     .map(sc=> t(`sc.${sc.id}.title`)).join("; ");
   presetMsg("ui.presetPicked", {names});
+});
+
+/* ==========================================================================
+   ПРЕДВСТРЕЧНАЯ АНКЕТА. НИ ОДНОЙ ФОРМУЛЫ И НИ ОДНОГО ВТОРОГО СПИСКА ПОЛЕЙ.
+
+   СОСТАВ НЕ ОБЪЯВЛЕН ЗДЕСЬ. Он вычитается из разметки происхождения: в анкету
+   идёт ровно то, у чего тип происхождения несёт признак ask (то есть «ask the
+   client» — client и clientRu). Список полей рядом с этим кодом был бы вторым
+   источником истины и разошёлся бы с плашками на экране в первую же правку —
+   ровно так уже разъезжался список сценариев с агентами у шаблона отчёта.
+
+   ЧЕГО ЗДЕСЬ НЕТ:
+     зарплат и нагрузки на ФОТ — решение заказчика. Они помечены «our estimate»,
+       то есть НАШЕЙ оценкой рыночной ставки, и признака ask у этого типа нет, так
+       что отсутствие держится разметкой, а не отдельным исключением в этом коде.
+       Партнёру про них сказано полосой на экране;
+     второго пути записи в состояние — «заполнить» кладёт число В ТО ЖЕ ПОЛЕ и
+       нажимает за партнёра то же событие input. Поэтому границы, признак dirty,
+       пересчёт и подсветка ошибки работают сами, без единой строки поддержки;
+     отчёта и печати — партнёр отправляет это ДО встречи, когда расчёта ещё нет.
+   ========================================================================== */
+
+/* Единица идёт в скобках после вопроса. Ключи — по суффиксу поля, то есть по
+   СМЫСЛУ величины: другого признака единицы в модели нет. */
+const BRIEF_UNIT = {
+  ppl:"brief.u.ppl", clients:"brief.u.clients", money:"brief.u.money",
+  share:"brief.u.share", min:"brief.u.min", calls:"brief.u.calls",
+  enq:"brief.u.enq", bookings:"brief.u.bookings", docs:"brief.u.docs",
+  meetings:"brief.u.meetings",
+};
+const briefAsk = f => { const o = orgOf(f); return !!(o && o.ask); };
+
+/* СОСТАВ АНКЕТЫ. Порядок — порядок экрана: партнёр читает письмо рядом со своим
+   калькулятором и сверяет глазами. */
+function briefItems(){
+  const out = [];
+  /* НАБОРА НЕТ — АНКЕТЫ НЕТ. Численность спрашивается при любом наборе, но
+     «при любом» это не «при пустом»: без выбранных сценариев замерять нечего, и
+     письмо из одного вопроса про численность отправлять незачем. Без этой строки
+     подсказка «выберите сценарии в шаге 3» не показалась бы никогда — численность
+     одна держала бы анкету непустой. */
+  if(!scenarios.some(sc=>state[sc.id].selected)) return out;
+  COMPANY.forEach(c=>{
+    if(!briefAsk(c)) return;
+    /* ЧИСЛЕННОСТЬ СПРАШИВАЕТСЯ ВСЕГДА, а роли — только если их просит выбранный
+       сценарий. Причина у численности не в сценариях: на ней стоит ЗНАМЕНАТЕЛЬ
+       предохранителя достоверности (payroll = empCount x empSal x нагрузка), и он
+       считается при любом наборе. Набор без единого сценария, использующего
+       численность, всё равно сравнивает экономию с фондом — то есть с этим
+       числом. Отфильтровать его по сценариям значило бы отправить анкету, после
+       которой предохранитель по-прежнему стоит на плейсхолдере. */
+    if(c.k !== "empCount"
+       && !(AUTOFILL[c.k] || []).some(([id]) => state[id] && state[id].selected)) return;
+    out.push({addr:"co-" + c.k, comp:c.k, suf:"ppl"});
+  });
+  scenarios.forEach(sc=>{
+    if(!state[sc.id].selected) return;
+    /* Сценарий, который сейчас не даёт ничего (работает только на выручку, а
+       переключатель выключен): тот же признак, по которому его карточка печатает
+       прочерк вместо суммы. Спрашивать клиента о числах, которые не войдут ни в
+       одну сумму, — это вопрос, потраченный впустую. */
+    if(!sc.effect.includes("fot") && !SHOW_REVENUE) return;
+    sc.fields.forEach(f=>{
+      if(!briefAsk(f)) return;
+      if(f.revOnly && !SHOW_REVENUE) return;   /* тот же фильтр, что у экрана и отчёта */
+      out.push({addr:sc.id + "-" + f.k, sc:sc.id, fk:f.k, suf:f.suf});
+    });
+  });
+  return out;
+}
+/* Вопрос — на языке клиента; подпись — на языке калькулятора, она нужна партнёру
+   в разборе ответа, чтобы видеть, куда уедет цифра. */
+const briefQ    = it => t("brief.q." + it.addr);
+const briefLbl  = it => it.comp ? t("co." + it.comp) : t("sc." + it.sc + ".f." + it.fk);
+const briefUnit = it => t(BRIEF_UNIT[it.suf], {cur: sufText("money")});
+/* Поле, в которое уедет ответ. То же самое, в которое партнёр набирает руками.
+   :not([data-seg]) ОБЯЗАТЕЛЕН: у сценария с сегментами в карточке живут
+   поля-близнецы с тем же data-k, и без этого условия адрес перестаёт быть
+   однозначным. Сегодня querySelector всё равно вернул бы основное поле — оно
+   стоит в разметке раньше, — то есть ошибка была бы не видна ни на экране, ни в
+   суммах, и проявилась бы от перестановки блоков в карточке. Поэтому селектор
+   вынесен отдельной функцией: check-brief добавляет сценарию сегмент и требует,
+   чтобы он находил РОВНО ОДИН узел, а не «первый подходящий». */
+const briefSel = it => "#card-" + it.sc + ' .num-in[data-k="' + it.fk + '"]:not([data-seg])';
+const briefInput = it => it.comp
+  ? document.getElementById("co-" + it.comp)
+  : document.querySelector(briefSel(it));
+
+/* ПИСЬМО ПЕРЕНОСИТСЯ ПО СЛОВАМ САМО, В 78 ЗНАКОВ.
+   Не косметика. Первый вариант отдавал длинные строки на перенос браузеру
+   (white-space:pre-wrap) — и в поле всё читалось, а в письме у клиента строка
+   уезжала так, как решит ЕГО почта: там своя ширина, свой шрифт и своя цитатная
+   полоса. Плоский текст, который партнёр вставляет в письмо, обязан нести свои
+   переносы, иначе нумерация вопросов у клиента разъезжается. 78 — обычная
+   ширина plain-text письма; при ней же в поле не нужна горизонтальная полоса,
+   то есть партнёр видит ровно то, что отправляет.
+   ПЕРЕНОС НЕ ЛОМАЕТ РАЗБОР ОТВЕТА: продолжение строки уходит без ведущего номера
+   и без метки ответа, а такие строки разбор пропускает молча. Ради этого же
+   продолжение вопроса ОТБИВАЕТСЯ отступом — оно встаёт под текстом вопроса, а не
+   под его номером, и глазами не читается как новый пункт. */
+const BRIEF_COLS = 78;
+function briefWrap(text, indent){
+  const words = text.split(/\s+/).filter(Boolean);
+  const out = [];
+  let line = "";
+  for(const w of words){
+    const cand = line ? line + " " + w : w;
+    /* Слово длиннее строки не режется: адрес или длинное название лучше выпустить
+       за поле, чем разорвать пополам. */
+    if(line && (out.length ? indent.length : 0) + cand.length > BRIEF_COLS){
+      out.push(line); line = w;
+    } else line = cand;
+  }
+  if(line) out.push(line);
+  return out.map((l,i)=> (i ? indent : "") + l).join("\n");
+}
+function briefText(items){
+  const qs = items.map((it,i)=>{
+    const head = (i+1) + ". " + briefQ(it) + " (" + briefUnit(it) + ")";
+    /* Отступ продолжения — под первой буквой вопроса, то есть по ширине «N. ».
+       Считается от номера, а не задан числом: на десятом вопросе номер шире. */
+    /* Метка ответа отбивается ТЕМ ЖЕ отступом, что и продолжение вопроса. Пока
+       он был набран тремя пробелами, у вопросов с двузначным номером «Answer:»
+       стоял на пробел левее текста — мелочь, но её видно, а письмо уходит
+       клиенту. */
+    const ind = " ".repeat(String(i+1).length + 2);
+    return briefWrap(head, ind) + "\n" + ind + t("brief.answerTag");
+  });
+  return [t("brief.hello"), "",
+          briefWrap(t("brief.intro", {n: items.length}), ""), "",
+          qs.join("\n\n"), "",
+          briefWrap(t("brief.outro"), "")].join("\n");
+}
+
+function paintBrief(){
+  const body = document.getElementById("br-body");
+  if(!body) return;
+  const items = briefItems();
+  const empty = !items.length;
+  body.hidden = empty;
+  document.getElementById("br-empty").hidden = !empty;
+  if(empty) return;
+  document.getElementById("br-count").textContent =
+    items.length === 1 ? t("ui.brCount1") : t("ui.brCount", {n: fmtInt(items.length)});
+  document.getElementById("br-subj").value = t("brief.subject");
+  const out = document.getElementById("br-out"), txt = briefText(items);
+  /* Сравнение до записи: recompute() зовётся на каждое нажатие клавиши в любом
+     поле страницы, а переписанное value сбрасывает выделение — партнёр, нажавший
+     «копировать» и не успевший скопировать вручную, потерял бы выделение. */
+  if(out.value !== txt) out.value = txt;
+  /* ПИСЬМО ПОКАЗЫВАЕТСЯ ЦЕЛИКОМ, а не в окошке со своей полосой прокрутки. Партнёр
+     обязан прочитать то, что отправляет клиенту, и внутренний скролл в поле,
+     которое и так стоит на прокручиваемой странице, читать этому мешает: две
+     прокрутки на одном экране. Высота задаётся строками (rows), а не пикселями:
+     кегль и межстрочный тут наши, но браузер всё равно считает их сам. */
+  out.rows = txt.split("\n").length + 1;
+}
+
+/* --------------------------------------------------------------------------
+   РАЗБОР ОТВЕТА.
+   ЧИТАЮТСЯ РОВНО ДВЕ ФОРМЫ, и обе — те, в которых отвечают на самом деле:
+   строка, начинающаяся с номера вопроса («3 - 40», клиент пересобрал список), и
+   строка с меткой ответа (клиент ответил внутри пересланного письма). Всё
+   остальное пропускается МОЛЧА, и это главное решение разбора: в пересланном
+   письме есть приветствие, цитаты и подпись, а в подписи — телефон и дата.
+   Читая «любое число в тексте», мы бы отдали номер телефона в ответ на последний
+   вопрос. Поэтому в формулировках вопросов нет ни одной цифры (держит
+   check-brief.mjs): единственное число в строке вопроса — это ответ.
+   -------------------------------------------------------------------------- */
+/* СКОЛЬКО ВОПРОСОВ БЫВАЕТ В АНКЕТЕ ВООБЩЕ — потолок номера, выведенный из
+   модели, а не назначенный. Нужен, чтобы отличить «ответ на другую анкету» от
+   постороннего числа в начале строки: номер больше этого потолка вопросом быть
+   не может ни при каком наборе сценариев, значит это дата, счёт вложений или
+   что-то ещё из письма, и отказываться из-за него нельзя. */
+function briefMax(){
+  let n = 0;
+  COMPANY.forEach(c=>{ if(briefAsk(c)) n++; });
+  scenarios.forEach(sc=>sc.fields.forEach(f=>{ if(briefAsk(f)) n++; }));
+  return n;
+}
+function briefParse(text, items){
+  const tag = t("brief.answerTag").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const tagRe = new RegExp(tag + "(.*)$", "i");
+  const ceiling = briefMax();
+  const got = {}, unknown = [];
+  let cur = null;
+  String(text).split(/\r?\n/).forEach(raw=>{
+    /* ЦИТАТНЫЕ УГОЛКИ СНИМАЮТСЯ ПЕРВЫМ ДЕЛОМ. Обычный ответ на письмо приходит
+       процитированным целиком, и почта ставит «> » перед КАЖДОЙ строкой — вместе
+       с нумерацией вопросов. Пока этого не было, ответ, присланный самым обычным
+       способом, не читался вовсе: строка «> 1. How many...» не начиналась с
+       цифры, и метка ответа под ней оставалась без вопроса. Снимаются только
+       пробелы и знаки цитаты, данных в них нет. */
+    const line = raw.replace(/^[\s>|]+/, "");
+    let rest = null;
+    /* РАЗДЕЛИТЕЛЬ ПОСЛЕ НОМЕРА ОБЯЗАТЕЛЕН. Был необязательным — и тогда любая
+       строка, начинающаяся числом («14 September 2026», «2 attachments»),
+       читалась как номер вопроса. Ответы же приходят с разделителем всегда:
+       «1.», «1)», «1 -». Потеря — форма «1 60» без всякого знака; она не
+       разбирается, и об этом сказано вслух, а не угадывается. */
+    const head = line.match(/^(\d+)\s*[.)\]:\-–—]\s*(.*)$/);
+    if(head){
+      const n = +head[1];
+      /* НОМЕР, КОТОРОГО В ЭТОЙ АНКЕТЕ НЕТ, НО В АНКЕТЕ БЫВАЕТ. Значит набор
+         сценариев поменялся после отправки, и позиции больше не те: копим и
+         отказываемся целиком. Разобрать «сколько получится» здесь нельзя — это
+         молча положило бы ответ на один вопрос в поле другого.
+         Номер выше потолка — не вопрос, а число из письма: пропускаем молча. */
+      if(n < 1 || n > ceiling){ cur = null; return; }
+      if(n > items.length){ unknown.push(n); cur = null; return; }
+      cur = n; rest = head[2];
+    } else {
+      const m = line.match(tagRe);
+      if(m && cur != null) rest = m[1];
+    }
+    if(rest == null) return;
+    const nums = rest.match(/\d[\d\s.,]*/g) || [];
+    if(!nums.length) return;
+    (got[cur] = got[cur] || []).push(...nums.map(parseNum));
+  });
+  const rows = items.map((it,i)=>{
+    /* Одно и то же число, названное дважды (клиент ответил и в сводке, и в
+       цитате), — это один ответ, а не спор. Разные — спор, и решать его за
+       партнёра мы не будем. */
+    const seen = [...new Set((got[i+1] || []).map(x=>Math.round(x*1e6)/1e6))];
+    return {it, n:i+1, seen,
+            value: seen.length === 1 ? seen[0] : null,
+            status: seen.length === 0 ? "none" : seen.length === 1 ? "ok" : "many"};
+  });
+  return {rows, unknown};
+}
+
+/* Прочитанное значение в единице ЭКРАНА — той, в которой оно и уедет в поле. */
+const briefShow = r => r.it.suf === "money" ? fmtMoney(r.value)
+                     : r.it.suf === "share" ? groupFmt(String(r.value)) + "%"
+                     : groupFmt(String(r.value)) + (t(SUF[r.it.suf]) ? " " + t(SUF[r.it.suf]) : "");
+
+let briefRead = null;          /* результат последнего разбора; до него нечего заполнять */
+
+function briefRender(){
+  const rev = document.getElementById("br-rev");
+  const msg = document.getElementById("br-msg");
+  const fill = document.getElementById("br-fill");
+  const res = briefRead;
+  rev.hidden = true; rev.innerHTML = ""; fill.hidden = true;
+  msg.hidden = false;
+  if(!res){ msg.hidden = true; return; }
+  if(res.unknown.length){
+    msg.textContent = t("ui.brStale", {n: fmtInt(Math.max(...res.unknown)),
+                                       have: fmtInt(res.rows.length)});
+    return;
+  }
+  const ok = res.rows.filter(r=>r.status === "ok").length;
+  if(!ok){ msg.textContent = t("ui.brNothing"); return; }
+  msg.textContent = res.rows.length === 1 && ok === 1
+    ? t("ui.brRead11")
+    : t("ui.brRead1", {ok: fmtInt(ok), n: fmtInt(res.rows.length)});
+  const cell = (cls, text) => {
+    const s = document.createElement("span");
+    s.className = cls; s.textContent = text; return s;
+  };
+  res.rows.forEach(r=>{
+    rev.append(cell("n", r.n + "."), cell("q", briefLbl(r.it)),
+      r.status === "ok"   ? cell("v", briefShow(r))
+    : r.status === "many" ? cell("v v--many", t("ui.brMany"))
+    :                       cell("v v--none", t("ui.brNone")));
+  });
+  rev.hidden = false;
+  fill.hidden = false;
+}
+
+/* ЗАПОЛНЕНИЕ. Всё, что здесь происходит: число кладётся в то же поле, в которое
+   партнёр набирает руками, и за него нажимается то же событие. Никакой записи в
+   state, company или dirty тут нет и быть не должно — обработчик поля делает это
+   сам, и вместе с ним работают границы и подсветка ошибки. */
+function briefFill(){
+  if(!briefRead || briefRead.unknown.length) return 0;
+  let n = 0;
+  briefRead.rows.filter(r=>r.status === "ok").forEach(r=>{
+    const inp = briefInput(r.it);
+    if(!inp) return;
+    inp.value = groupFmt(String(r.value));
+    inp.dispatchEvent(new Event("input", {bubbles:true}));
+    n++;
+  });
+  return n;
+}
+
+document.getElementById("br-copy").addEventListener("click", async ()=>{
+  const out = document.getElementById("br-out");
+  const msg = document.getElementById("br-copy-msg");
+  let copied = false;
+  /* Тот же путь, что у ссылки на клиентский экран: из file:// это не защищённый
+     контекст, буфер обмена странице не отдаётся вовсе — тогда текст выделяется, и
+     сказано, чем его копировать. */
+  try {
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(out.value); copied = true;
+    }
+  } catch(e){ copied = false; }
+  if(!copied){ out.focus(); out.select(); }
+  msg.hidden = false;
+  msg.textContent = t(copied ? "ui.brCopyMsg" : "ui.brCopyManual");
+});
+document.getElementById("br-read").addEventListener("click", ()=>{
+  const items = briefItems();
+  const src = document.getElementById("br-in").value;
+  /* Пустая вставка — не ошибка разбора, а «нечего разбирать»: строим тот же
+     результат из одних пропусков, чтобы сообщение было одно и то же. */
+  briefRead = src.trim()
+    ? briefParse(src, items)
+    : {rows: items.map((it,i)=>({it, n:i+1, seen:[], value:null, status:"none"})), unknown:[]};
+  briefRender();
+});
+document.getElementById("br-fill").addEventListener("click", ()=>{
+  const n = briefFill();
+  briefRead = null;
+  briefRender();
+  const msg = document.getElementById("br-msg");
+  msg.hidden = false;
+  msg.textContent = n === 1 ? t("ui.brFilled1") : t("ui.brFilled", {n: fmtInt(n)});
 });
 
 /* ==========================================================================
