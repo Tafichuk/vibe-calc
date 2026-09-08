@@ -481,7 +481,16 @@ body:not([data-mode="quick"]) #quick{display:none}
 /* Полоса прокрутки вбок здесь — признак того, что перенос в briefText сломался:
    письмо несёт свои переносы в 78 знаков и в это поле влезает целиком. Оставлено
    overflow-x:auto, а не hidden, именно поэтому: сломается — будет видно, а не
-   обрежется молча. */
+   обрежется молча.
+
+   НА ТЕЛЕФОНЕ ЭТА ПОЛОСА ЕСТЬ, И ЭТО ОСОЗНАННЫЙ РАЗМЕН (приёмка, P3-4).
+   При ширине поля около 280 точек строка в 78 знаков не влезает, и партнёр,
+   читающий письмо с телефона, листает его вбок. Убрать это можно только отдав
+   перенос браузеру (white-space:pre-wrap) — но тогда письмо перестанет нести
+   СВОИ переносы, а у клиента ширина письма своя, и нумерация вопросов у него
+   разъедется. Разъехавшееся письмо у клиента дороже неудобного чтения у партнёра,
+   тем более что письмо он читает один раз и обычно с ноутбука. Кегль ради этого
+   тоже не уменьшаем: нечитаемый текст хуже листаемого. Решение не менять. */
 .br-in{display:block; width:100%; height:auto; min-height:260px;
   padding:var(--b24-s4); font:13px/1.6 var(--b24-font-body); resize:vertical}
 .br-sub{max-width:520px}
@@ -823,6 +832,11 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
       <p class="hint" id="br-empty" data-i18n="ui.brEmpty" hidden></p>
       <div id="br-body" hidden>
         <p class="hint" id="br-count"></p>
+        <!-- ПОЛЯ, КОТОРЫЕ В АНКЕТУ НЕ ПОПАЛИ, НАЗЫВАЮТСЯ ВСЛУХ. Приёмка нашла:
+             при выключенном прогнозе выручки сценарий, работающий только на неё,
+             держит на карточке янтарные «ask the client», а в письме их нет —
+             и счётчик выше при этом обещал «все поля с этой пометкой». -->
+        <p class="hint" id="br-omitted" hidden></p>
         <div class="field br-sub">
           <label for="br-subj" data-i18n="ui.brSubj"></label>
           <div class="in-wrap">
@@ -856,6 +870,15 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
             <button type="button" class="btn-primary" id="br-fill" data-i18n="ui.brFill" hidden></button>
           </div>
           <p class="hint" id="br-msg" style="margin:var(--b24-s3) 0 0" hidden></p>
+          <!-- ЗАМЕЧАНИЯ РАЗБОРА — отдельной полосой, а не припиской к сообщению.
+               Это не отказ (числа прочитаны и записать их можно), но и не мелочь:
+               «в письме есть упоминание вопроса вне нумерации» означает, что
+               клиент, скорее всего, что-то поправил прозой, а мы этого не читаем.
+               Янтарь по правилу системы пометок: требует действия партнёра. -->
+          <div class="warn" id="br-notes" style="margin:var(--b24-s3) 0 0" hidden>
+            <img src="assets/icons/alert.svg" alt="">
+            <span id="br-notes-body"></span>
+          </div>
           <div class="br-rev" id="br-rev" hidden></div>
         </div>
       </div>
@@ -2158,6 +2181,44 @@ en: {
   "brief.hello":"Hello,",
   "brief.intro":"Before we meet I would like to build the figures on your own numbers instead of on industry averages. {n} short questions below. Round numbers are fine, and \u201cI don\u2019t know\u201d is a useful answer too \u2014 it tells me where to be careful.",
   "brief.answerTag":"Answer:",
+  /* ССЫЛКА В ПОДВАЛЕ ПИСЬМА — ПРИВЯЗКА ОТВЕТА К НАБОРУ СЦЕНАРИЕВ.
+     Приёмка показала худший из возможных исходов: два разных набора дают по шесть
+     вопросов, партнёр меняет набор после отправки, вставляет старый ответ — и
+     «9 продавцов» уезжает в «9 обращений в день», «15% недели» в «15 минут на
+     совещание», а сообщение говорит «прочитано 6 из 6». Прежний предохранитель
+     сверял только НОМЕР с числом вопросов и при равном числе молчал.
+     ЧТО ЗДЕСЬ НЕ ПОДОШЛО:
+       невидимые символы (zero-width) — часть почтовых клиентов их вырезает или
+         показывает квадратиками, а прятать данные в чужом письме — не то, что мы
+         говорим партнёру про прозрачность инструмента;
+       «SC-1-4-9-11» — тот самый технический мусор, и заодно наши внутренние
+         номера сценариев уезжают клиенту;
+       сверять процитированный текст вопросов — ловит только ответ с цитатой, а на
+         приёмке дефект показал ровно сжатый ответ («1. 62 / 2. 9») без цитаты.
+     «Our ref:» — обычная деловая мебель письма: одна короткая строка в подвале,
+     клиенту ничего не говорит и глаза не мозолит. Отпечаток набора, не его состав. */
+  "brief.ref":"Our ref: AVC-{code}",
+  "ui.brRefMismatch":"This reply was sent for a different set of scenarios. Its reference is {got}; this questionnaire is {want}. The answers are numbered, so applying them now would put the client’s figures into the wrong fields — nothing was filled in. Put the scenarios back the way they were when you sent the email, or ask the client to reply to the current one.",
+  "ui.brRefMissing":"The reply does not carry the reference line from the email, so I cannot confirm it answers THIS set of scenarios. Read the table below against the field names before you fill anything in — if you changed the selection after sending, the numbers will line up against the wrong questions.",
+  /* P1-2. Правку прозой НЕ РАЗБИРАЕМ: «correction on question 1: 65, not 62» —
+     это предложение на человеческом языке, и угадывать в нём число опаснее, чем
+     отказаться. Но и молчать нельзя: партнёр записывал старое значение, а
+     сообщение докладывало полный успех. Поэтому — заметили упоминание номера
+     вопроса вне нумерованной строки и сказали, где смотреть. */
+  "ui.brCorrection":"The reply mentions question {list} outside the numbered answers — that usually means the client corrected something in their own words. Prose corrections are not read: check {list} by hand against the email before you fill in.",
+  /* P3-1. Отказ обязан называть настоящую причину. Раньше на ответ словами
+     («about twenty») он говорил «сохраните нумерацию вопросов» — а нумерация как
+     раз была сохранена, и партнёр шёл искать ошибку, которой нет. */
+  "ui.brNoDigits":"The numbering is there, but the answers are not numbers: {sample}. Figures written as words are not read — ask the client for numbers, or type them into Step 1 and the scenario cards by hand.",
+  /* P3-2. После записи нельзя говорить «расчёт поехал», если значение отвергнуто
+     границей поля: сценарий в этот момент выкинут из всех сумм. */
+  "ui.brFilledInvalid":"The numbers are in, but the model cannot use {bad} — the scenario it belongs to stays out of every total until you fix that field. Look for it marked in red, in Step 1 or on the card.",
+  /* P3-3. Пересчёта валют нет и не будет, но и молча переименовывать чужую
+     валюту в свою нельзя: партнёр увидит «$3,500» на числе, которое клиент
+     назвал в евро. */
+  "ui.brCurrency":"The client answered question {list} in {theirs}, and this calculation is in {ours}. The number was taken as written — there is no conversion. Convert it yourself before you rely on it.",
+  /* P2-1. Поля, которые в анкету не пошли, называются вслух. */
+  "ui.brOmitted":"Not asked: {list}. Those fields are marked “ask the client” on their cards, but they belong to scenarios that work on revenue only, and the revenue forecast is switched off in Step 1 — so right now they add nothing to any total. Turn it on and they join the questionnaire.",
   "brief.outro":"Put a number after each \u201cAnswer:\u201d and send it back, and I will bring a calculation built on your figures rather than on placeholders. Nothing here goes anywhere outside our conversation.",
 
   "ui.brWhen":"Before the meeting",
@@ -7284,6 +7345,43 @@ function briefWrap(text, indent){
   if(line) out.push(line);
   return out.map((l,i)=> (i ? indent : "") + l).join("\n");
 }
+/* ОТПЕЧАТОК НАБОРА — привязка ответа к тому, о чём его спрашивали.
+   Считается по УПОРЯДОЧЕННОМУ списку адресов полей: порядок здесь несущий, потому
+   что ответы сопоставляются позицией. Включает и поля выручки, так что
+   переключатель прогноза меняет отпечаток — он тоже меняет состав вопросов.
+   FNV-1a: пяти знаков base36 хватает (36^5 = 60 млн) при том, что всех возможных
+   наборов сценариев 2^11, — случайное совпадение двух разных анкет исключено на
+   практике. Отпечаток НЕ раскрывает состав: клиенту он ничего не сообщает. */
+function briefFingerprint(items){
+  let hash = 0x811c9dc5;
+  const src = items.map(it => it.addr).join(",");
+  for(let i = 0; i < src.length; i++){
+    hash ^= src.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(36).toUpperCase().padStart(5, "0").slice(-5);
+}
+const BRIEF_REF_RE = /AVC-([A-Z0-9]{5})/i;
+
+/* ПОЛЯ, КОТОРЫЕ ПОМЕЧЕНЫ «СПРОСИТЬ КЛИЕНТА», НО В АНКЕТУ НЕ ПОШЛИ.
+   Сегодня причина одна: сценарий работает только на выручку, а прогноз выручки
+   выключен — тогда он не даёт ни одной цифры ни в одну сумму, и спрашивать о нём
+   клиента незачем. Но молчать об этом тоже нельзя: на карточке янтарные пометки
+   стоят, и счётчик анкеты обещает «все поля с этой пометкой». */
+function briefOmitted(){
+  const out = [];
+  scenarios.forEach(sc=>{
+    if(!state[sc.id].selected) return;
+    if(sc.effect.includes("fot") || SHOW_REVENUE) return;
+    sc.fields.forEach(f=>{
+      if(!briefAsk(f)) return;
+      if(f.revOnly && !SHOW_REVENUE) return;   /* этих нет и на карточке */
+      out.push(t(`sc.${sc.id}.f.${f.k}`));
+    });
+  });
+  return out;
+}
+
 function briefText(items){
   const qs = items.map((it,i)=>{
     const head = (i+1) + ". " + briefQ(it) + " (" + briefUnit(it) + ")";
@@ -7299,7 +7397,11 @@ function briefText(items){
   return [t("brief.hello"), "",
           briefWrap(t("brief.intro", {n: items.length}), ""), "",
           qs.join("\n\n"), "",
-          briefWrap(t("brief.outro"), "")].join("\n");
+          briefWrap(t("brief.outro"), ""), "",
+          /* Ссылка ПОСЛЕДНЕЙ строкой и через пустую: так её не примут за часть
+             просьбы, и она уцелеет при цитировании — почта ставит «> » перед
+             строкой, а разбор уголки снимает. */
+          t("brief.ref", {code: briefFingerprint(items)})].join("\n");
 }
 
 function paintBrief(){
@@ -7312,6 +7414,14 @@ function paintBrief(){
   if(empty) return;
   document.getElementById("br-count").textContent =
     items.length === 1 ? t("ui.brCount1") : t("ui.brCount", {n: fmtInt(items.length)});
+  /* P2-1. ПОЛЯ, КОТОРЫЕ В АНКЕТУ НЕ ПОШЛИ, НАЗЫВАЮТСЯ. Счётчик выше обещает
+     «все поля с пометкой ask the client в этом наборе», и без этой строки он врал:
+     сценарий, работающий только на выручку, при выключенном прогнозе держит на
+     карточке янтарные пометки, а в письме их нет. */
+  const om = briefOmitted();
+  const omEl = document.getElementById("br-omitted");
+  omEl.hidden = !om.length;
+  if(om.length) omEl.textContent = t("ui.brOmitted", {list: "“" + om.join("”, “") + "”"});
   document.getElementById("br-subj").value = t("brief.subject");
   const out = document.getElementById("br-out"), txt = briefText(items);
   /* Сравнение до записи: recompute() зовётся на каждое нажатие клавиши в любом
@@ -7352,7 +7462,13 @@ function briefParse(text, items){
   const tag = t("brief.answerTag").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const tagRe = new RegExp(tag + "(.*)$", "i");
   const ceiling = briefMax();
-  const got = {}, unknown = [];
+  const got = {}, rawAns = {}, unknown = [], numberless = [], mentions = new Set();
+  /* ОТПЕЧАТОК ИЗ ПИСЬМА. Ищется во всём тексте, а не построчно: клиент мог
+     оставить подвал в цитате, приписать ответ сверху, переслать письмо третий
+     раз — строка всё равно где-то там. */
+  const want = briefFingerprint(items);
+  const found = String(text).match(BRIEF_REF_RE);
+  const ref = found ? found[1].toUpperCase() : null;
   let cur = null;
   String(text).split(/\r?\n/).forEach(raw=>{
     /* ЦИТАТНЫЕ УГОЛКИ СНИМАЮТСЯ ПЕРВЫМ ДЕЛОМ. Обычный ответ на письмо приходит
@@ -7383,21 +7499,49 @@ function briefParse(text, items){
       const m = line.match(tagRe);
       if(m && cur != null) rest = m[1];
     }
-    if(rest == null) return;
+    if(rest == null){
+      /* УПОМИНАНИЕ НОМЕРА ВОПРОСА ВНЕ НУМЕРАЦИИ. «correction on question 1: 65,
+         not 62» — самый обычный способ поправиться в письме, и до приёмки он
+         пропадал молча: записывалось старое число, а сообщение докладывало
+         «прочитано 6 из 6». Разбирать такую фразу мы НЕ будем — угадать, какое из
+         двух чисел итоговое, нельзя, — но заметить и назвать номер обязаны.
+         Строки самого письма сюда не попадают: в них нет оборота «question N». */
+      const men = line.match(/\b(?:question|questions|q\.?|вопрос\w*)\s*#?\s*(\d{1,2})\b|#\s*(\d{1,2})\b/i);
+      if(men){
+        const n = +(men[1] || men[2]);
+        if(n >= 1 && n <= items.length) mentions.add(n);
+      }
+      return;
+    }
     const nums = rest.match(/\d[\d\s.,]*/g) || [];
-    if(!nums.length) return;
+    if(!nums.length){ numberless.push(rest.trim().slice(0, 26)); return; }
     (got[cur] = got[cur] || []).push(...nums.map(parseNum));
+    /* Сырой текст ответа нужен для проверки валюты: клиент отвечает «EUR 3 500»,
+       а поле у нас в долларах, и раньше таблица разбора молча печатала «$3,500».
+       ИМЯ НЕ `raw`: так зовут параметр forEach выше — сырую СТРОКУ письма, — и
+       внутри колбэка он затеняет внешнее имя, так что присваивание уходило в
+       индекс строки («Cannot assign to read only property '1' of string»).
+       Поймала проверка набора, а не глаза. */
+    (rawAns[cur] = rawAns[cur] || []).push(rest.trim());
   });
   const rows = items.map((it,i)=>{
     /* Одно и то же число, названное дважды (клиент ответил и в сводке, и в
        цитате), — это один ответ, а не спор. Разные — спор, и решать его за
        партнёра мы не будем. */
     const seen = [...new Set((got[i+1] || []).map(x=>Math.round(x*1e6)/1e6))];
-    return {it, n:i+1, seen,
+    return {it, n:i+1, seen, raw: (rawAns[i+1] || []).join(" "),
             value: seen.length === 1 ? seen[0] : null,
             status: seen.length === 0 ? "none" : seen.length === 1 ? "ok" : "many"};
   });
-  return {rows, unknown};
+  /* ЧУЖАЯ ВАЛЮТА В ДЕНЕЖНОМ ОТВЕТЕ. Пересчёта нет и не будет — курса у нас
+     никакого; сказать об этом обязаны, потому что число берётся как написано. */
+  const ours = CUR === "EUR" ? "EUR" : "USD";
+  const other = ours === "USD" ? /(?:€|\bEUR\b|\bPLN\b|zł|\bGBP\b|£|\bCHF\b|\bCZK\b)/i
+                               : /(?:\$|\bUSD\b|\bPLN\b|zł|\bGBP\b|£|\bCHF\b|\bCZK\b)/i;
+  const currency = rows.filter(r => r.it.suf === "money" && r.status === "ok" && other.test(r.raw))
+                       .map(r => ({n: r.n, token: (r.raw.match(other) || [""])[0] }));
+  return {rows, unknown, mentions: [...mentions].sort((a,b)=>a-b), numberless, currency,
+          ref, refWant: want};
 }
 
 /* Прочитанное значение в единице ЭКРАНА — той, в которой оно и уедет в поле. */
@@ -7411,20 +7555,49 @@ function briefRender(){
   const rev = document.getElementById("br-rev");
   const msg = document.getElementById("br-msg");
   const fill = document.getElementById("br-fill");
+  const notes = document.getElementById("br-notes");
+  const notesBody = document.getElementById("br-notes-body");
   const res = briefRead;
   rev.hidden = true; rev.innerHTML = ""; fill.hidden = true;
+  notes.hidden = true; notesBody.textContent = "";
   msg.hidden = false;
   if(!res){ msg.hidden = true; return; }
+  /* ОТКАЗЫ ИДУТ ПЕРВЫМИ И ПО СТАРШИНСТВУ. Сначала отпечаток: он говорит, что
+     ответ вообще про другой набор, и в этом случае обсуждать номера бессмысленно. */
+  if(res.ref && res.ref !== res.refWant){
+    msg.textContent = t("ui.brRefMismatch", {got: "AVC-" + res.ref, want: "AVC-" + res.refWant});
+    return;
+  }
   if(res.unknown.length){
     msg.textContent = t("ui.brStale", {n: fmtInt(Math.max(...res.unknown)),
                                        have: fmtInt(res.rows.length)});
     return;
   }
   const ok = res.rows.filter(r=>r.status === "ok").length;
-  if(!ok){ msg.textContent = t("ui.brNothing"); return; }
+  if(!ok){
+    /* ОТКАЗ ОБЯЗАН НАЗЫВАТЬ ПРИЧИНУ. Нумерация на месте, а в ответах слова —
+       это не то же самое, что ответ прозой без нумерации вовсе. */
+    msg.textContent = res.numberless.length
+      ? t("ui.brNoDigits", {sample: "“" + res.numberless.slice(0,2).join("”, “") + "”"})
+      : t("ui.brNothing");
+    return;
+  }
   msg.textContent = res.rows.length === 1 && ok === 1
     ? t("ui.brRead11")
     : t("ui.brRead1", {ok: fmtInt(ok), n: fmtInt(res.rows.length)});
+  /* ЗАМЕЧАНИЯ — не отказ, но и не мелочь: записать можно, а посмотреть надо. */
+  const warn = [];
+  if(!res.ref) warn.push(t("ui.brRefMissing"));
+  if(res.mentions.length)
+    warn.push(t("ui.brCorrection", {list: res.mentions.join(", ")}));
+  if(res.currency.length)
+    warn.push(t("ui.brCurrency", {list: res.currency.map(c=>c.n).join(", "),
+                                  theirs: res.currency[0].token.toUpperCase(),
+                                  ours: CUR}));
+  if(warn.length){
+    notesBody.textContent = warn.join(" ");
+    notes.hidden = false;
+  }
   const cell = (cls, text) => {
     const s = document.createElement("span");
     s.className = cls; s.textContent = text; return s;
@@ -7443,8 +7616,14 @@ function briefRender(){
    партнёр набирает руками, и за него нажимается то же событие. Никакой записи в
    state, company или dirty тут нет и быть не должно — обработчик поля делает это
    сам, и вместе с ним работают границы и подсветка ошибки. */
+/* ОТКАЗ ЖИВЁТ ТАМ, ГДЕ ЗАПИСЬ, А НЕ ТОЛЬКО ТАМ, ГДЕ РИСУЕТСЯ КНОПКА.
+   Проверка руками это и поймала: при несовпавшей ссылке кнопка скрыта, но сам
+   briefFill(), позванный мимо неё, спокойно писал ответ от другой анкеты в поля.
+   Условие отказа обязано стоять здесь — иначе оно держится на том, что никто
+   больше не позовёт запись. */
 function briefFill(){
   if(!briefRead || briefRead.unknown.length) return 0;
+  if(briefRead.ref && briefRead.ref !== briefRead.refWant) return 0;
   let n = 0;
   briefRead.rows.filter(r=>r.status === "ok").forEach(r=>{
     const inp = briefInput(r.it);
@@ -7475,20 +7654,37 @@ document.getElementById("br-copy").addEventListener("click", async ()=>{
 document.getElementById("br-read").addEventListener("click", ()=>{
   const items = briefItems();
   const src = document.getElementById("br-in").value;
-  /* Пустая вставка — не ошибка разбора, а «нечего разбирать»: строим тот же
-     результат из одних пропусков, чтобы сообщение было одно и то же. */
-  briefRead = src.trim()
-    ? briefParse(src, items)
-    : {rows: items.map((it,i)=>({it, n:i+1, seen:[], value:null, status:"none"})), unknown:[]};
+  /* Пустая вставка — не ошибка разбора, а «нечего разбирать»: пропускаем её через
+     ТОТ ЖЕ briefParse, а не собираем похожий объект рядом.
+     Раньше здесь лежал самодельный {rows, unknown} — и он развалился в первый же
+     раз, когда у результата разбора появились новые поля (ref, mentions,
+     currency, numberless): briefRender читал их у объекта, который про них не
+     знал, и падал на пустой вставке. Один конструктор результата, а не два. */
+  briefRead = briefParse(src.trim() ? src : "", items);
   briefRender();
 });
 document.getElementById("br-fill").addEventListener("click", ()=>{
+  /* Какие поля собирались заполнить — нужно ПОСЛЕ записи, чтобы посмотреть, не
+     отверг ли их предел поля. briefFill() обнуляет разбор, поэтому список
+     снимается до вызова. */
+  const targets = (briefRead ? briefRead.rows.filter(r=>r.status === "ok") : []).map(r=>r.it);
   const n = briefFill();
   briefRead = null;
   briefRender();
   const msg = document.getElementById("br-msg");
   msg.hidden = false;
-  msg.textContent = n === 1 ? t("ui.brFilled1") : t("ui.brFilled", {n: fmtInt(n)});
+  /* P3-2. «Расчёт уже поехал» — неправда, если значение вышло за предел поля:
+     сценарий в этот момент выброшен из ВСЕХ сумм, и партнёр, читающий только
+     сообщение, об этом не узнает. Смотрим на то, что стало с полем, а не на то,
+     что мы в него положили. */
+  const bad = targets.filter(it => {
+    const inp = briefInput(it);
+    const field = inp && inp.closest(".field");
+    return field && field.classList.contains("invalid");
+  }).map(briefLbl);
+  msg.textContent = bad.length
+    ? t("ui.brFilledInvalid", {bad: "“" + bad.join("”, “") + "”"})
+    : (n === 1 ? t("ui.brFilled1") : t("ui.brFilled", {n: fmtInt(n)}));
 });
 
 /* ==========================================================================
