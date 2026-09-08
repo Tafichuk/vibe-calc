@@ -81,63 +81,18 @@ const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n
    Fix: the lockups travel as data URIs (immune to <base>, to where the file is
    moved, and to whether the kit exists), and the kit stylesheet is inlined from
    the vendored copy in assets/ so a raw browser open is still styled and A4.
-   The <link> to the kit stays in <head> so the renderer keeps using the real
-   font files; on a raw open it 404s harmlessly and the inlined copy takes over.
-   ========================================================================== */const KIT_MIME = {".png":"image/png",".jpg":"image/jpeg",".svg":"image/svg+xml",".webp":"image/webp"};
-function dataUri(absPath){
-  const ext = path.extname(absPath).toLowerCase();
-  const mime = KIT_MIME[ext];
-  if(!mime || !fs.existsSync(absPath)) return null;
-  return `data:${mime};base64,${fs.readFileSync(absPath).toString("base64")}`;
-}
-const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const asset = rel => path.join(REPO, "assets", rel);
 
-/* the two lockups, embedded */
-const LOCKUP = {
-  dark:  dataUri(asset("logo-partner-h.png")),
-  white: dataUri(asset("logo-partner-h-white.png")),
-};
-for (const [k,v] of Object.entries(LOCKUP))
-  if(!v){ console.error(`build-report: missing assets/logo-partner-h${k==="white"?"-white":""}.png — the report would ship a broken lockup.`); process.exit(2); }
+   САМО ВСТРАИВАНИЕ ЖИВЁТ В scripts/lib/brand-assets.mjs: кит там только читается,
+   и подстановки идут в копии строки, а не в самом ките.
+   ========================================================================== */
+import { LOCKUP, inlinedKitCss } from "./lib/brand-assets.mjs";
 
-/* kit stylesheet, inlined, with its own icon references embedded too */
-function inlinedKitCss(){
-  const kit = asset("bitrix24-kit.css");
-  if(!fs.existsSync(kit)){
-    console.error("build-report: assets/bitrix24-kit.css is missing — a report opened outside the kit renderer would be unstyled.");
+for (const [k, v] of Object.entries(LOCKUP))
+  if (!v) {
+    console.error("build-report: missing assets/logo-partner-h"
+                + (k === "white" ? "-white" : "") + ".png — the report would ship a broken lockup.");
     process.exit(2);
   }
-  let css = fs.readFileSync(kit, "utf8");
-  /* embed the icons the kit paints as backgrounds (checklist badges) */
-  css = css.replace(/url\("bitrix24-images\/icons\/([^"]+)"\)/g, (m, file) => {
-    const uri = dataUri(asset(path.join("icons", file)));
-    if (!uri) {
-      /* Leaving the raw path in would ship a 404 into the report the moment the
-         kit rule that uses it is hit. Vendor the icon instead of guessing. */
-      console.error(`build-report: kit icon "${file}" is not vendored in assets/icons — `
-                  + `copy it from the kit before building, or the report loads a broken image.`);
-      process.exit(2);
-    }
-    return `url("${uri}")`;
-  });
-  /* Fonts. The kit points at seven static Montserrat files that only exist inside
-     the kit folder. A partner working from the public repo has no kit and no
-     renderer — browser print is their ONLY route to a PDF — so the brand font has
-     to be in the file. Drop the seven @font-face rules and substitute the single
-     vendored VARIABLE font, which covers every weight the kit asks for. */
-  css = css.replace(/@font-face\s*\{[^}]*Montserrat[^}]*\}/g, "");
-  const vf = asset("fonts/Montserrat-VariableFont_wght.ttf");
-  if(fs.existsSync(vf)){
-    const uri = `data:font/ttf;base64,${fs.readFileSync(vf).toString("base64")}`;
-    css = `@font-face{font-family:'Montserrat';font-weight:100 900;font-style:normal;`
-        + `src:url("${uri}") format('truetype-variations');font-display:swap;}\n` + css;
-  } else {
-    console.warn("build-report: assets/fonts/Montserrat-VariableFont_wght.ttf missing — "
-               + "a browser-printed report will fall back to a system font.");
-  }
-  return css;
-}
 
 /* =============================================================================
    РАЗМЕТКА — из scripts/report-template.mjs. Здесь остаётся только окружение:
