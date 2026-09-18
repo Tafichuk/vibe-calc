@@ -1105,8 +1105,8 @@ main.wrap{padding-bottom:calc(var(--b24x-navbar-h, 96px) + var(--b24-s5))}
    translated string: EN and DE would drift apart on the first edit.
    ========================================================================== */
 const C = {
-  // Working days per month — user-editable. The Russian production calendar
-  // (22 days / 176 hours) is gone: it is a legal artefact of one country.
+  // Working days per month — user-editable. No national production calendar is
+  // baked in: a fixed 22 days / 176 hours is a legal artefact of one country.
   // PUBLIC HOLIDAYS ARE DELIBERATELY NOT MODELLED. In Germany they are set per
   // Bundesland — Bavaria has 13, Berlin 10, and Corpus Christi or Reformation Day
   // apply in some Länder and not others. There is no single national calendar to
@@ -1140,14 +1140,14 @@ const C = {
      ТОГО ЖЕ числа дней, что и масштаб. Дневные сценарии перестали зависеть от поля.
      Инвариант закреплён отдельной проверкой — scripts/check-invariants.mjs. */
   BURDEN_PCT:    30,    // employer payroll burden, % on top of gross — NEUTRAL DEFAULT,
-                        // country-dependent, user-editable. Replaces the RU 1.4 multiplier.
+                        // country-dependent, user-editable. No fixed national multiplier is assumed.
   MEETING_GAIN:  0.15,  // meetings shorter / fewer participants (scenario 6)
   BASE_UPLIFT:   0.10,  // baseline efficiency uplift for all staff (scenario 7)
   /* ДВА ПОРОГА ДОСТОВЕРНОСТИ, И ОНИ ОТВЕЧАЮТ НА РАЗНЫЕ ВОПРОСЫ.
      Раньше был один — 25%, — и он молча пропускал вдвое больше того, что мы сами
      называем реальным потолком внедрений. Отсутствие предупреждения партнёр
      читает как «расчёт в норме», то есть молчание инструмента работало как
-     подтверждение. Это P3 разбора (docs/REVIEW_2026-08.md).
+     подтверждение. Это P3 августовского разбора.
 
      Числа разные потому, что утверждения разные:
 
@@ -1193,7 +1193,7 @@ const C = {
      У ДИАПАЗОНА НЕТ ВНЕШНЕГО ИСТОЧНИКА, и в интерфейсе это сказано прямо
      (ui.overlapSource). Это наша оценка, не данные вендора и не публикация. Если
      у Битрикс24 появится своя позиция по защищаемому уровню — оба порога
-     приводятся к ней. См. docs/CALC_MODEL.md §9.
+     приводятся к ней. См. описание модели, §9.
 
      Оба предупреждения НЕ БЛОКИРУЮТ расчёт и ничего не обрезают: у партнёра
      может быть защищаемый случай, и решение остаётся за ним. */
@@ -1655,15 +1655,15 @@ en: {
   "org.title":"Where this default comes from",
   /* ПОЛНЫЕ СТРОКИ. Каждая называет происхождение и говорит, что с этим делать.
      Ни одна не ссылается на исследование или выгрузку: таких данных у нас нет. */
-  "org.ru":"Carried over from the Russian version of this calculator, where it was the default. There is no benchmark behind it — no study, no vendor data, no partner survey. It was one person's working assumption in another tool. Ask the client for their own figure; if they do not have one, say out loud that this is a starting point.",
-  "org.ruCall":"Carried over from the Russian version, where the field asked for the whole handling time of a call and the default was 10 minutes. We renamed the field to the work that actually disappears — the minutes after the call — and halved the default, because 20 calls x 10 minutes came to 3 hours 20 minutes of post-call admin a day, 42% of a working day. Five minutes is still our estimate, not a measurement.",
-  "org.ruOps":"Carried over from the Russian version, where the default was 30 operations a day. We halved it: thirty is an active user of the system, and this scenario is claimed for all staff. Fifteen is still our estimate, not a measurement.",
-  "org.mkt":"Our estimate of a market rate for this region. It is NOT a conversion of the Russian figure — the Russian defaults were in roubles and the numbers here were picked fresh (MIGRATION_NOTES, OPEN_QUESTIONS §5). Replace it with the client's actual payroll: they know it, we do not.",
-  "org.clientRu":"This is a fact about this client's business \u2014 the number of them, how often it happens, how long their own people take over it \u2014 so the client knows it and we cannot. The figure sitting here is neither a benchmark nor our estimate: it was carried over from the Russian calculator unchanged, and nothing stands behind it for this market. It is in the pre-meeting questionnaire; replace it with the client's answer.",
+  "org.carried":"Carried over from an earlier version of this calculator, where it was already the default. There is no benchmark behind it — no study, no vendor data, no partner survey. It was one person's working assumption, nothing more. Ask the client for their own figure; if they do not have one, say out loud that this is a starting point.",
+  "org.carriedCall":"Carried over from an earlier version of this calculator, where the field asked for the whole handling time of a call and the default was 10 minutes. We renamed the field to the work that actually disappears — the minutes after the call — and halved the default, because 20 calls x 10 minutes came to 3 hours 20 minutes of post-call admin a day, 42% of a working day. Five minutes is still our estimate, not a measurement.",
+  "org.carriedOps":"Carried over from an earlier version of this calculator, where the default was 30 operations a day. We halved it: thirty is an active user of the system, and this scenario is claimed for all staff. Fifteen is still our estimate, not a measurement.",
+  "org.mkt":"Our estimate of a market rate for this region. It is NOT a currency conversion of some other figure — every number here was picked fresh for this market. Replace it with the client's actual payroll: they know it, we do not.",
+  "org.clientCarried":"This is a fact about this client's business \u2014 the number of them, how often it happens, how long their own people take over it \u2014 so the client knows it and we cannot. The figure sitting here is neither a benchmark nor our estimate: it was carried over unchanged from an earlier version of this calculator, and nothing stands behind it for this market. It is in the pre-meeting questionnaire; replace it with the client's answer.",
   "org.client":"This is a fact about this client, so no source exists and none can. We put in a deliberately modest placeholder so an untouched calculator does not flatter the result. Set it together with the client — and if they do not know it either, that is worth saying rather than guessing.",
   /* ОХВАТ. Формулировка называет и происхождение, и то, что это самое
      чувствительное число модели: она двигает итог линейно, и подтверждённых
-     значений по рынку у нас нет (OPEN_QUESTIONS §5, §8). */
+     значений по рынку у нас нет (открытые вопросы, §5 и §8). */
   "org.coverage":"Our estimate, and the most sensitive number in the whole model — it moves the total in a straight line. The share for each scenario was reasoned from who plausibly uses that feature, not measured: 100% where the scenario names a role that already is a share of the company, 12% for document work, 20-30% for the agent scenarios because that is early-adopter behaviour rather than the whole company. We have no confirmed market figures for this. If the client can name who will really use the feature, use their number.",
   "org.cov":"Not typed here. It comes from the headcount in step 1 multiplied by the coverage share above this field. Change one of those two, not this box.",
   /* Строка под таблицей входных данных в отчёте. Одна, а не по числу на каждое
@@ -2144,15 +2144,15 @@ en: {
   "brief.q.5-base":"How many customers have bought from you at least once and could realistically buy again?",
   "brief.q.5-check":"What does a typical order or contract come to?",
   "brief.q.5-conv":"In a typical month, what share of those past customers come back and buy something else? A rough percentage is fine.",
-  /* ДЕСЯТЬ ВОПРОСОВ НИЖЕ — ПОЛЯ, КОТОРЫЕ БЫЛИ ПОМЕЧЕНЫ ПЕРЕНОСОМ ИЗ РУССКОЙ
-     ВЕРСИИ, А ОКАЗАЛИСЬ ФАКТАМИ О КОМПАНИИ КЛИЕНТА. Признак, по которому их
+  /* ДЕСЯТЬ ВОПРОСОВ НИЖЕ — ПОЛЯ, КОТОРЫЕ БЫЛИ ПОМЕЧЕНЫ ПЕРЕНОСОМ ИЗ ПРЕЖНЕЙ
+     ВЕРСИИ КАЛЬКУЛЯТОРА, А ОКАЗАЛИСЬ ФАКТАМИ О КОМПАНИИ КЛИЕНТА. Признак, по которому их
      отобрали: клиент это ЗНАЕТ — либо мерит (звонки, обращения, записи), либо сам
      назначает (сколько раз перезвонить по записи, сколько длится совещание).
      Остались переносом те, где число говорит не про клиента, а про то, как
      работает функция: минуты после звонка, время на один поиск ответа, доля
      обращений, которые закроет ИИ, доля высвобожденного времени, ставшая
      продажами. Клиент такого не измеряет, и спрашивать его об этом значило бы
-     выдать нашу оценку за его ответ. Разбор — в docs/OPEN_QUESTIONS.md. */
+     выдать нашу оценку за его ответ. Разбор — в открытых вопросах. */
   "brief.q.1-calls":"How many calls does one of your salespeople make or take on a normal day?",
   "brief.q.4-share":"Roughly what share of the working week does whoever runs your sales team spend listening back to recorded calls and grading them? If nobody does this, say so and I will leave it out.",
   "brief.q.2-total":"How many customer requests does your support team get on a normal day, across all the channels together?",
@@ -2436,10 +2436,10 @@ function onNumInput(inp){
 }
 
 /* =============================================================================
-   SCENARIOS — all 11, formulas per INVENTORY.md, display order from the source
+   SCENARIOS — all 11, formulas per the field inventory, display order from the source
    (1, 4, 5, 9, 2, 10, 11, 12, 3, 6, 7 — not id order).
    Salary and fee defaults are NEUTRAL ESTIMATES, flagged in the UI. They are
-   not conversions of the RU figures.
+   not conversions of any earlier figures.
    ========================================================================== */
 /* Ключ suf у поля — это СМЫСЛ величины, а не готовая надпись: по нему решается
    и единица, и поведение («share» делится на 100, «money» берёт знак валюты).
@@ -2497,18 +2497,17 @@ function onNumInput(inp){
    было нечем, и партнёр говорил «это примерная оценка» — после чего примерной
    становилась вся модель.
 
-   АРХЕОЛОГИЯ ПРОВЕДЕНА ПО РЕПОЗИТОРИЮ, А НЕ ПО ПАМЯТИ. Источники:
-     INVENTORY.md из первого коммита (e0decf6) — построчный разбор русского
-       исходника github.com/BelMihMed/calc-serv со ВСЕМИ его дефолтами;
-     MIGRATION_NOTES.md оттуда же — что мы заменили осознанно и почему;
-     OPEN_QUESTIONS.md §5 — оклады и услуги интегратора объявлены оценочными;
-     DEMO_SUMMARY.md — происхождение долей охвата.
+   АРХЕОЛОГИЯ ПРОВЕДЕНА ПО РЕПОЗИТОРИЮ, А НЕ ПО ПАМЯТИ. Источники — внутренние
+   документы первого коммита (e0decf6): построчная инвентаризация исходного
+   калькулятора со ВСЕМИ его дефолтами; заметки о переносе — что мы заменили
+   осознанно и почему; открытые вопросы §5 — оклады и услуги интегратора
+   объявлены оценочными; итоги демо — происхождение долей охвата.
 
    ЧТО ВЫЯСНИЛОСЬ, И ЭТО НЕПРИЯТНО, НО ЭТО ПРАВДА: подтверждённый ИСТОЧНИК есть
    ровно у двух величин — у прайса (config/pricing.json, официальная выгрузка) и
    у границы наличия AI-агентов по тарифам (подтверждение заказчицы). У всех
    остальных дефолтов источника нет. Большинство числовых дефолтов сценариев —
-   ПЕРЕНОС ИЗ РУССКОЙ ВЕРСИИ, где за ними тоже не стояло ни исследования, ни
+   ПЕРЕНОС ИЗ ПРЕЖНЕЙ ВЕРСИИ, где за ними тоже не стояло ни исследования, ни
    выгрузки: они были дефолтами в чужом калькуляторе. Так и написано.
 
    ЛОЖНАЯ РОДОСЛОВНАЯ ХУЖЕ ЕЁ ОТСУТСТВИЯ, поэтому ни одна строка ниже не
@@ -2517,29 +2516,29 @@ function onNumInput(inp){
    переговорной работает лучше выдуманной цифры.
    ========================================================================== */
 const ORIGINS = {
-  /* Перенос из русского калькулятора без изменения. Бенчмарка за числом нет. */
-  ru:      {pill:"org.pill.carried", text:"org.ru"},
+  /* Перенос из прежней версии без изменения. Бенчмарка за числом нет. */
+  carried:     {pill:"org.pill.carried", text:"org.carried"},
   /* Перенос, который мы потом уменьшили — и у каждого своя причина, поэтому
      отдельные ключи, а не общий текст. */
-  ruCall:  {pill:"org.pill.carried", text:"org.ruCall"},
-  ruOps:   {pill:"org.pill.carried", text:"org.ruOps"},
-  /* Наша рыночная оценка. Русские оклады НЕ конвертировались по курсу — числа
-     подобраны заново (MIGRATION_NOTES §8, OPEN_QUESTIONS §5). */
-  mkt:     {pill:"org.pill.ours",    text:"org.mkt",    check:true},
+  carriedCall: {pill:"org.pill.carried", text:"org.carriedCall"},
+  carriedOps:  {pill:"org.pill.carried", text:"org.carriedOps"},
+  /* Наша рыночная оценка. Прежние оклады НЕ конвертировались по курсу — числа
+     подобраны заново (заметки о переносе §8, открытые вопросы §5). */
+  mkt:         {pill:"org.pill.ours",    text:"org.mkt",    check:true},
   /* Про конкретного клиента. Источника нет и быть не может — мы поставили
      заведомо скромный плейсхолдер. */
-  client:  {pill:"org.pill.client",  text:"org.client",  check:true, ask:true},
-  /* ТОЖЕ ФАКТ О КЛИЕНТЕ, НО ЧИСЛО ЗДЕСЬ НЕ НАШ ПЛЕЙСХОЛДЕР, А ПЕРЕНОС ИЗ РУССКОЙ
-     ВЕРСИИ. Пометка та же — партнёр обязан спросить, — а объяснение другое: у
+  client:      {pill:"org.pill.client",  text:"org.client",  check:true, ask:true},
+  /* ТОЖЕ ФАКТ О КЛИЕНТЕ, НО ЧИСЛО ЗДЕСЬ НЕ НАШ ПЛЕЙСХОЛДЕР, А ПЕРЕНОС ИЗ ПРЕЖНЕЙ
+     ВЕРСИИ КАЛЬКУЛЯТОРА. Пометка та же — партнёр обязан спросить, — а объяснение другое: у
      «client» сказано «мы поставили заведомо скромное число», и про перенос это
      было бы неправдой. Отдельный ключ по тому же правилу, по которому разделены
-     ru / ruCall / ruOps: пометка одна, причина у каждого своя.
+     carried / carriedCall / carriedOps: пометка одна, причина у каждого своя.
      ПРИЗНАК ask, А НЕ СРАВНЕНИЕ org === "client", решает состав анкеты и отметку
      цифр клиента в отчёте — иначе десять переведённых полей попали бы в анкету, а
      в отчёте остались бы неотмеченными. */
-  clientRu:{pill:"org.pill.client",  text:"org.clientRu", check:true, ask:true},
+  clientCarried:{pill:"org.pill.client", text:"org.clientCarried", check:true, ask:true},
   /* Поле не набирается: его заполняет охват от численности из шага 1. */
-  cov:     {pill:"org.pill.coverage",text:"org.cov"},
+  cov:         {pill:"org.pill.coverage",text:"org.cov"},
 };
 const orgOf = f => ORIGINS[f.org] || null;
 /* check:true — «our estimate» и «ask the client»: партнёр обязан что-то сделать с
@@ -2643,7 +2642,7 @@ const scenarios = [
    Professional and Enterprise plans». Заказчица подтверждала то же и добавила
    вариант тарифа: Alaio Professional Vibe+ и все Alaio Enterprise-* Vibe+, и НЕТ
    на Basic/Standard Vibe+. Статья вариант не различает — держимся подтверждения
-   заказчицы, оно строже (OPEN_QUESTIONS §17).
+   заказчицы, оно строже (открытые вопросы, §17).
 
    СОСТАВ МНОЖЕСТВА СОКРАЩЁН С ПЯТИ ДО ДВУХ (01.09.2026). Раньше он выводился из
    ПОДПИСЕЙ сценариев: где в тексте стоит «CoPilot Agent», там и пометка. Это была
@@ -2651,7 +2650,7 @@ const scenarios = [
    раздел продукта с готовыми и кастомными агентами, а не всякое место, где в
    описании упомянут агент. Сняты сценарии 9, 2 и 12 — по каждому официальная
    таблица сравнения НАЗЫВАЕТ функцию и даёт ей доступность ниже Professional
-   (см. OPEN_QUESTIONS §20). Остались:
+   (см. открытые вопросы, §20). Остались:
      10 — «Knowledge base search agent» описан в статье дословно, совпадение
           пункт в пункт, включая порог;
      11 — половина про сводку отчётов руководителю подтверждения на Basic не
@@ -2666,7 +2665,7 @@ const scenarios = [
     fields:[
       {k:"mgr",  def:1,     suf:"ppl", org:"cov"},
       {k:"sal",  def:4000,  suf:"money", org:"mkt"},
-      {k:"calls",def:20,    suf:"calls", org:"clientRu"},
+      {k:"calls",def:20,    suf:"calls", org:"clientCarried"},
       /* ВРЕМЯ ПОСЛЕ ЗВОНКА: 10 -> 5 МИНУТ, И ВОТ ПОЧЕМУ.
          Само число не менялось с первой версии, а вот вопрос, на который оно
          отвечает, изменился. Пока поле называлось «Handling time per call», десять
@@ -2681,11 +2680,11 @@ const scenarios = [
          ПРАВИТСЯ СЧЁТЧИК ВРЕМЕНИ, А НЕ ЧИСЛО ЗВОНКОВ: двадцать звонков в день у
          менеджера по продажам — норма, и занижать её значило бы прятать проблему
          не там, где она есть.
-         Происхождение помечено как перенос из русской версии, уменьшенный нами:
-         источника у числа нет и не было. См. ORIGINS/org.ruCall. */
-      {k:"time", def:5,     suf:"min", org:"ruCall"},
+         Происхождение помечено как перенос из прежней версии, уменьшенный нами:
+         источника у числа нет и не было. См. ORIGINS/org.carriedCall. */
+      {k:"time", def:5,     suf:"min", org:"carriedCall"},
       {k:"plan", def:40000, suf:"money", revOnly:true, org:"client"},
-      {k:"coef", def:0.3,   suf:"share", revOnly:true, org:"ru"},
+      {k:"coef", def:0.3,   suf:"share", revOnly:true, org:"carried"},
     ],
     /* Пул правдоподобности: годовой план продаж всей команды. Прирост выручки
        здесь — доля этого плана, и сравнивать его правильно именно с ним. */
@@ -2720,7 +2719,7 @@ const scenarios = [
     fields:[
       {k:"rop",  def:1,    suf:"ppl", org:"cov"},
       {k:"sal",  def:6500, suf:"money", org:"mkt"},
-      {k:"share",def:0.10, suf:"share", org:"clientRu"},
+      {k:"share",def:0.10, suf:"share", org:"clientCarried"},
     ],
     /* ЧАСОВ В ФОРМУЛЕ НЕТ — она берёт долю месячной стоимости. Но полная месячная
        стоимость это и есть contractHours() оплаченных часов, поэтому доля стоимости
@@ -2770,7 +2769,7 @@ const scenarios = [
      Basic и функции не окажется, отвечать будет отчёт партнёра, а не таблица.
      Ошибка односторонняя, поэтому и выбор односторонний.
      Признак ОТДЕЛЬНЫЙ от agent: сценарий не про AI-агента, и говорить клиенту
-     «нужен агент» здесь было бы выдумкой. См. OPEN_QUESTIONS §19. */
+     «нужен агент» здесь было бы выдумкой. См. открытые вопросы, §19. */
   { id:5, group:"crm", driver:"monthly", minPro:true, link:"https://helpdesk.bitrix24.com/open/25766347/",
     effect:["rev"], revLabel:"ui.revBase", segments:true,
     fields:[
@@ -2804,9 +2803,9 @@ const scenarios = [
          величину с большим разбросом — значит прятать неопределённость в число,
          которое партнёр всё равно не проверит. Счётчик он проверяет по своей
          практике за минуту.
-         Происхождение — перенос из русской версии, уменьшенный нами (org.ruOps). */
-      {k:"ops", def:15,   suf:"ops", org:"ruOps"},
-      {k:"time",def:3,    suf:"min", org:"ru"},
+         Происхождение — перенос из прежней версии, уменьшенный нами (org.carriedOps). */
+      {k:"ops", def:15,   suf:"ops", org:"carriedOps"},
+      {k:"time",def:3,    suf:"min", org:"carried"},
     ],
     hours:v=> v.ops * v.time * daysMonth / 60 * v.mgr,
     compute:v=>{
@@ -2832,9 +2831,9 @@ const scenarios = [
     effect:["fot"],
     fields:[
       {k:"sal",  def:3000, suf:"money", org:"mkt"},
-      {k:"total",def:40,   suf:"enq", org:"clientRu"},
-      {k:"ai",   def:30,   suf:"enq", org:"ru"},
-      {k:"time", def:7,    suf:"min", org:"clientRu"},
+      {k:"total",def:40,   suf:"enq", org:"clientCarried"},
+      {k:"ai",   def:30,   suf:"enq", org:"carried"},
+      {k:"time", def:7,    suf:"min", org:"clientCarried"},
     ],
     validate:v=> v.ai > v.total ? {ai:"sc.2.err.ai"} : null,
     /* min(ai, total) — та же страховка, что в деньгах: часы не имеют права
@@ -2853,9 +2852,9 @@ const scenarios = [
     fields:[
       {k:"emp",  def:50,   suf:"ppl",   src:"empCount", org:"cov"},
       {k:"sal",  def:4000, suf:"money", src:"empSal", org:"mkt"},
-      {k:"q",    def:3,    suf:"lookups", org:"ru"},
-      {k:"t",    def:10,   suf:"min", org:"ru"},
-      {k:"share",def:0.7,  suf:"share", org:"ru"},
+      {k:"q",    def:3,    suf:"lookups", org:"carried"},
+      {k:"t",    def:10,   suf:"min", org:"carried"},
+      {k:"share",def:0.7,  suf:"share", org:"carried"},
     ],
     hours:v=> v.q * v.t * v.share * daysMonth / 60 * v.emp,
     compute:v=>{
@@ -2868,10 +2867,10 @@ const scenarios = [
     fields:[
       {k:"emp",   def:50,   suf:"ppl",   src:"empCount", org:"cov"},
       {k:"empSal",def:4000, suf:"money", src:"empSal", org:"mkt"},
-      {k:"empMin",def:20,   suf:"min", org:"ru"},
+      {k:"empMin",def:20,   suf:"min", org:"carried"},
       {k:"mgr",   def:5,    suf:"ppl", org:"client"},
       {k:"mgrSal",def:6500, suf:"money", org:"mkt"},
-      {k:"mgrMin",def:30,   suf:"min", org:"ru"},
+      {k:"mgrMin",def:30,   suf:"min", org:"carried"},
     ],
     /* ДВЕ СТАВКИ. В часах слагаемые просто складываются — час сотрудника и час
        руководителя это одинаковые часы; в деньгах они стоят разного. Поэтому
@@ -2888,12 +2887,12 @@ const scenarios = [
   { id:12, group:"agents", driver:"monthly", link:null, note:true,
     effect:["fot"],
     fields:[
-      {k:"visits",def:800,  suf:"bookings", org:"clientRu"},
+      {k:"visits",def:800,  suf:"bookings", org:"clientCarried"},
       /* «Звонков на запись» — это НЕ звонки в день, хотя единица та же. Потолок
          сотня: у одной записи не бывает больше сотни звонков. Уточнение объявлено
          у поля — так же, как объявляются пул выручки и часы. */
-      {k:"perRec",def:2,    suf:"calls", lim:{max:100}, org:"clientRu"},
-      {k:"time",  def:3,    suf:"min", org:"ru"},
+      {k:"perRec",def:2,    suf:"calls", lim:{max:100}, org:"clientCarried"},
+      {k:"time",  def:3,    suf:"min", org:"carried"},
       {k:"admSal",def:2600, suf:"money", org:"mkt"},
     ],
     hours:v=> v.visits * v.perRec * v.time / 60,
@@ -2907,8 +2906,8 @@ const scenarios = [
     fields:[
       {k:"emp", def:5,    suf:"ppl",   src:"empCount", org:"cov"},
       {k:"sal", def:4000, suf:"money", src:"empSal", org:"mkt"},
-      {k:"docs",def:5,    suf:"docs", org:"clientRu"},
-      {k:"time",def:20,   suf:"min", org:"ru"},
+      {k:"docs",def:5,    suf:"docs", org:"clientCarried"},
+      {k:"time",def:20,   suf:"min", org:"carried"},
     ],
     hours:v=> v.docs * v.time * daysMonth / 60 * v.emp,
     compute:v=>{
@@ -2919,9 +2918,9 @@ const scenarios = [
   { id:6, group:"other", driver:"monthly", link:"https://helpdesk.bitrix24.com/open/25345201/",
     effect:["fot"],
     fields:[
-      {k:"meet",def:8,    suf:"meetings", org:"clientRu"},
-      {k:"dur", def:60,   suf:"min", org:"clientRu"},
-      {k:"part",def:6,    suf:"ppl", org:"clientRu"},
+      {k:"meet",def:8,    suf:"meetings", org:"clientCarried"},
+      {k:"dur", def:60,   suf:"min", org:"clientCarried"},
+      {k:"part",def:6,    suf:"ppl", org:"clientCarried"},
       {k:"psal",def:4000, suf:"money", org:"mkt"},
       {k:"asal",def:3000, suf:"money", org:"mkt"},
     ],
@@ -2943,8 +2942,8 @@ const scenarios = [
     effect:["fot"], qualitative:"qual.7",
     fields:[
       {k:"emp",  def:10,   suf:"ppl",   src:"empCount", org:"cov"},
-      {k:"share",def:0.10, suf:"share", org:"ru"},
-      {k:"simp", def:0.30, suf:"share", org:"ru"},
+      {k:"share",def:0.10, suf:"share", org:"carried"},
+      {k:"simp", def:0.30, suf:"share", org:"carried"},
       {k:"sal",  def:4000, suf:"money", src:"empSal", org:"mkt"},
     ],
     /* Как у сценария 4: формула берёт доли месячной стоимости, а полная месячная
@@ -3181,7 +3180,7 @@ const segsHtml = (sc, vis) => (state[sc.id].segments || []).map((sv,i)=>segHtml(
    обработчики на его поля.
    Почему не buildScenarios(): тот пересобирает #groups целиком — все одиннадцать
    карточек вместе с .sc-body, полем цены услуг и охватом. Именно так в этом
-   проекте дважды терялся ввод и фокус (INVENTORY.md §e). Здесь трогается один
+   проекте дважды терялся ввод и фокус (инвентаризация полей, §e). Здесь трогается один
    узел, всё за его пределами — включая соседние поля этой же карточки — остаётся
    тем же DOM-элементом со своим значением, выделением и фокусом. */
 function renderSegments(sc){
@@ -3247,7 +3246,7 @@ function scHtml(sc){
            карточки на 1440 и 1158 px на мобильной, третьей строкой среди
            посчитанных значений и с подписью-<span> вместо label. Его не находили.
            Живёт в .sc-body, который recompute() не перерисовывает, — поэтому ввод
-           не сбивается на полуслове (INVENTORY.md §e). -->
+           не сбивается на полуслове (инвентаризация полей, §e). -->
       <div class="svc-strip">
         <div class="field" style="max-width:260px">
           <label for="svc-${sc.id}">${t("ui.svcCardLabel")}</label>
@@ -3657,7 +3656,7 @@ function computeModel(){
     })(),
     revGuard,
     /* ====================== МОЩНОСТЬ: ЧАСЫ, ШТАТНЫЕ ЕДИНИЦЫ, ОКУПАЕМОСТЬ ======
-       Деньги остаются главной цифрой — это решение заказчика (OPEN_QUESTIONS §11,
+       Деньги остаются главной цифрой — это решение заказчика (открытые вопросы §11,
        вариант В: мощность рядом, а не вместо). Здесь три производные величины,
        которые встают рядом с деньгами и НИЧЕГО не пересчитывают заново.
 
@@ -3834,7 +3833,7 @@ function recompute(){
 
 /* Totals only — never touches the scenario cards. Used by the partner service-cost
    input, which lives INSIDE #res-N: a full recompute() rewrites that block and would
-   destroy the field mid-keystroke (the phase-2 bug; INVENTORY.md §e).
+   destroy the field mid-keystroke (the phase-2 bug; see the field inventory, §e).
    This is a RENDER variant, not a second calculation: both call computeModel(). */
 function refreshTotals(){
   paintTotals(computeModel());
@@ -4240,8 +4239,8 @@ function renderSummary(model){
            заказчика; часы встают под ними, потому что это та же величина в
            единицах, которые клиент может сверить.
            ТРЕТЬЯ СТРОКА ПОЧТИ ВСЕГДА ПУСТА, И ОНА ЗДЕСЬ ИМЕННО ПОЭТОМУ. Вопрос
-           «мы кого-то уволим?» финансовый директор задаёт первым (OPEN_QUESTIONS
-           §11), и ответ на него лучше дать раньше вопроса. Прочерк, а не «$0»:
+           «мы кого-то уволим?» финансовый директор задаёт первым (открытые
+           вопросы §11), и ответ на него лучше дать раньше вопроса. Прочерк, а не «$0»:
            ноль в колонке денег читается как «ничего не даёт», а тут наоборот —
            эффект есть, он просто не в кассе. */
         ""}
@@ -4951,9 +4950,9 @@ function buildReport(S, {assets}) {
   /* Сценарии, которым нужен тариф выше. ДВЕ причины, один порог:
        10, 11 — держатся на AI-агентах (agent:true в index.html). Было пять; с
                 9, 2 и 12 пометка снята 01.09.2026 — таблица сравнения называет их
-                функции доступными ниже Professional (OPEN_QUESTIONS §20);
+                функции доступными ниже Professional (открытые вопросы, §20);
        5 — переведён на порог Professional по строгому чтению противоречивой
-           строки официальной страницы (minPro:true, OPEN_QUESTIONS §19).
+           строки официальной страницы (minPro:true, открытые вопросы, §19).
      Список — зеркало index.html, и сверка ниже роняет сборку при расхождении:
      именно она поймала эту правку, когда пятый добавили только на одной стороне. */
   const AGENT_SCENARIO_IDS = new Set([5, 10, 11]);
@@ -7236,7 +7235,7 @@ document.getElementById("preset-row").addEventListener("click", e=>{
 
    СОСТАВ НЕ ОБЪЯВЛЕН ЗДЕСЬ. Он вычитается из разметки происхождения: в анкету
    идёт ровно то, у чего тип происхождения несёт признак ask (то есть «ask the
-   client» — client и clientRu). Список полей рядом с этим кодом был бы вторым
+   client» — client и clientCarried). Список полей рядом с этим кодом был бы вторым
    источником истины и разошёлся бы с плашками на экране в первую же правку —
    ровно так уже разъезжался список сценариев с агентами у шаблона отчёта.
 

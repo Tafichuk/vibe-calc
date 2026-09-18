@@ -132,7 +132,7 @@ it prints the full sentence. Use it when the client asks where a number came fro
 they will.
 
 There is no vendor benchmark data behind any of these figures, and the tool says so. Most of
-the scenario defaults were carried over from the earlier Russian version of this calculator,
+the scenario defaults were carried over from an earlier version of this calculator,
 where they were also just defaults. Salaries are our own estimate of market rates, not a
 currency conversion. The figures marked *ask the client* are facts about their company —
 there is no source for those and there cannot be one. Replace them all with the client's real
@@ -259,8 +259,8 @@ If you add a figure to a report, display the model's value; don't re-derive it.
 
 ## Credits and licence
 
-The scenario set and the calculation approach come from the original Russian-language
-calculator by [BelMihMed](https://github.com/BelMihMed/calc-serv). This is a western
+The scenario set and the calculation approach come from an earlier calculator by
+[BelMihMed](https://github.com/BelMihMed/calc-serv). This is a western
 edition: coverage, the credibility guard, day-driver tagging and the two-mode report
 were added on top, and the pricing model was rebuilt around the Essential / Vibe+ variants.
 
