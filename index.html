@@ -5386,7 +5386,7 @@ const headline = () => {
   </div>
   ${footer()}
 </section>`;
-  return first + second + third;
+  return [first, second, third];
 };
 
 
@@ -5476,7 +5476,7 @@ const scenarioPages = () => chunk(S.items, ROWS_PER_PAGE).map((rows, i, all) => 
     Revenue / month is a projection, not a saving the client can verify. It never enters the net first-year figure${rows.some(noRev) ? `; ${DASH} means the scenario has no revenue effect` : ""}.
     The first page shows the same amount split into revenue uplift and existing-base potential.</p>` : ""}
   ${footer()}
-</section>`).join("");
+</section>`);
 
 /* ---------- inputs used, chunked (transparency: the client can check our numbers) ---------- */
 /* Отметка у цифр клиента. Тот же приём, что у пометки сценариев на AI-агентах:
@@ -5645,7 +5645,7 @@ const assumptionPages = () => {
     ${esc(S.orgLegend)}</p>` : ""}
   ${footer()}
 </section>`;
-  }).join("");
+  });
 };
 
 /* AI-СТУПЕНЬ ВЫБРАННОГО ТАРИФА. Блок называется «What <тариф> adds», значит в нём
@@ -5729,7 +5729,7 @@ const planPage = () => {
 </section>`;
   /* На второй странице заголовок страницы и есть «What <тариф> adds» — двух
      заголовков подряд быть не должно, поэтому он полноразмерный и с нумерацией. */
-  return first + `
+  return [first, `
 <section class="page page--sky">
   ${runhead("Recommended plan")}
   <h1 class="b24-h1">What ${esc(P.to)} adds${num(2)}</h1>
@@ -5769,7 +5769,7 @@ const planPage = () => {
   </div>
 
   ${footer()}
-</section>`;
+</section>`];
 };
 
 
@@ -5890,14 +5890,14 @@ const proposal = () => {
   ${scopeTable(rows, i, scopeChunks.length)}
   ${oneSheet ? priceBlock : ""}
   ${footer()}
-</section>`).join("");
+</section>`);
   if (oneSheet) return scopeSheets;
-  return scopeSheets + `
+  return scopeSheets.concat(`
 <section class="page page--sky">
   ${head(total - 1)}
   ${priceBlock}
   ${footer()}
-</section>`;
+</section>`);
 };
 
 /* ---------- closing CTA + partner contacts ---------- */
@@ -5929,8 +5929,19 @@ const closing = () => `
   </div>
 </section>`;
 
-/* ---------- assemble ---------- */
-const pages = [
+/* ---------- assemble ----------
+   ЛИСТЫ ЖИВУТ МАССИВОМ, И ЭТОТ ЖЕ МАССИВ ИХ СЧИТАЕТ. Раньше листы склеивались
+   сразу, а число листов добывалось регуляркой /<section class="page/ по ГОТОВОМУ
+   файлу — вместе с кодом отчёта в нём лежит вклеенный кит, а в его комментарии
+   стоит строка-пример `<section class="page page--li page--partner-navy">`.
+   Она попадала в счёт, и build-report печатал на лист больше, чем в документе:
+   постоянное завышение на единицу, безобидное на вид. Безобидным оно не было —
+   то же число уехало в инструкцию партнёру («between fourteen and seventeen
+   sheets» при настоящих 13 и 16), потому что проверка инструкции считала листы
+   ТОЙ ЖЕ регуляркой и подтверждала завышенное значение завышенным.
+   Считать надо то, что собрано, а не совпадения в тексте файла. Каждая функция
+   отдаёт массив листов, длина массива и есть число листов. */
+const sheets = [
   cover(),
   headline(),
   scenarioPages(),
@@ -5938,7 +5949,8 @@ const pages = [
   planPage(),
   proposal(),
   closing(),
-].filter(Boolean).join("\n");
+].flat().filter(Boolean);
+const pages = sheets.join("\n");
 
 const html = `<!DOCTYPE html>
 <html lang="${esc(S.lang || "en")}">
@@ -6041,7 +6053,7 @@ ${pages}
 </html>
 `;
 
-  const pageCount = (html.match(/<section class="page/g) || []).length;
+  const pageCount = sheets.length;
   /* Аудит без исключений: сборка одна, и «партнёрской» сборки, где внутреннее
      было бы допустимо, больше нет. */
   const hits = auditClient(html, P, money,
