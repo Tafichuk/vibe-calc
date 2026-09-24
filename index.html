@@ -968,7 +968,7 @@ en: {
   "ui.agentWarnBody":"{fot} of the payroll saving a year comes from these scenarios, and each of them is listed from {min} up. You can still quote {plan} — nothing is blocked — but the client will not get these scenarios on it. Raise the plan, or present them as a second phase and say so.",
   "ui.agentWarnFix":"Raise the plan to {min}",
   "ui.ptWarnH":"Your details are empty — the report will go out unsigned",
-  "ui.ptWarnBody":"The report is signed by you: the header, the footer and the closing page carry your name and contact details. With Step 7 empty the client gets a document signed \u201cBitrix24 Partner\u201d with no way to reach you. Missing: {what}.",
+  "ui.ptWarnBody":"The report is signed by you: the header, the footer and the closing page carry your name and contact details. With {step:partner-details} empty the client gets a document signed \u201cBitrix24 Partner\u201d with no way to reach you. Missing: {what}.",
   "ui.ptWarnName":"your name or company",
   "ui.ptWarnContact":"a way to reach you (email, phone or website)",
   "ui.pdfRefusedInvalid":"The report was not built: {what} selected scenario(s) have an input error and are left out of every total. Fix the field marked in red — a report that quietly drops a scenario you showed the client is worse than no report.",
@@ -1000,7 +1000,7 @@ en: {
   "org.clientCarried":"This is a fact about this client's business \u2014 the number of them, how often it happens, how long their own people take over it \u2014 so the client knows it and we cannot. The figure sitting here is neither a benchmark nor our estimate: it was carried over unchanged from an earlier version of this calculator, and nothing stands behind it for this market. It is in the pre-meeting questionnaire; replace it with the client's answer.",
   "org.client":"This is a fact about this client, so no source exists and none can. We put in a deliberately modest placeholder so an untouched calculator does not flatter the result. Set it together with the client — and if they do not know it either, that is worth saying rather than guessing.",
   "org.coverage":"Our estimate, and the most sensitive number in the whole model — it moves the total in a straight line. The share for each scenario was reasoned from who plausibly uses that feature, not measured: 100% where the scenario names a role that already is a share of the company, 12% for document work, 20-30% for the agent scenarios because that is early-adopter behaviour rather than the whole company. We have no confirmed market figures for this. If the client can name who will really use the feature, use their number.",
-  "org.cov":"Not typed here. It comes from the headcount in step 1 multiplied by the coverage share above this field. Change one of those two, not this box.",
+  "org.cov":"Not typed here. It comes from the headcount in {step:company} multiplied by the coverage share above this field. Change one of those two, not this box.",
   "org.reportLegendNone":"Where these figures come from: none of them is vendor benchmark data. They are our starting assumptions — carried over from the earlier version of this calculator or estimated by us. Replace any of them with your own figures where you have them.",
   "org.reportLegend":"Where these figures come from: none of them is vendor benchmark data. {client} of them are facts about your company and are marked {mark} — please confirm or replace those. The rest are our starting assumptions, carried over from the earlier version of this calculator or estimated by us.",
   "ui.step5":"Step 5", "ui.step6":"Step 6", "ui.step7":"Step 7", "ui.step8":"Step 8",
@@ -1058,8 +1058,8 @@ en: {
 
   "ui.svcLabel":"Cost of my services (one-off)",
   "ui.svcH":"Price your services",
-  "ui.svcNote":"Your one-off fee per scenario: connection, setup for the client's processes, staff training. You type each fee in the scenario card in Step 3, right under the scenario you are pricing — this table shows what you typed and adds it up. Click any fee to go to its field. Nothing is filled in for you. NOT QUOTED means exactly that: it stays out of the total and out of the average instead of counting as zero. A deliberate 0 is a real quote and does count.",
-  "ui.svcEmpty":"No scenarios picked yet. Choose them in Step 3 and each one appears here with the fee you typed in its card.",
+  "ui.svcNote":"Your one-off fee per scenario: connection, setup for the client's processes, staff training. You type each fee in the scenario card in {step:scenarios}, right under the scenario you are pricing — this table shows what you typed and adds it up. Click any fee to go to its field. Nothing is filled in for you. NOT QUOTED means exactly that: it stays out of the total and out of the average instead of counting as zero. A deliberate 0 is a real quote and does count.",
+  "ui.svcEmpty":"No scenarios picked yet. Choose them in {step:scenarios} and each one appears here with the fee you typed in its card.",
   "ui.svcRowGoto":"Go to the fee field for {name}",
   "ui.svcColScenario":"Scenario",
   "ui.svcColSaving":"Client's saving, year",
@@ -1068,7 +1068,7 @@ en: {
   "ui.svcQuotedOf":"{quoted} of {n} priced",
   "ui.svcAllPriced":"Every selected scenario is priced.",
   "ui.svcCardLabel":"Your fee for this scenario",
-  "ui.svcCardHint":"One-off, your price. Blank = not quoted yet. This is the only place a fee is typed; Step 4 lists them all and totals them.",
+  "ui.svcCardHint":"One-off, your price. Blank = not quoted yet. This is the only place a fee is typed; {step:services} lists them all and totals them.",
   "ui.svcJump":"Price them now",
   "ui.svcJumpAria":"Go to the first scenario without a price",
   "ui.sumSvc":"My services (one-off)",
@@ -1118,7 +1118,7 @@ en: {
   "ui.pdfHint":"The button lays the report out as A4 pages and opens your browser's print dialog — that dialog is the only way a web page can write a PDF to your disk. It also keeps the text real text: you can select it and search it, and it prints in the Bitrix24 font instead of as a picture. The pages declare their own size and zero margins, so Chrome does not add a URL or a date to the corners even with headers and footers switched on — we measured that. Switching them off anyway costs nothing and covers browsers we could not measure.",
   "ui.pdfBuilding":"Laying out the report…",
   "ui.pdfRefused":"The report was not built: it would have carried internal, partner-only content ({what}). This is a bug, so please report it. Do not work around it. There is one report and it goes to the client.",
-  "ui.pdfNoScenarios":"Pick at least one scenario in Step 3. There is nothing to put in a report yet.",
+  "ui.pdfNoScenarios":"Pick at least one scenario in {step:scenarios}. There is nothing to put in a report yet.",
   "ui.saveH":"Save the calculation",
   "ui.saveHint":"Two ways to keep this calculation, and neither is the report — the button above makes that. A <b>link</b> carries the calculation inside the address itself: paste it into a message, and whoever opens it sees these figures and can change them. A <b>JSON file</b> carries everything, including your logo, and is the one to use if a mail client mangles the link. Both reopen through the same route, so a link and a file restore the same calculation.",
   "ui.dlState":"Save calculation (JSON)",
@@ -1151,7 +1151,7 @@ en: {
   "ui.navPerMonth":"Saving / month",
   "ui.navPerYear":"Saving / year",
   "ui.navPotLabel":"Revenue + base potential, month",
-  "ui.revOffNote":"This scenario works on revenue, not on the payroll fund. Turn on \u201cShow revenue uplift\u201d in Step 1 to see its figure. While the switch is off it adds nothing to the totals.",
+  "ui.revOffNote":"This scenario works on revenue, not on the payroll fund. Turn on \u201cShow revenue uplift\u201d in {step:company} to see its figure. While the switch is off it adds nothing to the totals.",
   "ui.pickOne":"Select at least one scenario to see the combined effect.",
   "ui.month":"Month", "ui.year":"Year",
   "ui.sumFot":"Total payroll saving",
@@ -1253,7 +1253,7 @@ en: {
   "err.max":"Cannot be more than {max}. Above that the figure stops describing a company.",
   "err.whole":"Needs to be a whole number — half a person or half an event does not happen.",
   "ui.globalErrH":"Check the company details",
-  "ui.globalErrBody":"One of the figures in step 1 is outside what the model can use, so the calculation is on hold. The field is marked below.",
+  "ui.globalErrBody":"One of the figures in {step:company} is outside what the model can use, so the calculation is on hold. The field is marked below.",
   "info.2":"How many requests a day the AI closes instead of a specialist, and how many minutes a specialist used to spend on one request. The AI closes the whole request, so the whole time goes. We turn that into hours per month (x {days} working days) and multiply it by the specialist's hourly cost.",
   "int.2":"The integrator connects the open channels, fills the knowledge base with answers, sets the hand-off rules for complex cases, defines what to capture from the dialogue into the card and trains the support team. Scope depends on specialists and channels.",
 
@@ -1352,16 +1352,16 @@ en: {
   "ui.brRefMismatch":"This reply was sent for a different set of scenarios. Its reference is {got}; this questionnaire is {want}. The answers are numbered, so applying them now would put the client’s figures into the wrong fields — nothing was filled in. Put the scenarios back the way they were when you sent the email, or ask the client to reply to the current one.",
   "ui.brRefMissing":"The reply does not carry the reference line from the email, so I cannot confirm it answers THIS set of scenarios. Read the table below against the field names before you fill anything in — if you changed the selection after sending, the numbers will line up against the wrong questions.",
   "ui.brCorrection":"The reply mentions question {list} outside the numbered answers — that usually means the client corrected something in their own words. Prose corrections are not read: check {list} by hand against the email before you fill in.",
-  "ui.brNoDigits":"The numbering is there, but the answers are not numbers: {sample}. Figures written as words are not read — ask the client for numbers, or type them into Step 1 and the scenario cards by hand.",
-  "ui.brFilledInvalid":"The numbers are in, but the model cannot use {bad} — the scenario it belongs to stays out of every total until you fix that field. Look for it marked in red, in Step 1 or on the card.",
+  "ui.brNoDigits":"The numbering is there, but the answers are not numbers: {sample}. Figures written as words are not read — ask the client for numbers, or type them into {step:company} and the scenario cards by hand.",
+  "ui.brFilledInvalid":"The numbers are in, but the model cannot use {bad} — the scenario it belongs to stays out of every total until you fix that field. Look for it marked in red, in {step:company} or on the card.",
   "ui.brCurrency":"The client answered question {list} in {theirs}, and this calculation is in {ours}. The number was taken as written — there is no conversion. Convert it yourself before you rely on it.",
-  "ui.brOmitted":"Not asked: {list}. Those fields are marked “ask the client” on their cards, but they belong to scenarios that work on revenue only, and the revenue forecast is switched off in Step 1 — so right now they add nothing to any total. Turn it on and they join the questionnaire.",
+  "ui.brOmitted":"Not asked: {list}. Those fields are marked “ask the client” on their cards, but they belong to scenarios that work on revenue only, and the revenue forecast is switched off in {step:company} — so right now they add nothing to any total. Turn it on and they join the questionnaire.",
   "brief.outro":"Put a number after each \u201cAnswer:\u201d and send it back, and I will bring a calculation built on your figures rather than on placeholders. Nothing here goes anywhere outside our conversation.",
 
   "ui.brWhen":"Before the meeting",
   "ui.brH":"Ask the client for their numbers",
-  "ui.brNote":"The calculation starts on deliberately modest placeholders, and every field marked \u201cask the client\u201d is one of them. This screen turns exactly those fields \u2014 for the scenarios you picked in Step 3, and no others \u2014 into a short email you send before you meet. Salary is not asked; see the note below. When the reply comes back, paste it in at the bottom and the answers go into the fields.",
-  "ui.brEmpty":"No scenarios picked yet. Choose them in Step 3 \u2014 or press an industry profile there, which picks a set in one click \u2014 and the questions for that set appear here.",
+  "ui.brNote":"The calculation starts on deliberately modest placeholders, and every field marked \u201cask the client\u201d is one of them. This screen turns exactly those fields \u2014 for the scenarios you picked in {step:scenarios}, and no others \u2014 into a short email you send before you meet. Salary is not asked; see the note below. When the reply comes back, paste it in at the bottom and the answers go into the fields.",
+  "ui.brEmpty":"No scenarios picked yet. Choose them in {step:scenarios} \u2014 or press an industry profile there, which picks a set in one click \u2014 and the questions for that set appear here.",
   "ui.brCount1":"One question, from the fields marked \u201cask the client\u201d in this set. Headcount is always asked: the credibility guard measures the saving against the company\u2019s whole payroll, so every calculation stands on it.",
   "ui.brCount":"{n} questions, from the fields marked \u201cask the client\u201d in this set. Headcount is always asked: the credibility guard measures the saving against the company\u2019s whole payroll, so every calculation stands on it.",
   "ui.brSubj":"Subject line",
@@ -1370,12 +1370,12 @@ en: {
   "ui.brCopyMsg":"Copied. Paste it into your mail client \u2014 your own greeting and signature come from there, this text carries neither.",
   "ui.brCopyManual":"The browser would not let the page reach the clipboard (that is normal for a file opened from disk). The text is selected \u2014 press Ctrl+C, or Cmd+C on a Mac.",
   "ui.brSalH":"Salary is not in the questionnaire, and neither is the payroll burden.",
-  "ui.brSalBody":"Both are the client\u2019s most sensitive figures, and a first meeting is the wrong place to ask for them. Take a public average for the country, the industry and the role instead, and put it in Step 1 yourself. This tool ships no salary source \u2014 there is none to ship: the defaults are our own estimate of a market rate, which is why they are marked \u201cour estimate\u201d and not \u201cbenchmark\u201d. Use whatever public figure you can name to the client (a national statistics office, a published salary survey, a job-board aggregate), write down which one you used, and say so on the call. The same goes for the payroll burden in Step 1: the default is a neutral round number, not this client\u2019s rate.",
+  "ui.brSalBody":"Both are the client\u2019s most sensitive figures, and a first meeting is the wrong place to ask for them. Take a public average for the country, the industry and the role instead, and put it in {step:company} yourself. This tool ships no salary source \u2014 there is none to ship: the defaults are our own estimate of a market rate, which is why they are marked \u201cour estimate\u201d and not \u201cbenchmark\u201d. Use whatever public figure you can name to the client (a national statistics office, a published salary survey, a job-board aggregate), write down which one you used, and say so on the call. The same goes for the payroll burden in {step:company}: the default is a neutral round number, not this client\u2019s rate.",
   "ui.brBackH":"The reply came back",
   "ui.brBackNote":"Paste the client\u2019s reply here \u2014 the whole email is fine, quoted text and all. Nothing is filled in until you have looked at what was read and pressed the second button.",
   "ui.brRead":"Read the reply",
   "ui.brFill":"Fill these in",
-  "ui.brNothing":"No answers found. The reply has to keep either the question numbers or the \u201cAnswer:\u201d lines for this to read it \u2014 if the client wrote prose instead, type the figures into Step 1 and the scenario cards by hand.",
+  "ui.brNothing":"No answers found. The reply has to keep either the question numbers or the \u201cAnswer:\u201d lines for this to read it \u2014 if the client wrote prose instead, type the figures into {step:company} and the scenario cards by hand.",
   "ui.brStale":"The reply answers question {n}, and this questionnaire has {have}. The selection changed since you sent it, so the numbers no longer line up with the questions. Nothing was filled in. Put the scenarios back the way they were when you sent it, or enter the figures by hand.",
   "ui.brRead1":"Read {ok} of {n} answers. Check them against the field each one lands in, then press \u201cFill these in\u201d.",
   "ui.brRead11":"Read the one answer. Check it against the field it lands in, then press \u201cFill these in\u201d.",
@@ -1394,10 +1394,16 @@ de: {
 const SHOW_LANG_SWITCH = false;
 const SHOW_CUR_SWITCH  = false;
 let LANG = "en", CUR = "USD";
+const stepOf = id => {
+  const el = document.querySelector(`section#${id} [data-i18n^="ui.step"]`);
+  if (!el) { console.error(`t(): section #${id} has no step label`); return `{step:${id}}`; }
+  return t(el.dataset.i18n);
+};
 const t = (k, p) => {
   let s = (I18N[LANG] && I18N[LANG][k]) != null ? I18N[LANG][k] : I18N.en[k];
   if (s == null) return k;
   if (p) for (const key in p) s = s.split("{" + key + "}").join(p[key]);
+  if (s.includes("{step:")) s = s.replace(/\{step:([\w-]+)\}/g, (m, id) => stepOf(id));
   return s;
 };
 const copyVars = () => ({
