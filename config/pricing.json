@@ -4,7 +4,7 @@
   "key_dates": {
     "_two_different_dates": "prices_live and lineup_live are NOT the same event, and client-facing wording must keep them apart. prices_live is the date of the price list WE HOLD. lineup_live is the date the new lineup starts applying to customers accounts, and it comes from a public article the client can open. Saying 'prices apply from Aug 17' was our own conflation: the price list is dated Aug 17, but nobody's account changed that day.",
     "prices_live": "2026-08-17",
-    "_prices_live_source": "COM_B24_08_2028.xlsx, the official price export. Date OF OUR DOCUMENT, printed in the report footer as 'Prices as of ...' - a snapshot date, not a claim about anyone's account.",
+    "_prices_live_source": "The official price export. Date OF OUR DOCUMENT, printed in the report footer as 'Prices as of ...' - a snapshot date, not a claim about anyone's account.",
     "lineup_live": "2026-09-01",
     "_lineup_live_source": "https://helpdesk.bitrix24.com/open/26027119/ - 'New Vibe+ lineup - What Changes for Paid Customers', Emily Walker, updated 2026-09-01: 'As of September 1, 2026, Bitrix24 has a new plan lineup', and elsewhere 'the plans available before September 1, 2026'.",
     "existing_clients_grandfathered_until": "2026-11-30",
@@ -939,7 +939,7 @@
         "quarterly_per_month": 840000
       }
     ],
-    "_note": "USD replaced with the official export from Anton; verified against the previous data with zero discrepancies. Other currencies still come from the earlier VIBE_prices sheet and have no Essentials counterpart."
+    "_note": "USD taken from the official price export; verified against the previous data with zero discrepancies. Other currencies still come from the earlier VIBE_prices sheet and have no Essentials counterpart."
   },
   "vibe_plus_headline_limits": {
     "_note": "Top-of-range ceiling figures. FOUR OF SIX ARE NOW CONFIRMED against the official plan comparison (see _source_verified): emails, admins, rest_api and bitrix24_market all match the Enterprise Vibe+ column read from the page. Storage was corrected DOWN from the guide's 'up to 4 TB' to 3 TB, because the page shows 3 TB in the Enterprise column for BOTH variants and a client can open that page in a minute. The guide's warning that per-tier increments do not reconcile still applies to any tier above Enterprise 250, which the public page does not publish - confirm those via Partner Portal before quoting.",
@@ -959,7 +959,7 @@
   ],
   "vibe_plus_delta_by_tier": {
     "_source": "https://www.bitrix24.com/prices/compare_cloud_plans.php - official plan comparison, read from the DOM 2026-09-01. The page carries NINE columns: Free, plus an Essential/Vibe+ pair for each of Basic, Standard, Professional and Enterprise. A row-by-row diff of all 880 rows found EXACTLY 11 that differ between Essential and Vibe+ at any tier. The lists below are those rows, per tier, named as the page names them. This replaced our own three-line summary of the lineup, which was written from the partner guide and had no per-tier detail.",
-    "_naming": "Row names follow the page, with two deliberate deviations. The page writes 'Vibeсode platform' with a CYRILLIC 's' - spelled in Latin letters here. And its 'Increased Rest API performance' is written 'REST' to match the page's own other REST row.",
+    "_naming": "Row names follow the page, with two deliberate deviations. The page writes 'Vibecode platform' with a Cyrillic letter in place of the Latin 'c' - spelled in Latin letters here. And its 'Increased Rest API performance' is written 'REST' to match the page's own other REST row.",
     "_ai_row": "The official row 'Unlimited AI requests' (Standard Vibe+ and up) is NOT repeated in these lists: it is printed by the AI rung, which comes from ai_allowance_by_tier and also covers Basic Vibe+, where the page has no AI row at all.",
     "_enterprise": "The page publishes ONE Enterprise column, at 250 seats. Its figures (25 -> 30 admins, 250k -> 350k emails, 10 -> unlimited REST/Market) belong to that tier only. For Enterprise tiers above 250 seats the page has no column, so ent_other omits every row that would need an Essential counterpart figure we cannot see. Silence beats a number carried over from a different tier.",
     "basic": [

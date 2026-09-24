@@ -1,17 +1,4 @@
 #!/usr/bin/env node
-/**
- * check-prices.mjs — guard against price drift.
- *
- * Prices live in config/pricing.json (source of record) but are ALSO embedded in
- * index.html, because the calculator has to stay a single static file that works
- * over file:// with no fetch. Two copies drift. This script fails loudly when they do.
- *
- *   node scripts/check-prices.mjs          # verify
- *   node scripts/check-prices.mjs --json   # machine-readable diff
- *
- * Exit 0 = in sync. Exit 1 = drift (prints exactly which field differs).
- * Exit 2 = could not read or parse one of the two sides (never reported as "in sync").
- */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,19 +10,16 @@ const asJson = process.argv.includes("--json");
 
 const fail = (code, msg) => { console.error(msg); process.exit(code); };
 
-/* ---------- read the source of record ---------- */
 let cfg;
 try { cfg = JSON.parse(fs.readFileSync(CONFIG, "utf8")); }
 catch (e) { fail(2, `check-prices: cannot read/parse ${path.relative(ROOT, CONFIG)}\n  ${e.message}`); }
 
-/* ---------- extract the embedded block from index.html ---------- */
 let page;
 try { page = fs.readFileSync(PAGE, "utf8"); }
 catch (e) { fail(2, `check-prices: cannot read ${path.relative(ROOT, PAGE)}\n  ${e.message}`); }
 
 const start = page.indexOf("const PRICING = {");
 if (start < 0) fail(2, "check-prices: `const PRICING = {` not found in index.html — was the block renamed?");
-// walk braces to find the end of the object literal
 let depth = 0, end = -1;
 for (let i = page.indexOf("{", start); i < page.length; i++) {
   const ch = page[i];
@@ -46,36 +30,20 @@ if (end < 0) fail(2, "check-prices: could not find the end of the PRICING object
 
 let embedded;
 try {
-  // The literal is plain data (no expressions), so evaluating it in isolation is safe.
   embedded = new Function("return " + page.slice(page.indexOf("{", start), end))();
 } catch (e) {
   fail(2, `check-prices: embedded PRICING block is not valid JS data\n  ${e.message}`);
 }
 
-/* ---------- build the expected shape FROM the config ---------- */
 const essUSD = cfg.essentials_prices?.USD;
 if (!Array.isArray(essUSD)) fail(2, "check-prices: config.essentials_prices.USD is not an array.");
 
 const expected = {
   effectiveFrom: cfg.key_dates?.prices_live,
-  /* ДАТЫ СВЕРЯЮТСЯ НАРАВНЕ С ЦЕНАМИ. Они печатаются клиенту и проверяются им по
-     публичной статье за минуту: дата запуска линейки и конец переходного периода
-     пришли оттуда, дата прайса — из выгрузки. Расхождение между конфигом и
-     встроенной копией здесь — это неверная дата в PDF, а не косметика. */
   lineupFrom: cfg.key_dates?.lineup_live,
   grandfatheredUntil: cfg.key_dates?.existing_clients_grandfathered_until,
-  /* seats и monthly сверяются наравне с ценой. В официальной выгрузке Антона
-     monthly есть у ВСЕХ пятнадцати тиров — раньше у четырёх Enterprise его не было,
-     потому что их брали с публичного сайта. Проверка «опубликовано / не опубликовано»
-     остаётся: она ловит и обратный случай, если источник когда-нибудь снова
-     перестанет публиковать месячную цену, а в index.html она задержится. */
   essentialsUSD: essUSD.map(r => ({ plan: r.plan, monthly: r.monthly, annual: r.annual_per_month,
                                     seats: r.seats })),
-  /* EUR Essentials нет в источнике; страница обязана моделировать это как null.
-     Раньше проверка срабатывала только на строку «MISSING». В официальной выгрузке
-     ключа EUR нет ВООБЩЕ — при старом условии проверка тихо выключилась бы, и
-     выдуманная цена в index.html прошла бы незамеченной. Теперь «нет данных» — это
-     и отсутствие ключа, и MISSING. */
   essentialsEURisNull: cfg.essentials_prices?.EUR == null
     || (typeof cfg.essentials_prices.EUR === "string" && /MISSING/i.test(cfg.essentials_prices.EUR)),
   migration: (cfg.migration_map || []).map(p => ({ to: p.to })),
@@ -87,7 +55,6 @@ const expected = {
   ])),
 };
 
-/* ---------- compare ---------- */
 const problems = [];
 const cmp = (label, want, got) => {
   if (want !== got) problems.push({ field: label, config: want, index_html: got });
@@ -96,16 +63,12 @@ const cmp = (label, want, got) => {
 cmp("effectiveFrom", expected.effectiveFrom, embedded.effectiveFrom);
 cmp("lineupFrom", expected.lineupFrom, embedded.lineupFrom);
 cmp("grandfatheredUntil", expected.grandfatheredUntil, embedded.grandfatheredUntil);
-/* Обе даты обязаны быть настоящими датами, а не прозой: раньше в конфиге лежало
-   «end of current period or ~2026-11-17, whichever is later» — фраза, из которой
-   ничего не сверить и в которой тильда прятала догадку. */
 [["lineupFrom", expected.lineupFrom], ["grandfatheredUntil", expected.grandfatheredUntil]]
   .forEach(([k, v]) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(v || "")))
       problems.push({ field: `key_dates -> ${k} (source)`, config: "must be a bare YYYY-MM-DD date", index_html: v });
   });
 
-// Essentials USD — every published tier, with its seat capacity
 const embEss = embedded.essentials?.USD || [];
 if (embEss.length !== expected.essentialsUSD.length) {
   problems.push({ field: "essentials.USD.length", config: expected.essentialsUSD.length, index_html: embEss.length });
@@ -114,7 +77,6 @@ if (embEss.length !== expected.essentialsUSD.length) {
     cmp(`essentials.USD[${i}].plan`, w.plan, embEss[i].plan);
     cmp(`essentials.USD[${i}].annual`, w.annual, embEss[i].annual);
     cmp(`essentials.USD[${i}].seats`, w.seats, embEss[i].seats);
-    /* Наличие monthly — тоже факт из источника, а не деталь оформления. */
     const wantHas = w.monthly != null, gotHas = embEss[i].monthly != null;
     if (wantHas !== gotHas)
       problems.push({ field: `essentials.USD[${i}].monthly (${w.plan})`,
@@ -124,7 +86,6 @@ if (embEss.length !== expected.essentialsUSD.length) {
   });
 }
 
-// EUR Essentials must be null while the source says MISSING — a number here would be invented.
 if (expected.essentialsEURisNull && embedded.essentials?.EUR !== null) {
   problems.push({
     field: "essentials.EUR",
@@ -133,23 +94,18 @@ if (expected.essentialsEURisNull && embedded.essentials?.EUR !== null) {
   });
 }
 
-// Essentials -> Vibe+ mapping and promo prices
 const embMig = embedded.migration || [];
 if (embMig.length !== expected.migration.length) {
   problems.push({ field: "migration.length", config: expected.migration.length, index_html: embMig.length });
 } else {
   expected.migration.forEach((w, i) => {
     cmp(`migration[${i}].to`, w.to, embMig[i].to);
-    // the `from` side must be a real Essentials plan name
     if (!essUSD.some(e => e.plan === embMig[i].from))
       problems.push({ field: `migration[${i}].from`, config: essUSD.map(e => e.plan).join("|"), index_html: embMig[i].from });
   });
 }
 
 
-// Vibe+ tiers: every tier the page carries must match the config exactly.
-// The page may carry FEWER tiers than the config (it only needs the migration targets),
-// but never a tier the config does not have, and never a different number.
 for (const cur of ["USD", "EUR"]) {
   const want = expected.vibe[cur], got = embedded.vibePlus?.[cur] || [];
   if (!want.length) { problems.push({ field: `vibe_plus_prices.${cur}`, config: "missing in config", index_html: got.length }); continue; }
@@ -162,10 +118,6 @@ for (const cur of ["USD", "EUR"]) {
   });
 }
 
-/* Официальная разница Vibe+ против Essential — ТАКОЙ ЖЕ ИСТОЧНИК ЗАПИСИ, КАК ЦЕНЫ.
-   Она уезжает в клиентский документ построчно, поэтому расхождение между конфигом и
-   встроенной копией здесь не косметика: партнёр пообещает то, чего в таблице нет.
-   Сверяются и состав тиров, и порядок строк, и сами строки дословно. */
 const wantDelta = cfg.vibe_plus_delta_by_tier || {};
 const gotDelta = embedded.vibeDelta || {};
 const deltaTiers = Object.keys(wantDelta).filter(k => !k.startsWith("_"));
@@ -185,8 +137,6 @@ if (!deltaTiers.length) {
       w.forEach((line, i) => cmp(`vibeDelta.${tier}[${i}]`, line, g[i]));
     });
   }
-  /* Опечатка со страницы не должна доехать до клиента ни в одной из двух копий:
-     кириллическая «с» в «Vibecode» выглядит как латинская и молча пройдёт глазами. */
   const CYR = /[\u0400-\u04FF]/;
   [["config", wantDelta], ["index.html", gotDelta]].forEach(([where, obj]) => {
     Object.entries(obj).forEach(([k, arr]) => {
@@ -200,7 +150,6 @@ if (!deltaTiers.length) {
   });
 }
 
-/* ---------- report ---------- */
 if (asJson) {
   console.log(JSON.stringify({ ok: problems.length === 0, problems }, null, 2));
   process.exit(problems.length ? 1 : 0);

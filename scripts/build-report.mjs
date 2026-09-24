@@ -1,46 +1,10 @@
 #!/usr/bin/env node
-/**
- * build-report.mjs — turn a calculator state snapshot into report HTML for the kit renderer.
- *
- *   node scripts/build-report.mjs calc-state.json [--out FILE]
- *
- * then:
- *   python3 ~/.claude/skills/bitrix24-partner-style/scripts/render.py OUT.html --format a4
- *
- * MARKUP comes from the kit: assets/bitrix24-template.html component classes only
- * (.page/.page--sky/.page--partner-navy, .b24-runhead, .b24-h1, .b24-card--white,
- * .b24-table-wrap/.b24-table, .b24-checklist, .b24-quote, .b24-footer, .b24-btn ...).
- * Nothing is invented here and the kit is never edited.
- *
- * ASSET PATHS are kit-relative (bitrix24-logo/...) because render.py injects
- * <base href=".../skills/bitrix24-partner-style/assets/">.
- *
- * NO EMOJI: check marks come from .b24-checklist li.is-yes, which the kit backs with
- * badge-check.svg (brand-spec §5.3).
- *
- * PAGES ARE FIXED A4 with overflow:hidden (kit .page = height:297mm). Content does not
- * reflow — it is CLIPPED. So rows are chunked conservatively and a page is added rather
- * than squeezed. ROWS_PER_PAGE below is the knob.
- *
- * ONE BUILD, AND IT IS THE CLIENT'S. There used to be a second, partner build
- * carrying the per-scenario service fees and a page marked for internal use. It is
- * gone: the partner works from the screen and hands the client a single document.
- * So there is no longer a build in which internal material is allowed. Each report
- * is audited before it is written and the script REFUSES to emit a leaking file.
- * The implementation fee stays in the report as ONE total line among the first-year
- * costs: without it the net saving would be overstated. What went away is the
- * per-scenario breakdown, not the cost itself.
- */
 import fs from "node:fs";
 import path from "node:path";
 
 const argv = process.argv.slice(2);
 const input = argv.find(a => !a.startsWith("--"));
 const outArg = (argv.find(a => a.startsWith("--out=")) || "").split("=")[1];
-/* --mode пережил удаление партнёрской сборки только как совместимость: он стоит в
-   README, в check-parity и в пальцах. --mode=client принимается и ничего не значит.
-   --mode=partner НЕ игнорируется молча: команда, которая раньше давала другой
-   документ, обязана сказать, что документа больше нет, а не тихо выдать клиентский. */
 const mode = (argv.find(a => a.startsWith("--mode=")) || "").split("=")[1];
 
 if (!input) {
@@ -59,32 +23,15 @@ if (mode && mode !== "client") {
 
 const S = JSON.parse(fs.readFileSync(input, "utf8"));
 
-/* ---------- helpers ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const LOC = S.lang === "de" ? "de-DE" : "en-US";
 const money = n => new Intl.NumberFormat(LOC, { style: "currency", currency: S.currency, maximumFractionDigits: 0 }).format(Math.round(n || 0));
 const int = n => new Intl.NumberFormat(LOC).format(Math.round(n || 0));
-/* one-decimal percent, identical rule to fmtPct1() on screen. The state carries the
-   raw ratio; rounding happens here, on display, once. */
 const pct1 = v => new Intl.NumberFormat(LOC, {maximumFractionDigits:1})
   .format(Math.round((v || 0) * 10) / 10);
 const today = new Date(S.generatedAt || Date.now()).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" });
 const chunk = (arr, n) => { const o = []; for (let i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; };
 
-/* =============================================================================
-   ASSET EMBEDDING — why the report inlines its images
-   The kit renderer injects <base href=".../partner-style/assets/">, so EVERY
-   relative URL in this document resolves against the kit folder. That folder is a
-   private skill: a partner who clones the public repo does not have it. Opening
-   the built HTML in a browser therefore produced ten broken Bitrix24 lockups and
-   a 404 on the stylesheet — in a workflow the README tells partners to use.
-   Fix: the lockups travel as data URIs (immune to <base>, to where the file is
-   moved, and to whether the kit exists), and the kit stylesheet is inlined from
-   the vendored copy in assets/ so a raw browser open is still styled and A4.
-
-   САМО ВСТРАИВАНИЕ ЖИВЁТ В scripts/lib/brand-assets.mjs: кит там только читается,
-   и подстановки идут в копии строки, а не в самом ките.
-   ========================================================================== */
 import { LOCKUP, inlinedKitCss } from "./lib/brand-assets.mjs";
 
 for (const [k, v] of Object.entries(LOCKUP))
@@ -94,28 +41,13 @@ for (const [k, v] of Object.entries(LOCKUP))
     process.exit(2);
   }
 
-/* =============================================================================
-   РАЗМЕТКА — из scripts/report-template.mjs. Здесь остаётся только окружение:
-   чем подставить логотипы и стили. Ровно та же функция строит отчёт в браузере
-   (кнопки «скачать PDF» на шаге 8) — поэтому версии не могут разъехаться.
-   ========================================================================== */
 import { buildReport } from "./report-template.mjs";
 
 const { html, pageCount, hits, missing, blocked } = buildReport(S, {
   assets: {
     lockupDark:  LOCKUP.dark,
     lockupWhite: LOCKUP.white,
-    /* The kit stylesheet, inlined from the vendored copy in assets/ so the document
-       stands on its own: correct A4 geometry, colours, badges and brand font with no
-       external file. No <link> to the kit is emitted on purpose — render.py adds one
-       itself when it does not find the name in the source, so the renderer still uses
-       the kit directly and a raw browser open produces no 404 at all. */
     styleTags: `<style>
-/* The kit stylesheet, inlined from the vendored copy in assets/ so the document
-   stands on its own: correct A4 geometry, colours, badges and brand font with no
-   external file. No <link> to the kit is emitted on purpose — render.py adds one
-   itself when it does not find the name in the source, so the renderer still uses
-   the kit directly and a raw browser open produces no 404 at all. */
 ${inlinedKitCss()}
 </style>`,
     baseHref: null,
@@ -124,8 +56,6 @@ ${inlinedKitCss()}
 
 const T = S.totals, P = S.plan;
 
-/* ОТКАЗ ПО ОШИБКЕ ВВОДА. Первым: пока цифры не сходятся, обсуждать состав
-   отчёта бессмысленно. */
 if (blocked && blocked.length) {
   console.error("\n  REFUSED: the calculation carries an input error, so the report would be");
   console.error("  built on a set of scenarios the partner did not actually get:\n");
@@ -134,9 +64,6 @@ if (blocked && blocked.length) {
   process.exit(1);
 }
 
-/* ОТКАЗ ПО ОТСУТСТВИЮ РАСКРЫТИЯ. Отдельно от лика: там документ несёт лишнее,
-   здесь — не несёт обязательного. Формулировка своя, потому что и лечится это
-   иначе: не «вырезать», а «дописать». */
 if (missing && missing.length) {
   console.error("\n  REFUSED: the report is built on scenarios that the recommended plan does not");
   console.error("  include, and it does not say so. Missing:\n");
@@ -156,8 +83,6 @@ if (hits.length) {
 }
 
 const out = outArg || input.replace(/\.json$/, "") + "-report.html";
-/* build/ is generated output and therefore gitignored, so it does not exist in a fresh
-   clone. Create the directory rather than failing the first command a new user runs. */
 fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
 fs.writeFileSync(out, html, "utf8");
 
